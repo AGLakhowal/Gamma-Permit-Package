@@ -1,22 +1,22 @@
 # Gamma Runtime Governance Engine (G-0 Standard)
 
 Author: Abhinandan Gill-Lakhowal  
-Version: v1.0 — November 2025
+Version: v1.0 — November 2025  
 
 The Gamma Runtime Governance Engine defines a deterministic control layer that separates AI capability generation from execution authority.
 
-This repository contains the Gamma Permit Package, including the Lakhowal Law of Coherence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, procurement frameworks, and sample governance evidence artifacts.
+This repository contains the Gamma Permit Package, including the Lakhowal Law of Coherence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, procurement frameworks, conformity assessment tools, and sample governance evidence artifacts.
 
-The package provides both:
+The package is designed to provide both:
 
-1. A governance standard (Γ-Standard)  
+1. A governance standard for permit-based control of intelligent systems  
 2. A reference architecture for runtime permit enforcement
 
 ---
 
 🌐 Overview
 
-Γ (Gamma) = 0 represents the universal permit-to-act condition for safe, deterministic, coherent intelligence across:
+Γ (Gamma) = 0 represents the permit-to-act condition for safe, deterministic, and coherent operation across:
 
 • AI systems  
 • autonomous platforms  
@@ -33,6 +33,15 @@ The Gamma framework introduces a deterministic governance rule that separates de
 
 ---
 
+🜁 Core Principle
+
+Γ = 0 → Coherence → Permit  
+Γ > 0 → Instability → Abstain  
+
+Gamma is proposed as a runtime governance condition for intelligent systems. In this model, a system may compute, recommend, simulate, or plan internally, but it may execute only when the governance layer authorizes action.
+
+---
+
 Runtime Governance Architecture
 
 The Gamma model introduces a deterministic authorization boundary between AI capability generation and real-world execution.
@@ -45,13 +54,13 @@ Permit / Deny
         ↓  
 Execution Layer  
 
-This architecture establishes a runtime permit control plane for intelligent systems.
+This architecture establishes a runtime permit control plane for intelligent systems, enabling governance to be evaluated at the point of action rather than only at design time or policy time.
 
 ---
 
 Dual Permission Model
 
-The Gamma governance framework separates two types of authority.
+The Gamma governance framework separates two forms of authority.
 
 Permit-to-Act  
 Controls whether a system may perform externally effective operations, including:
@@ -70,29 +79,27 @@ Controls whether a system may modify its internal state, including:
 • adaptive policy updates  
 • reinforcement learning changes  
 
-Separating these permissions enables safe operation of adaptive intelligent systems.
+Separating these permissions enables safer operation of adaptive intelligent systems by distinguishing execution authority from self-modification authority.
 
 ---
 
 Operational Modes
 
-The dual-permission model allows multiple governance modes.
-
-Deployment Mode
+Deployment Mode  
 
 ACT_PERMIT = true  
 ADAPT_PERMIT = false  
 
-The system operates but cannot modify itself.
+The system may operate but may not modify itself.
 
-Training / Sandbox Mode
+Training / Sandbox Mode  
 
 ACT_PERMIT = false  
 ADAPT_PERMIT = true  
 
-Learning is allowed but external actions are blocked.
+Learning and adaptation are allowed but external actions are blocked.
 
-Fault / Safety Mode
+Fault / Safety Mode  
 
 ACT_PERMIT = false  
 ADAPT_PERMIT = false  
@@ -105,39 +112,39 @@ What This Repository Provides
 
 The Gamma Permit Package includes:
 
-• A complete technical standard (LLC Γ-Standard v1.0)  
-• A G-0 Certification Scheme aligned with ISO/IEC 42001 and UL 4600  
-• A NIST AI Risk Management Framework profile for Gamma-based governance  
-• An IEEE PAR submission draft for a Γ-based governance standard  
-• A BSI PAS outline supporting national-level standardization  
-• A procurement clause pack for institutional buyers and regulators  
-• A Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems  
+• a complete technical standard (LLC Γ-Standard v1.0)  
+• a G-0 Certification Scheme structured for use alongside governance and safety frameworks such as ISO/IEC 42001 and UL 4600  
+• a NIST AI Risk Management Framework profile for Gamma-based governance  
+• an IEEE PAR submission draft for a proposed Γ-based governance standard  
+• a BSI PAS outline supporting national-level standardization  
+• a procurement clause pack for institutional buyers and regulators  
+• a Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems  
 
 ---
 
 Repository Contents
 
-Standards & Specifications
+Standards & Specifications  
 
 01-LLC_Gamma-Standard_v1.0.txt  
 02-ERTuple_Schema_v1.0.json  
 03-G0_Certification_Scheme.txt  
 
-Procurement & Evaluation
+Procurement & Evaluation  
 
 04-Procurement_Clause_Pack_LLC-G0.txt  
 05-Evaluation_Scoring_Rubric.csv  
 06-Conformity_Assessment_Checklist.xlsx  
 07-Vendor_Self-Attestation_Questionnaire.txt  
 
-Regulatory Submissions
+Regulatory Submissions  
 
 08-Executive_OneSlide_Content.txt  
 09-IEEE_PAR_Submission_Text.txt  
 10-BSI_PAS_Outline_and_Rationale.txt  
 11-NIST_AIRMF_Gamma_Profile_v1.0.txt  
 
-Additional Resources
+Additional Resources  
 
 12-PEM_Profile_Addendum.txt  
 samples/ERTuple_example.json  
@@ -151,7 +158,7 @@ Governance Evidence Model
 
 Every permit decision produces a governance evidence artifact called an ERTuple.
 
-Example structure:
+Example fields include:
 
 timestamp  
 ICS  
@@ -164,7 +171,23 @@ ADAPT_PERMIT
 hash_prev  
 hash_current  
 
-These artifacts create a cryptographically linked governance audit trail that enables deterministic replay and compliance verification.
+These artifacts form a cryptographically linked governance audit trail intended to support deterministic replay, compliance verification, revocation analysis, and post-incident review.
+
+---
+
+Standards and Regulatory Relevance
+
+This package is intended to support work across government, standards, and industry environments, including:
+
+• public-sector AI governance and procurement  
+• NIST AI RMF profiling and risk control mapping  
+• ISO/IEC 42001-oriented management system implementation  
+• UL 4600-style safety case development for autonomous systems  
+• IEEE standards development discussions  
+• BSI PAS-style national standardization efforts  
+• conformity assessment and certification program design  
+
+These materials are provided to help organizations evaluate whether Gamma-style runtime governance can be integrated into existing assurance, audit, and safety frameworks.
 
 ---
 
@@ -174,11 +197,11 @@ This repository supports the development and adoption of deterministic runtime g
 
 It is intended to enable:
 
-• Government adoption (NIST, DoD, EU AI Act environments)  
-• Standards development (IEEE, ISO, BSI)  
-• Industry governance compliance through the G-0 certification framework  
-• Research alignment in AI safety, robotics, and autonomous systems  
-• Planetary-grade autonomy using Γ-gated decision control for exploration systems  
+• government adoption in environments such as NIST, DoD, and EU AI Act governance programs  
+• standards development across IEEE, ISO, and BSI channels  
+• industry governance compliance through the G-0 certification framework  
+• research alignment in AI safety, robotics, and autonomous systems  
+• planetary-grade autonomy using Γ-gated decision control for exploration systems
 
 ---
 
@@ -189,13 +212,6 @@ For inquiries or collaboration: aggg2107@gmail.com
 
 ---
 
-🜁 The Gamma Principle
-
-Γ = 0 → Coherence → Permit  
-Γ > 0 → Instability → Abstain  
-
-The Gamma condition defines a deterministic governance rule for intelligent systems, ensuring that externally effective actions and adaptive updates occur only under coherent and verifiable conditions.
-
----
+Public Interest Statement
 
 This repository is made public in the interest of transparency, responsible AI governance, and global scientific collaboration.
