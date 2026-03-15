@@ -39,15 +39,15 @@ The governance layer evaluates authorization conditions at the externalization b
 
 Γ (Gamma) = 0 represents the permit-to-act condition for safe, deterministic, and coherent operation across:
 
-• AI systems
-• autonomous platforms
-• robotics
-• cyber-physical infrastructure
-• hybrid human–machine architectures
+• AI systems  
+• autonomous platforms  
+• robotics  
+• cyber-physical infrastructure  
+• hybrid human–machine architectures  
 
 Under the Lakhowal Law of Coherence (LLC):
 
-A system may act only when Γ = 0.
+A system may act only when Γ = 0.  
 If Γ > 0, the system must abstain, safe-halt, or escalate to human oversight.
 
 The Gamma framework separates decision generation from execution authority and permits externally effective actions only when governance conditions are satisfied.
@@ -56,7 +56,7 @@ The Gamma framework separates decision generation from execution authority and p
 
 ## Core Principle
 
-Γ = 0 → Coherence → Permit
+Γ = 0 → Coherence → Permit  
 Γ > 0 → Instability → Abstain
 
 Gamma defines a runtime governance condition that determines when intelligent systems may execute externally effective actions.
@@ -66,28 +66,70 @@ However, execution is permitted only when the governance layer authorizes action
 
 ---
 
+## Governance Predicate Model
+
+The Gamma condition is evaluated as a function of governance predicates.
+
+Γ = f(stability_violation,
+      fairness_violation,
+      policy_violation,
+      uncertainty_exceedance)
+
+Decision rule:
+
+Γ = 0 → all predicates satisfied  
+Γ > 0 → one or more predicates violated
+
+If any critical predicate fails, execution authority is deterministically revoked.
+
+This non-compensatory gating model prevents strong performance in one metric from masking critical safety or policy violations.
+
+---
+
 ## Runtime Governance Architecture
 
 The Gamma model introduces a deterministic authorization boundary between AI capability generation and real-world execution.
 
-AI Capability Layer
-        ↓
-Gamma Runtime Governance Engine
-        ↓
-Permit / Deny
-        ↓
-Execution Layer
+AI Capability Layer  
+        ↓  
+Gamma Runtime Governance Engine  
+        ↓  
+Permit / Deny  
+        ↓  
+Execution Layer  
 
 This architecture establishes a runtime permit control plane for intelligent systems, enabling governance to be evaluated at the point of action rather than only during design or policy stages.
 
-AI system proposes action
-        ↓
-Governance predicates evaluated
-        ↓
-Γ = 0 ?
-        ↓
-Yes → ACT_PERMIT
-No  → SAFE_STATE / ABSTAIN
+AI system proposes action  
+        ↓  
+Governance predicates evaluated  
+        ↓  
+Γ = 0 ?  
+        ↓  
+Yes → ACT_PERMIT  
+No  → SAFE_STATE / ABSTAIN  
+
+Example implementation pipeline:
+
+AI Model  
+   ↓  
+Action Proposal API  
+   ↓  
+Gamma Governance Engine  
+   ↓  
+Predicate Evaluator  
+   ↓  
+ERTuple Logger  
+   ↓  
+Execution Permit  
+
+---
+
+## Fail-Safe Behavior
+
+If the Gamma governance engine becomes unavailable or fails integrity checks, the system defaults to SAFE_STATE and execution authority is revoked until governance conditions are restored.
+
+This ensures that loss of governance control cannot result in uncontrolled system actuation.
 
 ---
 
@@ -95,22 +137,22 @@ No  → SAFE_STATE / ABSTAIN
 
 The Gamma governance framework separates two forms of authority.
 
-Permit-to-Act
+Permit-to-Act  
 Controls whether a system may perform externally effective operations, including:
 
-• financial transactions
-• robot actuation
-• system commands
-• infrastructure control
-• policy-affecting actions
+• financial transactions  
+• robot actuation  
+• system commands  
+• infrastructure control  
+• policy-affecting actions  
 
-Permit-to-Adapt
+Permit-to-Adapt  
 Controls whether a system may modify its internal state, including:
 
-• model parameter updates
-• learning adjustments
-• adaptive policy updates
-• reinforcement learning changes
+• model parameter updates  
+• learning adjustments  
+• adaptive policy updates  
+• reinforcement learning changes  
 
 Separating these permissions enables safer operation of adaptive intelligent systems by distinguishing execution authority from self-modification authority.
 
@@ -120,22 +162,22 @@ Separating these permissions enables safer operation of adaptive intelligent sys
 
 Deployment Mode
 
-ACT_PERMIT = true
-ADAPT_PERMIT = false
+ACT_PERMIT = true  
+ADAPT_PERMIT = false  
 
 The system may operate but may not modify itself.
 
 Training / Sandbox Mode
 
-ACT_PERMIT = false
-ADAPT_PERMIT = true
+ACT_PERMIT = false  
+ADAPT_PERMIT = true  
 
 Learning and adaptation are allowed but external actions are blocked.
 
 Fault / Safety Mode
 
-ACT_PERMIT = false
-ADAPT_PERMIT = false
+ACT_PERMIT = false  
+ADAPT_PERMIT = false  
 
 Both execution and adaptation are halted until governance conditions are restored.
 
@@ -145,13 +187,13 @@ Both execution and adaptation are halted until governance conditions are restore
 
 The Gamma Permit Package includes:
 
-• a complete technical standard (LLC Γ-Standard v1.0)
-• a G-0 Certification Scheme structured for use alongside governance and safety frameworks such as ISO/IEC 42001 and UL 4600
-• a NIST AI Risk Management Framework profile for Gamma-based governance
-• an IEEE PAR submission draft for a proposed Γ-based governance standard
-• a BSI PAS outline supporting national-level standardization
-• a procurement clause pack for institutional buyers and regulators
-• a Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems
+• a complete technical standard (LLC Γ-Standard v1.0)  
+• a G-0 Certification Scheme structured for use alongside governance and safety frameworks such as ISO/IEC 42001 and UL 4600  
+• a NIST AI Risk Management Framework profile for Gamma-based governance  
+• an IEEE PAR submission draft for a proposed Γ-based governance standard  
+• a BSI PAS outline supporting national-level standardization  
+• a procurement clause pack for institutional buyers and regulators  
+• a Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems  
 
 ---
 
@@ -159,31 +201,31 @@ The Gamma Permit Package includes:
 
 Standards & Specifications
 
-01-LLC_Gamma-Standard_v1.0.txt
-02-ERTuple_Schema_v1.0.json
-03-G0_Certification_Scheme.txt
+01-LLC_Gamma-Standard_v1.0.txt  
+02-ERTuple_Schema_v1.0.json  
+03-G0_Certification_Scheme.txt  
 
 Procurement & Evaluation
 
-04-Procurement_Clause_Pack_LLC-G0.txt
-05-Evaluation_Scoring_Rubric.csv
-06-Conformity_Assessment_Checklist.xlsx
-07-Vendor_Self-Attestation_Questionnaire.txt
+04-Procurement_Clause_Pack_LLC-G0.txt  
+05-Evaluation_Scoring_Rubric.csv  
+06-Conformity_Assessment_Checklist.xlsx  
+07-Vendor_Self-Attestation_Questionnaire.txt  
 
 Regulatory Submissions
 
-08-Executive_OneSlide_Content.txt
-09-IEEE_PAR_Submission_Text.txt
-10-BSI_PAS_Outline_and_Rationale.txt
-11-NIST_AIRMF_Gamma_Profile_v1.0.txt
+08-Executive_OneSlide_Content.txt  
+09-IEEE_PAR_Submission_Text.txt  
+10-BSI_PAS_Outline_and_Rationale.txt  
+11-NIST_AIRMF_Gamma_Profile_v1.0.txt  
 
 Additional Resources
 
-12-PEM_Profile_Addendum.txt
-samples/ERTuple_example.json
-samples/PIL_digest_example.json
-samples/Revocation_p95_test_report_sample.txt
-README.txt
+12-PEM_Profile_Addendum.txt  
+samples/ERTuple_example.json  
+samples/PIL_digest_example.json  
+samples/Revocation_p95_test_report_sample.txt  
+README.txt  
 
 ---
 
@@ -193,18 +235,35 @@ Every permit decision produces a governance evidence artifact called an ERTuple.
 
 Example fields include:
 
-timestamp
-ICS
-I_PHI
-PR_LCB
-CI_WIDTH
-H_X
-ACT_PERMIT
-ADAPT_PERMIT
-hash_prev
-hash_current
+timestamp  
+ICS  
+I_PHI  
+PR_LCB  
+CI_WIDTH  
+H_X  
+ACT_PERMIT  
+ADAPT_PERMIT  
+hash_prev  
+hash_current  
 
-These artifacts form a cryptographically linked governance audit trail intended to support deterministic replay, compliance verification, revocation analysis, and post-incident review.
+Metric descriptions:
+
+ICS       → Integrity Constraint Score  
+I_PHI     → Policy Coherence Index  
+PR_LCB    → Lower confidence bound of risk prediction  
+CI_WIDTH  → Uncertainty confidence interval width  
+H_X       → Entropy of decision distribution  
+
+These artifacts form a cryptographically linked governance audit trail intended to support:
+
+• deterministic replay  
+• compliance verification  
+• revocation analysis  
+• post-incident review  
+
+The full ERTuple schema is defined in:
+
+02-ERTuple_Schema_v1.0.json
 
 ---
 
@@ -212,13 +271,13 @@ These artifacts form a cryptographically linked governance audit trail intended 
 
 This package is intended to support work across government, standards, and industry environments, including:
 
-• public-sector AI governance and procurement
-• NIST AI RMF profiling and risk control mapping
-• ISO/IEC 42001-oriented management system implementation
-• UL 4600-style safety case development for autonomous systems
-• IEEE standards development discussions
-• BSI PAS-style national standardization efforts
-• conformity assessment and certification program design
+• public-sector AI governance and procurement  
+• NIST AI RMF profiling and risk control mapping  
+• ISO/IEC 42001-oriented management system implementation  
+• UL 4600-style safety case development for autonomous systems  
+• IEEE standards development discussions  
+• BSI PAS-style national standardization efforts  
+• conformity assessment and certification program design  
 
 These materials are provided to help organizations evaluate whether Gamma-style runtime governance can be integrated into existing assurance, audit, and safety frameworks.
 
@@ -230,18 +289,18 @@ This repository supports the development and adoption of deterministic runtime g
 
 It is intended to enable:
 
-• government adoption in environments such as NIST, DoD, and EU AI Act governance programs
-• standards development across IEEE, ISO, and BSI channels
-• industry governance compliance through the G-0 certification framework
-• research alignment in AI safety, robotics, and autonomous systems
-• planetary-grade autonomy using Γ-gated decision control for exploration systems
+• government adoption in environments such as NIST, DoD, and EU AI Act governance programs  
+• standards development across IEEE, ISO, and BSI channels  
+• industry governance compliance through the G-0 certification framework  
+• research alignment in AI safety, robotics, and autonomous systems  
+• planetary-grade autonomy using Γ-gated decision control for exploration systems  
 
 ---
 
 ## Contact
 
-Author: Abhinandan Gill-Lakhowal
-For inquiries or collaboration: aggg2107@gmail.com
+Author: Abhinandan Gill-Lakhowal  
+For inquiries or collaboration: aggg2107@gmail.com  
 
 ---
 
