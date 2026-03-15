@@ -68,12 +68,12 @@ However, execution is permitted only when the governance layer authorizes action
 
 ## Governance Predicate Model
 
-The Gamma condition is evaluated as a function of governance predicates.
+The Gamma condition is evaluated as a function of governance predicates:
 
-Γ = f(stability_violation,
-      fairness_violation,
-      policy_violation,
-      uncertainty_exceedance)
+Γ = f(stability_violation,  
+     fairness_violation,  
+     policy_violation,  
+     uncertainty_exceedance)
 
 Decision rule:
 
@@ -254,14 +254,9 @@ PR_LCB    → Lower confidence bound of risk prediction
 CI_WIDTH  → Uncertainty confidence interval width  
 H_X       → Entropy of decision distribution  
 
-These artifacts form a cryptographically linked governance audit trail intended to support:
+These artifacts form a cryptographically linked governance audit trail intended to support deterministic replay, compliance verification, revocation analysis, and post-incident review.
 
-• deterministic replay  
-• compliance verification  
-• revocation analysis  
-• post-incident review  
-
-The full ERTuple schema is defined in:
+The full schema definition is provided in:
 
 02-ERTuple_Schema_v1.0.json
 
