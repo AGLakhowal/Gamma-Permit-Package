@@ -133,6 +133,148 @@ This ensures that loss of governance control cannot result in uncontrolled syste
 
 ---
 
+## Enforcement, Edge Cases, and System Guarantees
+
+### Enforcement Boundary (Non-Bypassable Control)
+
+All externally effective actions MUST traverse the Gamma Governance Engine through a mandatory enforcement boundary.
+
+No direct execution path is permitted.
+
+Execution systems (e.g., payments processors, actuation controllers, routing systems) MUST require a valid governance permit token before performing any externally effective operation.
+
+If a valid permit token is absent, invalid, expired, or mismatched, execution MUST be denied.
+
+This establishes a non-bypassable control boundary ensuring that governance cannot be circumvented by internal components, engineering pathways, or system misconfiguration.
+
+---
+
+### Permit Token Binding
+
+Every permit decision is bound to:
+
+• model identifier and version  
+• policy version  
+• evaluation timestamp  
+• predicate state snapshot  
+
+If any of these change between evaluation and execution, the permit becomes invalid and execution MUST be denied.
+
+This prevents stale approvals, model drift misuse, and time-of-check/time-of-use inconsistencies.
+
+---
+
+### Edge Case Handling (Deterministic Fail-Closed Resolution)
+
+The Gamma system assumes that failures will occur and defines deterministic responses for each class of failure.
+
+1. Missing Predicate Data  
+If any governance predicate is unavailable or undefined:  
+→ Γ > 0  
+→ ACT_PERMIT = false  
+→ ADAPT_PERMIT = false  
+
+2. Stale Evidence (Temporal Drift)  
+If governance evidence exceeds freshness thresholds:  
+→ Permit invalidated  
+→ Re-evaluation required  
+
+3. Model Mismatch  
+If model version at execution differs from evaluation:  
+→ Permit invalidated  
+→ Execution denied  
+
+4. Revocation Signal  
+If revocation is active or status is unknown:  
+→ ACT_PERMIT = false  
+→ ADAPT_PERMIT = false  
+
+5. Retry / Replay Attempts  
+If a prior evaluation resulted in Γ > 0 under unchanged conditions:  
+→ Retry attempts MUST be denied or gated by re-evaluation  
+
+6. Evidence Integrity Failure  
+If audit logs fail integrity checks or exhibit tampering:  
+→ System enters SAFE_STATE  
+→ Execution authority revoked  
+
+---
+
+### Adaptation Governance (Permit-to-Adapt Enforcement)
+
+All internal system modifications are subject to governance control.
+
+Adaptation includes:
+
+• model parameter updates  
+• threshold adjustments  
+• routing policy changes  
+• learning or reinforcement updates  
+
+If Γ > 0:  
+→ ADAPT_PERMIT = false  
+→ Learning is frozen for the cycle  
+
+This prevents systems from learning under degraded, unstable, or non-compliant conditions.
+
+---
+
+### Evidence Integrity and Tamper Resistance
+
+Governance evidence (ERTuples) MUST be:
+
+• append-only  
+• cryptographically hash-linked  
+• optionally signed  
+
+Each record includes a reference to the previous record:
+
+hash_current = hash(previous_hash + current_record)
+
+Any break in the hash chain indicates tampering or corruption.
+
+Systems exhibiting non-zero tamper gaps are considered non-compliant.
+
+---
+
+### Quantified Control Guarantees
+
+Implementations SHOULD define measurable operational constraints, including:
+
+• permit validity window (TTL)  
+• evidence freshness thresholds  
+• revocation propagation latency (e.g., P95 bounds)  
+• maximum allowable uncertainty intervals  
+
+If these constraints cannot be verified or are exceeded, execution MUST be denied.
+
+---
+
+### System-Level Guarantees
+
+The Gamma Runtime Governance Engine guarantees:
+
+• No externally effective action occurs without a valid permit  
+• No action occurs under degraded or incomplete evidence conditions  
+• No internal adaptation occurs under unsafe or unstable conditions  
+• All failures resolve deterministically to SAFE_STATE  
+• All decisions are recorded and replayable through governance evidence  
+
+The system does not guarantee correctness of decisions.
+
+It guarantees that actions are permitted only under explicitly defined, evidence-bound conditions.
+
+---
+
+### Design Philosophy
+
+Failure is expected.
+
+The system is designed such that failure cannot result in unauthorized action.
+
+All failure modes are explicitly defined and resolve to denial rather than degraded execution.
+---
+
 ## Dual Permission Model
 
 The Gamma governance framework separates two forms of authority.
