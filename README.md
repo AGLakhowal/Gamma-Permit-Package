@@ -139,13 +139,15 @@ This ensures that loss of governance control cannot result in uncontrolled syste
 
 All externally effective actions MUST traverse the Gamma Governance Engine through a mandatory enforcement boundary.
 
-No direct execution path is permitted.
+No alternative or direct execution path is permitted.
 
-Execution systems (e.g., payments processors, actuation controllers, routing systems) MUST require a valid governance permit token before performing any externally effective operation.
+Execution systems (including payments processors, actuation controllers, routing systems, or infrastructure interfaces) MUST require a valid governance permit token prior to performing any externally effective operation.
 
-If a valid permit token is absent, invalid, expired, or mismatched, execution MUST be denied.
+Permit validation MUST occur at the point of use.
 
-This establishes a non-bypassable control boundary ensuring that governance cannot be circumvented by internal components, engineering pathways, or system misconfiguration.
+If a valid permit token is absent, invalid, expired, revoked, or mismatched to the execution context, the operation MUST be denied under fail-closed semantics.
+
+This establishes a complete mediation boundary ensuring that governance cannot be bypassed by internal components, engineering pathways, misconfiguration, or adversarial manipulation.
 
 ---
 
