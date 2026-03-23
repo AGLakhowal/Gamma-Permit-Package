@@ -5,7 +5,7 @@ Version: v1.0 — November 2025
  
 The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority.
  
-This repository contains the Gamma Permit Package, including the Lakhowal Law of Coherence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, procurement frameworks, conformity assessment tools, and sample governance evidence artifacts.
+This repository contains the Gamma Permit Package, including the Lakhowal Law of Concurrence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, procurement frameworks, conformity assessment tools, and sample governance evidence artifacts.
  
 The package provides:
  
@@ -79,7 +79,7 @@ If these conditions are not met, the system is considered non-compliant and guar
 • cyber-physical infrastructure  
 • hybrid human–machine architectures  
  
-Under the Lakhowal Law of Coherence (LLC):
+Under the Lakhowal Law of Concurrence (LLC):
  
 A system may act only when Γ = 0.  
 If Γ > 0, the system must abstain, safe-halt, or escalate to human oversight.
