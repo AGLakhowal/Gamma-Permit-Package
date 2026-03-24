@@ -38,6 +38,17 @@ This repository provides a reference implementation and technical foundation ali
 If you are interested in contributing or participating in early discussions, please reach out.
 
 ---
+
+## Validation and Experimental Results
+
+Detailed validation and experimental results are available in:
+
+- [Prototype Realization and Local Deterministic Validation](docs/prototype_validation.md)  
+- [Empirical Validation Under Adversarial Concurrency (ECST)](docs/ecst_validation.md)
+
+These evaluations demonstrate deterministic execution control, fail-closed behavior, replayable authorization, and zero unauthorized execution under adversarial conditions.
+
+---
 ## Key Idea
  
 AI systems may generate actions,
