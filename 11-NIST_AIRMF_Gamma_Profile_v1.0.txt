@@ -1,3 +1,22 @@
-NIST AI RMF Profile: Gamma Runtime Enforcement
-Function: GOVERN / MANAGE
-Control: Fail-closed execution gating (Γ > 0).
+TITLE: NIST AI RMF PROFILE FOR GAMMA RUNTIME ENFORCEMENT (v1.1)
+
+1. GOVERN FUNCTION (GOVERN 1.2)
+The Gamma Runtime Governance Engine maps organizational risk appetite and 
+institutional policies to deterministic, per-action execution predicates. 
+It ensures that policy is technically enforced at the point of actuation.
+
+2. MEASURE FUNCTION (MEASURE 2.1)
+The ERTuple audit trail provides a machine-readable measurement of:
+- System Integrity (ICS)
+- Policy Coherence Index (I_PHI)
+- Uncertainty Confidence Intervals (CI_WIDTH)
+- Decision Entropy (H_X)
+
+3. MANAGE FUNCTION (MANAGE 2.4)
+Gamma provides the mandatory "Safe-Halt" and "Fail-Closed" mechanism 
+(Γ > 0) required for managing high-risk AI deployments where human 
+oversight alone is insufficient to prevent rapid-scale harms.
+
+4. ALIGNMENT
+A G-0 Certified system is natively compliant with the NIST AI Risk 
+Management Framework (AI RMF 1.0) Core.
