@@ -181,6 +181,26 @@ ERTuple Logger
   ↓  
 Execution Permit
 
+### Architecture Flow (Permit-to-Act and Permit-to-Adapt)
+
+```mermaid
+graph TD
+    A[AI Capability Layer / Model] -->|Proposes Action or Adaptation| B(Gamma Runtime Governance Engine)
+    B --> C{Predicate Evaluation (Γ)}
+
+    C -->|Γ = 0 (Act)| D[ACT_PERMIT → Execution Layer]
+    C -->|Γ = 0 (Adapt)| F[ADAPT_PERMIT → Learning / Update Layer]
+
+    C -->|Γ > 0| E[DENY → Safe State / Abstain]
+
+    subgraph Mandatory Governance Boundary
+        B
+        C
+    end
+
+    style B fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+
 ---
  
 ## Fail-Safe Behavior
@@ -409,6 +429,41 @@ The Gamma Permit Package includes:
 • a procurement clause pack for institutional buyers and regulators  
 • a Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems  
  
+### 6. Quick Start / Pseudo-Code Example
+
+The following example illustrates how an external system integrates with the Gamma Runtime Governance Engine to gate execution of an AI-generated action.
+
+#### Example Integration (Financial Services)
+
+```python
+from gamma_governance import GammaEngine, ActionProposal
+from execution_layer import FinancialActuator
+
+# Initialize the deterministic governance engine
+gamma = GammaEngine(
+    policy_version="1.4.2",
+    fail_closed=True
+)
+
+# AI model proposes an externally effective action
+proposal = ActionProposal(
+    action_type="FUNDS_TRANSFER",
+    amount=500000,
+    target_node="EXTERNAL_GATEWAY",
+    uncertainty_score=0.85
+)
+
+# Governance layer evaluates Γ
+permit = gamma.evaluate(proposal)
+
+if permit.is_valid() and permit.gamma_value == 0:
+    # Execution is explicitly authorized
+    FinancialActuator.execute(proposal, permit.get_token())
+else:
+    # Deterministic denial → safe state
+    print(f"Execution Denied. Violations: {permit.get_violations()}")
+    FinancialActuator.safe_halt()
+
 ---
  
 ## Repository Contents
