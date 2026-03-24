@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gamma ERTuple Schema v1.1",
+  "type": "object",
+  "properties": {
+    "ertuple_id": { "type": "string" },
+    "timestamp_utc": { "type": "string" },
+    "permits": {
+      "type": "object",
+      "properties": {
+        "act_permit": { "type": "boolean" },
+        "adapt_permit": { "type": "boolean" }
+      }
+    }
+  }
+}
