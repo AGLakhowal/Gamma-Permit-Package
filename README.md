@@ -27,6 +27,8 @@ Gamma introduces a runtime authorization boundary that separates AI decision-mak
  
 This ensures that externally effective actions occur only under explicitly validated, evidence-bound conditions.
 
+Gamma implements deterministic execution and adaptation control at the point of action.
+
 ## IEEE Study Group Proposal
 
 A proposal has been submitted to initiate an IEEE Study Group on:
@@ -51,6 +53,7 @@ These evaluations demonstrate deterministic execution control, fail-closed behav
 ## Domain-Specific Extensions
 
 - [G-0 Financial Services Addendum (Gamma-FS)](docs/g0_financial_services.md)
+
 ---
 ## Key Idea
  
