@@ -622,14 +622,10 @@ Any violation of these conditions results in deterministic denial (Γ > 0).
   ],
   "additionalProperties": false
 }
-
 ---
-
-#### Reference Implementation (Python / Pydantic)
-
+Reference Implementation (Python / Pydantic)
 The following reference implementation provides a deterministic, strongly-typed validation model for predicate evaluation inputs. It enforces immutability, temporal validity, and fail-closed semantics consistent with Gamma runtime governance requirements.
 
-```python
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Annotated
 from enum import Enum
@@ -685,7 +681,7 @@ class PredicateEvaluation(BaseModel):
     def triggers_gamma(self) -> bool:
         if self.is_expired:
             return True  # FAIL-CLOSED: expired evidence contributes to Gamma > 0
-return self.predicate_status == PredicateStatus.FAIL
+        return self.predicate_status == PredicateStatus.FAIL
 
 ---
  ## Standards and Regulatory Relevance
