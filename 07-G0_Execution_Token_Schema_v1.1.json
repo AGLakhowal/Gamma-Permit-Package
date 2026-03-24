@@ -1,0 +1,13 @@
+{
+  "iss": "gamma-engine-node-id", 
+  "sub": "model-v4.1.2-hash",
+  "aud": "target-actuator-id",
+  "exp": "2026-03-24T15:00:56Z", 
+  "iat": "2026-03-24T15:00:51Z",
+  "jti": "urn:uuid:f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "gamma_claims": {
+    "gamma_value": 0,
+    "action_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ertuple_ref": "sha256-8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+  }
+}
