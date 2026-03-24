@@ -2,7 +2,7 @@
 ## A Reference Implementation of the L-DERE Framework
  
 **Author:** Abhinandan Gill-Lakhowal  
-![License](https://img.shields.io/badge/License-MIT-blue)
+[![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/AGLakhowal/Gamma-Permit-Package/blob/main/LICENSE)
 ![Version](https://img.shields.io/badge/Version-v1.1-green)
 ![Status](https://img.shields.io/badge/Status-Validated%20Prototype-brightgreen)
 ![Validation](https://img.shields.io/badge/Validation-ECST%20Tested-success)
