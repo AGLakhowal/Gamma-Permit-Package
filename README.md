@@ -3,6 +3,15 @@
  
 **Author:** Abhinandan Gill-Lakhowal  
 **Version:** v1.1 — March 2026  
+
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
+![Version](https://img.shields.io/badge/Version-v1.1-green.svg)
+![Status](https://img.shields.io/badge/Status-Active_Development-orange.svg)
+
+**Intellectual Property & Academic Status:**  
+The foundational L-DERE framework and Gamma deterministic runtime architectures are currently supported by five pending U.S. patent applications. Companion research and empirical validation papers are under peer review at IEEE and *Future Generation Computer Systems (FGCS)*.
+
+—
  
 The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority. It serves as the primary reference implementation for the **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework.
  
