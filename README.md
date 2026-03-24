@@ -183,15 +183,14 @@ Execution Permit
 
 ### Architecture Flow (Permit-to-Act and Permit-to-Adapt)
 
-```mermaid
 graph TD
     A[AI Capability Layer / Model] -->|Proposes Action or Adaptation| B(Gamma Runtime Governance Engine)
-    B --> C{Predicate Evaluation (Γ)}
+    B --> C{Predicate Evaluation (Gamma)}
 
-    C -->|Γ = 0 (Act)| D[ACT_PERMIT → Execution Layer]
-    C -->|Γ = 0 (Adapt)| F[ADAPT_PERMIT → Learning / Update Layer]
+    C -->|Gamma = 0 (Act)| D[ACT_PERMIT -> Execution Layer]
+    C -->|Gamma = 0 (Adapt)| F[ADAPT_PERMIT -> Learning / Update Layer]
 
-    C -->|Γ > 0| E[DENY → Safe State / Abstain]
+    C -->|Gamma > 0| E[DENY -> Safe State / Abstain]
 
     subgraph Mandatory Governance Boundary
         B
