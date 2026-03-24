@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gamma ERTuple Governance Evidence Schema v1.0",
+  "description": "Deterministic, cryptographically linked audit record for a single execution permit evaluation.",
+  "type": "object",
+  "properties": {
+    "ertuple_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "model_binding_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the AI model and version proposing the action."
+    },
+    "action_proposed": {
+      "type": "string",
+      "description": "The exact externally effective action requested by the AI."
+    },
+    "gamma_computation": {
+      "type": "object",
+      "properties": {
+        "gamma_value": {
+          "type": "integer",
+          "enum": [0, 1],
+          "description": "0 = PERMIT. >0 = DENY (SAFE_STATE)."
+        },
+        "ICS": { "type": "number", "description": "Integrity Constraint Score" },
+        "I_PHI": { "type": "number", "description": "Policy Coherence Index" },
+        "PR_LCB": { "type": "number", "description": "Lower Confidence Bound of Risk" },
+        "CI_WIDTH": { "type": "number", "description": "Uncertainty Confidence Interval Width" },
+        "H_X": { "type": "number", "description": "Entropy of Decision Distribution" }
+      },
+      "required": ["gamma_value", "ICS", "I_PHI", "PR_LCB", "CI_WIDTH", "H_X"]
+    },
+    "execution_decision": {
+      "type": "string",
+      "enum": ["ACT_PERMIT", "ADAPT_PERMIT", "SAFE_STATE_DENY"]
+    },
+    "previous_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the preceding ERTuple to maintain tamper-evident chain."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Cryptographic signature of the Gamma Engine node."
+    }
+  },
+  "required": [
+    "ertuple_id", "timestamp_utc", "model_binding_hash", "action_proposed", 
+    "gamma_computation", "execution_decision", "previous_hash"
+  ],
+  "additionalProperties": false
+}
