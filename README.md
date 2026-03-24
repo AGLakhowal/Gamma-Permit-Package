@@ -143,6 +143,17 @@ Governance predicates evaluated
 Yes → ACT_PERMIT  
 No  → SAFE_STATE / ABSTAIN  
  
+AI system proposes action  
+       ↓  
+Governance predicates evaluated  
+       ↓  
+Γ = 0 ?  
+       ↓  
+Yes → ACT_PERMIT  
+No  → SAFE_STATE / ABSTAIN  
+ 
+The governance engine is deployed as an intercepting execution control point—for example, at an API gateway, service mesh sidecar, or Kubernetes admission controller—ensuring all externally effective actions are validated against permit conditions before execution.
+ 
 Example implementation pipeline:
  
 AI Model  
@@ -444,6 +455,14 @@ I_PHI     → Policy Coherence Index
 PR_LCB    → Lower confidence bound of risk prediction  
 CI_WIDTH  → Uncertainty confidence interval width  
 H_X       → Entropy of decision distribution  
+ 
+ICS       → Integrity Constraint Score  
+I_PHI     → Policy Coherence Index  
+PR_LCB    → Lower confidence bound of risk prediction  
+CI_WIDTH  → Uncertainty confidence interval width  
+H_X       → Entropy of decision distribution  
+ 
+These artifacts function as deterministic, per-action audit records, enabling traceability, compliance verification, and alignment with regulatory expectations for AI system accountability.
  
 These artifacts form a cryptographically linked governance audit trail intended to support deterministic replay, compliance verification, revocation analysis, and post-incident review.
  
