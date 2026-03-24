@@ -48,6 +48,9 @@ Detailed validation and experimental results are available in:
 
 These evaluations demonstrate deterministic execution control, fail-closed behavior, replayable authorization, and zero unauthorized execution under adversarial conditions.
 
+## Domain-Specific Extensions
+
+- [G-0 Financial Services Addendum (Gamma-FS)](docs/g0_financial_services.md)
 ---
 ## Key Idea
  
