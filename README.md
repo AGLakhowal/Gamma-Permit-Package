@@ -622,7 +622,7 @@ Any violation of these conditions results in deterministic denial (Γ > 0).
   ],
   "additionalProperties": false
 }
----
+
 Reference Implementation (Python / Pydantic)
 The following reference implementation provides a deterministic, strongly-typed validation model for predicate evaluation inputs. It enforces immutability, temporal validity, and fail-closed semantics consistent with Gamma runtime governance requirements.
 
