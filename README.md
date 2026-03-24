@@ -11,7 +11,7 @@
 **Intellectual Property & Academic Status:**  
 The foundational L-DERE framework and Gamma deterministic runtime architectures are currently supported by five pending U.S. patent applications. Companion research and empirical validation papers are under peer review at IEEE and *Future Generation Computer Systems (FGCS)*.
 
-—
+---
  
 The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority. It serves as the primary reference implementation for the **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework.
  
@@ -685,24 +685,23 @@ class PredicateEvaluation(BaseModel):
     def triggers_gamma(self) -> bool:
         if self.is_expired:
             return True  # FAIL-CLOSED: expired evidence contributes to Gamma > 0
-        return self.predicate_status == PredicateStatus.FAIL
+return self.predicate_status == PredicateStatus.FAIL
 
 ---
- 
-## Standards and Regulatory Relevance
- 
-This package is intended to support work across government, standards, and industry environments, including:
-• NIST AI RMF Alignment: Gamma directly supports the “Govern” and “Manage” functions of the NIST AI Risk Management Framework by enforcing runtime execution and adaptation authorization, enabling real-time policy compliance, risk control, and per-action audit evidence. 
-• public-sector AI governance and procurement  
-• NIST AI RMF profiling and risk control mapping 
-• ISO/IEC 42001-oriented management system implementation  
-• UL 4600-style safety case development for autonomous systems  
-• IEEE standards development discussions  
-• BSI PAS-style national standardization efforts  
-• conformity assessment and certification program design  
- 
-These materials are provided to help organizations evaluate whether Gamma-style runtime governance can be integrated into existing assurance, audit, and safety frameworks.
- 
+ ## Standards and Regulatory Relevance
+
+This package is intended to support adoption and integration across government, standards bodies, and industry environments, including:
+
+- **NIST AI RMF Alignment:** Gamma directly supports the *Govern* and *Manage* functions of the NIST AI Risk Management Framework by enforcing runtime execution and adaptation authorization, enabling real-time policy compliance, risk control, and per-action audit evidence  
+- Public-sector AI governance and procurement  
+- NIST AI RMF profiling and risk control mapping  
+- ISO/IEC 42001-aligned AI management system implementation  
+- UL 4600-style safety case development for autonomous systems  
+- IEEE standards development discussions and working groups  
+- BSI PAS-style national standardization efforts  
+- Conformity assessment and certification program design  
+
+These materials are intended to support evaluation and integration of Gamma-style runtime governance within existing assurance, audit, and safety-critical system frameworks.
 ---
  
 ## Purpose
