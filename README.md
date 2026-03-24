@@ -1,58 +1,187 @@
 # Gamma Runtime Governance Engine (G-0 Standard)
-## A Reference Implementation of the L-DERE Framework
- 
+### A Reference Implementation of the L-DERE Framework
+
 **Author:** Abhinandan Gill-Lakhowal  
 **Version:** v1.1 — March 2026  
- 
-The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority. It serves as the primary reference implementation for the **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework.
- 
-This repository contains the Gamma Permit Package, including the Lakhowal Law of Concurrence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, and sample governance evidence artifacts.
- 
-The package provides:
- 
-1. A governance standard for permit-based control of intelligent systems
-2. A reference architecture for runtime permit enforcement
- 
----
-## TL;DR
- 
-The Gamma Runtime Governance Engine enforces a deterministic rule:
- 
-→ Systems may generate actions freely  
-→ Execution occurs only when all governance conditions are satisfied  
- 
-If any condition fails, execution is denied under fail-closed enforcement.
- 
-Gamma introduces a runtime authorization boundary that separates AI decision-making from execution authority.
- 
-This ensures that externally effective actions occur only under explicitly validated, evidence-bound conditions.
-
-Gamma implements deterministic execution and adaptation control at the point of action.
-
-## IEEE Study Group Proposal
-
-A proposal has been submitted to initiate an IEEE Study Group on:
-
-**Execution-Layer Governance for AI Systems (Permit-to-Act and Permit-to-Adapt Control Models)**
-
-This repository provides a reference implementation and technical foundation aligned with that effort.
-
-If you are interested in contributing or participating in early discussions, please reach out.
 
 ---
 
-## Validation and Experimental Results
+The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority.
 
-Detailed validation and experimental results are available in:
+---
 
-- [Prototype Realization and Local Deterministic Validation](docs/prototype_validation.md)  
-- [Empirical Validation Under Adversarial Concurrency (ECST)](docs/ecst_validation.md)
+## The Problem
 
-These evaluations demonstrate deterministic execution control, fail-closed behavior, replayable authorization, and zero unauthorized execution under adversarial conditions.
+AI systems are getting exceptionally good at generating decisions—but there is currently **no widely adopted, deterministic execution authorization layer** to determine whether those decisions are actually permitted to occur.
 
-## Domain-Specific Extensions
+Current approaches rely on:
+- post-hoc logging  
+- probabilistic risk scoring  
+- model-level guardrails  
 
-- [G-0 Financial Services Addendum (Gamma-FS)](docs/g0_financial_services.md)
+These do not provide **deterministic, enforceable control over real-world actions**.
+
+---
+
+## The Core Idea: L-DERE Framework
+
+The **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework introduces a strict runtime authorization boundary between AI outputs and the real world:
+
+AI Model → Output Proposal → Gamma Authorization Layer → Permit / Deny → Execution
+
+This layer governs two specific authorities:
+
+1. **Permit-to-Act**  
+   Is the system allowed to execute this specific externally effective action?
+
+2. **Permit-to-Adapt**  
+   Is the system allowed to update its internal state (weights, policies, learning)?
+
+---
+
+## Formal Grounding
+
+The governance condition **Γ (Gamma)** is defined as a non-compensatory predicate evaluation:
+
+Γ(s, a, θ) = Σ(i=1..n) 1[ φᵢ(s, a, θ) = Violation ]
+
+Where:
+- **s** → system state  
+- **a** → proposed action  
+- **θ** → active policy constraints  
+- **φᵢ** → governance predicates (safety, stability, policy, uncertainty)
+
+### Decision Rule
+
+- **Γ = 0 → PERMIT**  
+- **Γ > 0 → DENY (fail-closed)**  
+
+If Γ > 0:
+- execution is deterministically blocked  
+- learning and adaptation are frozen  
+
+---
+
+## Threat Model & Enforcement Guarantees
+
+The G-0 Standard assumes an **adversarial, distributed, and highly concurrent environment**.
+
+### Threats Addressed
+
+- **Policy Evasion**  
+  AI optimization attempting to bypass intended guardrails  
+
+- **Side-Channel Execution**  
+  Direct-to-actuator or API calls bypassing authorization  
+
+- **Insider Bypass**  
+  Compromised nodes forcing execution without valid, signed evidence  
+
+- **Distributed State Failure**  
+  Network partitions, stale evidence, temporal drift  
+
+### Resolution
+
+Under any of these conditions:
+
+> The enforcement layer cannot be bypassed and deterministically defaults to a **safe-halt state**.
+
+---
+
+## How Gamma Differs (Comparison Anchors)
+
+### vs. Simplex Architectures
+- Simplex switches to a verified safe controller  
+- **Gamma revokes execution authority entirely**
+
+---
+
+### vs. Shielding (Reactive Synthesis)
+- Shields modify unsafe actions into safe ones  
+- **Gamma does not modify actions — it denies them**
+
+---
+
+### vs. Policy Engines (e.g., OPA)
+- Policy engines evaluate static access control (RBAC / ABAC)  
+- **Gamma evaluates dynamic runtime conditions**, including:
+  - uncertainty bounds  
+  - model drift  
+  - temporal freshness  
+  - system integrity  
+
+---
+
+## Why This Matters
+
+As AI systems move from advisory roles to active agents in:
+
+- Tier-1 financial systems (payments, trading)  
+- critical infrastructure  
+- autonomous operations  
+
+We require:
+
+> **Mathematically enforceable control over whether actions occur**  
+—not just how they are generated.
+
+---
+
+## Institutional Positioning & IEEE Status
+
+This deterministic runtime layer is designed to sit directly beneath and enforce higher-level governance frameworks, including:
+
+- NIST AI RMF  
+- ISO/IEC 42001  
+- SR 11-7  
+- UL 4600  
+
+This repository serves as the foundational reference for a submitted IEEE study group proposal:
+
+**Execution-Layer Governance for AI Systems**  
+*(Permit-to-Act / Permit-to-Adapt Control Models)*
+
+---
+
+## Validation & Domain Extensions
+
+Detailed experimental results and domain-specific profiles are available in:
+
+- Prototype Realization and Local Deterministic Validation  
+- Empirical Validation Under Adversarial Concurrency (ECST)  
+- G-0 Financial Services Addendum (Gamma-FS)  
+
+---
+
+## Runtime Governance Architecture
+
+AI Capability Layer
+↓
+Gamma Runtime Governance Engine
+↓
+Permit / Deny
+↓
+Execution Layer
+
+### Execution Flow
+AI system proposes action
+↓
+Governance predicates evaluated
+↓
+Γ = 0 ?
+↓
+Yes → ACT_PERMIT
+No  → SAFE_STATE / ABSTAIN
+
+The governance engine is deployed as an intercepting control point (API gateway, service mesh, or admission controller), ensuring all externally effective actions are validated before execution.
+
+---
+
+## Key Principle
+
+> AI systems may generate actions freely.  
+> **Execution occurs only when explicitly authorized.**
+
 
 ---
 ## Key Idea
