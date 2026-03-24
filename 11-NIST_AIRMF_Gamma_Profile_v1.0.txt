@@ -1,0 +1,3 @@
+NIST AI RMF Profile: Gamma Runtime Enforcement
+Function: GOVERN / MANAGE
+Control: Fail-closed execution gating (Γ > 0).
