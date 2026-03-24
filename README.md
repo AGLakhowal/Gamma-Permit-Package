@@ -2,16 +2,13 @@
 ## A Reference Implementation of the L-DERE Framework
  
 **Author:** Abhinandan Gill-Lakhowal  
-**Version:** v1.1 — March 2026  
+![License](https://img.shields.io/badge/License-MIT-blue)
+![Version](https://img.shields.io/badge/Version-v1.1-green)
+![Status](https://img.shields.io/badge/Status-Validated%20Prototype-brightgreen)
+![Validation](https://img.shields.io/badge/Validation-ECST%20Tested-success)
+![Domain](https://img.shields.io/badge/Domain-Financial%20Services-blueviolet)
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Version](https://img.shields.io/badge/Version-v1.1-green.svg)
-![Status](https://img.shields.io/badge/Status-Active_Development-orange.svg)
-
-**Intellectual Property & Academic Status:**  
-The foundational L-DERE framework and Gamma deterministic runtime architectures are currently supported by five pending U.S. patent applications. Companion research and empirical validation papers are under peer review at IEEE and *Future Generation Computer Systems (FGCS)*.
-
----
+**Version:** v1.1 — March 2026
  
 The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority. It serves as the primary reference implementation for the **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework.
  
@@ -46,6 +43,20 @@ This repository provides a reference implementation and technical foundation ali
 
 If you are interested in contributing or participating in early discussions, please reach out.
 
+---
+
+## Validation and Experimental Results
+
+Detailed validation and experimental results are available in:
+
+- [Prototype Realization and Local Deterministic Validation](docs/prototype_validation.md)  
+- [Empirical Validation Under Adversarial Concurrency (ECST)](docs/ecst_validation.md)
+
+These evaluations demonstrate deterministic execution control, fail-closed behavior, replayable authorization, and zero unauthorized execution under adversarial conditions.
+
+## Domain-Specific Extensions
+
+- [G-0 Financial Services Addendum (Gamma-FS)](docs/g0_financial_services.md)
 ---
 ## Key Idea
  
@@ -180,27 +191,6 @@ Predicate Evaluator
 ERTuple Logger  
   ↓  
 Execution Permit
-
-### Architecture Flow (Permit-to-Act and Permit-to-Adapt)
-
-```mermaid
-graph TD
-    A["AI Capability Layer / Model"] -->|"Proposes Action or Adaptation"| B["Gamma Runtime Governance Engine"]
-    B --> C{"Predicate Evaluation (Gamma)"}
-
-    C -->|"Gamma = 0 (Act)"| D["ACT_PERMIT -> Execution Layer"]
-    C -->|"Gamma = 0 (Adapt)"| F["ADAPT_PERMIT -> Learning / Update Layer"]
-
-    C -->|"Gamma > 0"| E["DENY -> Safe State / Abstain"]
-
-    subgraph "Mandatory Governance Boundary"
-        B
-        C
-    end
-
-    style B fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#bbf,stroke:#333,stroke-width:2px
-```
 
 ---
  
@@ -429,203 +419,7 @@ The Gamma Permit Package includes:
 • a BSI PAS outline supporting national-level standardization  
 • a procurement clause pack for institutional buyers and regulators  
 • a Planetary Exploration Mode (PEM) addendum for deep-space autonomous systems  
-
----
-## Prototype Validation (Deterministic Execution Governance)
-
-A deterministic prototype of the Gamma Runtime Governance Engine (GRGE) was implemented to validate that the Lakhowal Law of Concurrence (LLC) can be realized as a complete-mediation execution boundary in a real system.
-
-### Objective
-
-The prototype does **not** improve model accuracy.  
-It proves a stronger property:
-
-→ AI systems may generate actions  
-→ Execution authority is enforced externally and deterministically  
-
-**Invariant:**  
-No externally effective action occurs unless all governance predicates hold concurrently.
-
-Formally:
-
-Λ(G) = ∧ gᵢ  
-Γ = 0 ⇔ Λ(G) = 1  
-Γ > 0 ⇔ Λ(G) = 0  
-
----
-
-### System Flow
-
-All actions pass through a non-bypassable governance boundary:
-
-Request
-→ AI Proposal
-→ Predicate Evaluation
-→ Γ Computation
-→ Permit Decision
-→ Execution OR SAFE_STATE
-→ Evidence Record (ERTuple)
-
-The model has **no direct execution authority**.
-
----
-
-### Prototype Phases
-
-#### Phase 1 — Foundational Enforcement
-
-Minimal predicates:
-
-• request_valid  
-• risk_score ≤ 0.70  
-• geo_match  
-• audit_log_active  
-• timestamp freshness  
-
-Result:
-
-→ Γ = 0 → ACT_PERMIT  
-→ Γ > 0 → SAFE_STATE  
-
----
-
-#### Phase 2 — Extended Governance
-
-Additional controls:
-
-• device trust  
-• model version binding  
-• replay detection  
-• revocation awareness  
-• cumulative exposure control  
-• execution binding (decision hash)  
-• Permit-to-Act vs Permit-to-Adapt  
-
-Result:
-
-→ Multi-dimensional, non-compensatory enforcement  
-→ Replay, tampering, and stale execution blocked at runtime  
-
----
-
-### Key Results
-
-| Phase | Requests | AI Proposed | Blocked | Executed | Replay Consistency |
-|------|---------:|------------:|--------:|---------:|-------------------:|
-| Phase 1 | 10,000 | 71.17% | 8.72% | 6,245 | 100% |
-| Phase 2 | 10,000 | 72.00% | 42.96% | 2,904 | 100% |
-
-**Observed Properties:**
-
-• No direct execution from AI outputs  
-• Deterministic fail-closed behavior  
-• 100% replay consistency  
-• Multi-predicate non-compensatory denial  
-• All failures resolve to SAFE_STATE  
-
----
-
-### Edge-Case Validation
-
-Tested scenarios:
-
-• stale evidence  
-• replay attacks  
-• model mismatch  
-• revocation  
-• timeout / missing predicates  
-• tampering attempts  
-
-Result:
-
-→ All cases resolved to denial (Γ > 0)  
-→ No unsafe execution observed within prototype boundary  
-
----
-
-### Core Insight
-
-The prototype demonstrates:
-
-→ **Execution authority ≠ model output**  
-→ **Authorization can be enforced as a runtime invariant**  
-→ **Failures degrade to non-execution, not partial safety**  
-
----
-
-### Scope and Limits
-
-This is **prototype-level validation**, not internet-scale deployment.
-
-Results demonstrate:
-
-• execution-boundary correctness  
-• deterministic enforcement behavior  
-
-They do NOT claim:
-
-• optimal decision quality  
-• completeness of predicate design  
-• global deployment guarantees  
-
----
-
-### Distributed Execution Compatibility
-
-A multi-node simulation (32 concurrent execution nodes) demonstrated:
-
-• consistent authorization across concurrent agents  
-• centralized governance with distributed execution  
-• no bypass of enforcement boundary  
-
----
-
-### Summary
-
-The prototype provides **executable proof-of-behavior**:
-
-→ deterministic  
-→ fail-closed  
-→ evidence-bound  
-→ replayable  
-
-runtime governance at the execution boundary.
  
-### 6. Quick Start / Pseudo-Code Example
-
-The following example illustrates how an external system integrates with the Gamma Runtime Governance Engine to gate execution of an AI-generated action.
-
-#### Example Integration (Financial Services)
-
-```python
-from gamma_governance import GammaEngine, ActionProposal
-from execution_layer import FinancialActuator
-
-# Initialize the deterministic governance engine
-gamma = GammaEngine(
-    policy_version="1.4.2",
-    fail_closed=True
-)
-
-# AI model proposes an externally effective action
-proposal = ActionProposal(
-    action_type="FUNDS_TRANSFER",
-    amount=500000,
-    target_node="EXTERNAL_GATEWAY",
-    uncertainty_score=0.85
-)
-
-# Governance layer evaluates Γ
-permit = gamma.evaluate(proposal)
-
-if permit.is_valid() and permit.gamma_value == 0:
-    # Execution is explicitly authorized
-    FinancialActuator.execute(proposal, permit.get_token())
-else:
-    # Deterministic denial → safe state
-    print(f"Execution Denied. Violations: {permit.get_violations()}")
-    FinancialActuator.safe_halt()
-
 ---
  
 ## Repository Contents
@@ -681,184 +475,24 @@ These artifacts form a cryptographically linked governance audit trail intended 
 The full schema definition is provided in:
  
 02-ERTuple_Schema_v1.0.json
-
-### Predicate Input Layer (External Telemetry Interface)
-
-The following specification defines the standardized interface through which external systems submit governance predicate evaluations to the Gamma Runtime Governance Engine.
-
-This interface serves as the deterministic input layer for Γ (Gamma) computation and enforcement. Each predicate evaluation represents a single, non-ambiguous governance signal contributing to the overall authorization decision.
-
-All inputs MUST be:
-- deterministic and non-redundant  
-- cryptographically verifiable  
-- bound to model and policy context  
-- valid within defined temporal constraints (TTL)  
-
-Any violation of these conditions results in deterministic denial (Γ > 0).
-
+ 
 ---
+ 
+## Standards and Regulatory Relevance
+ 
+This package supports the adoption and integration of deterministic runtime governance across government, industry, and standards ecosystems, including:
 
-#### JSON Schema (Interface Contract)
+• Alignment with the NIST AI Risk Management Framework (AI RMF), directly supporting the “Govern” and “Manage” functions through runtime execution and adaptation authorization, real-time risk control, and per-action audit evidence  
+• Public-sector AI governance, procurement, and regulatory compliance initiatives  
+• NIST AI RMF profiling, risk assessment, and control implementation  
+• Integration with ISO/IEC 42001-aligned AI management systems  
+• Safety assurance and certification workflows for autonomous and safety-critical systems (e.g., UL 4600)  
+• Contributions to IEEE standards development and working group activities  
+• National and international standardization programs (e.g., BSI PAS)  
+• Conformity assessment, certification program design, and audit frameworks  
 
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Gamma Predicate Interface Specification",
-  "description": "Standardized schema for external telemetry systems to report governance predicate evaluations to the Gamma Runtime Governance Engine.",
-  "type": "object",
-  "properties": {
-    "predicate_id": {
-      "type": "string",
-      "description": "Unique UUID for this specific predicate evaluation event.",
-      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
-    },
-    "predicate_type": {
-      "type": "string",
-      "description": "The governance dimension being evaluated.",
-      "enum": [
-        "STABILITY_VIOLATION",
-        "FAIRNESS_VIOLATION",
-        "POLICY_VIOLATION",
-        "UNCERTAINTY_EXCEEDANCE",
-        "INTEGRITY_COMPROMISE"
-      ]
-    },
-    "predicate_status": {
-      "type": "string",
-      "enum": ["PASS", "FAIL"],
-      "description": "Deterministic evaluation result. PASS indicates no violation. FAIL indicates a violation contributing to Gamma > 0."
-    },
-    "telemetry_data": {
-      "type": "object",
-      "description": "Optional payload containing the raw metrics that led to the predicate evaluation.",
-      "properties": {
-        "metric_value": {
-          "type": "number",
-          "description": "The raw quantified score (e.g., CI_WIDTH or H_X)."
-        },
-        "threshold_applied": {
-          "type": "number",
-          "description": "The exact threshold limit evaluated against."
-        }
-      },
-      "additionalProperties": false
-    },
-    "evaluation_timestamp": {
-      "type": "string",
-      "format": "date-time",
-      "description": "ISO 8601 timestamp of when the evaluation was completed."
-    },
-    "ttl_ms": {
-      "type": "integer",
-      "minimum": 0,
-      "description": "Time-to-Live in milliseconds. The Gamma Engine MUST reject this predicate if current_time exceeds evaluation_timestamp + ttl_ms."
-    },
-    "model_binding_hash": {
-      "type": "string",
-      "description": "Cryptographic hash (e.g., SHA-256) of the AI model and version this predicate applies to."
-    },
-    "policy_binding_version": {
-      "type": "string",
-      "description": "Version identifier of the governance policy used during evaluation. Prevents policy drift and replay inconsistencies."
-    },
-    "source_system_id": {
-      "type": "string",
-      "description": "Unique identifier of the system or service that generated this predicate evaluation."
-    },
-    "evidence_signature": {
-      "type": "string",
-      "description": "Cryptographic signature generated by the evaluating system to verify integrity and authenticity."
-    }
-  },
-  "required": [
-    "predicate_id",
-    "predicate_type",
-    "predicate_status",
-    "evaluation_timestamp",
-    "ttl_ms",
-    "model_binding_hash",
-    "policy_binding_version",
-    "source_system_id",
-    "evidence_signature"
-  ],
-  "additionalProperties": false
-}
-
-Reference Implementation (Python / Pydantic)
-The following reference implementation provides a deterministic, strongly-typed validation model for predicate evaluation inputs. It enforces immutability, temporal validity, and fail-closed semantics consistent with Gamma runtime governance requirements.
-
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Annotated
-from enum import Enum
-from datetime import datetime, timezone
-import uuid
-
-NonEmptyStr = Annotated[str, Field(min_length=1)]
-
-class PredicateType(str, Enum):
-    STABILITY_VIOLATION = "STABILITY_VIOLATION"
-    FAIRNESS_VIOLATION = "FAIRNESS_VIOLATION"
-    POLICY_VIOLATION = "POLICY_VIOLATION"
-    UNCERTAINTY_EXCEEDANCE = "UNCERTAINTY_EXCEEDANCE"
-    INTEGRITY_COMPROMISE = "INTEGRITY_COMPROMISE"
-
-class PredicateStatus(str, Enum):
-    PASS = "PASS"
-    FAIL = "FAIL"
-
-class TelemetryData(BaseModel):
-    metric_value: Optional[float] = Field(None, description="The raw quantified score (e.g., CI_WIDTH or H_X).")
-    threshold_applied: Optional[float] = Field(None, description="The exact threshold limit evaluated against.")
-
-class PredicateEvaluation(BaseModel):
-    model_config = {
-        "frozen": True
-    }
-
-    predicate_id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    predicate_type: PredicateType
-    predicate_status: PredicateStatus
-    telemetry_data: Optional[TelemetryData] = None
-    evaluation_timestamp: datetime
-    ttl_ms: int = Field(..., ge=0)
-    model_binding_hash: NonEmptyStr
-    policy_binding_version: NonEmptyStr
-    source_system_id: NonEmptyStr
-    evidence_signature: NonEmptyStr
-
-    @field_validator("evaluation_timestamp")
-    def ensure_timezone_aware(cls, v):
-        if v.tzinfo is None or v.tzinfo.utcoffset(v) is None:
-            raise ValueError("evaluation_timestamp must be timezone-aware (UTC required)")
-        return v
-
-    @property
-    def is_expired(self) -> bool:
-        current_time = datetime.now(timezone.utc)
-        time_elapsed_ms = (current_time - self.evaluation_timestamp).total_seconds() * 1000
-        return time_elapsed_ms > self.ttl_ms
-
-    @property
-    def triggers_gamma(self) -> bool:
-        if self.is_expired:
-            return True  # FAIL-CLOSED: expired evidence contributes to Gamma > 0
-        return self.predicate_status == PredicateStatus.FAIL
-
----
- ## Standards and Regulatory Relevance
-
-This package is intended to support adoption and integration across government, standards bodies, and industry environments, including:
-
-- **NIST AI RMF Alignment:** Gamma directly supports the *Govern* and *Manage* functions of the NIST AI Risk Management Framework by enforcing runtime execution and adaptation authorization, enabling real-time policy compliance, risk control, and per-action audit evidence  
-- Public-sector AI governance and procurement  
-- NIST AI RMF profiling and risk control mapping  
-- ISO/IEC 42001-aligned AI management system implementation  
-- UL 4600-style safety case development for autonomous systems  
-- IEEE standards development discussions and working groups  
-- BSI PAS-style national standardization efforts  
-- Conformity assessment and certification program design  
-
-These materials are intended to support evaluation and integration of Gamma-style runtime governance within existing assurance, audit, and safety-critical system frameworks.
+These materials are intended to help organizations evaluate and integrate deterministic runtime governance into existing assurance, compliance, and safety-critical system architectures.
+ 
 ---
  
 ## Purpose
@@ -885,3 +519,4 @@ For inquiries or collaboration: aggg2107@gmail.com
 ## Public Interest Statement
  
 This repository is made public in the interest of transparency, responsible AI governance, and global scientific collaboration.
+
