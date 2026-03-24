@@ -439,6 +439,7 @@ README.txt
 Every permit decision produces a governance evidence artifact called an ERTuple.
  
 Example fields include:
+
 ### Metric Descriptions
 
 ICS       → Integrity Constraint Score (system integrity and constraint compliance)  
@@ -460,9 +461,9 @@ The full schema definition is provided in:
 ## Standards and Regulatory Relevance
  
 This package is intended to support work across government, standards, and industry environments, including:
- 
+• NIST AI RMF Alignment: Gamma directly supports the “Govern” and “Manage” functions of the NIST AI Risk Management Framework by enforcing runtime execution and adaptation authorization, enabling real-time policy compliance, risk control, and per-action audit evidence. 
 • public-sector AI governance and procurement  
-• NIST AI RMF profiling and risk control mapping  
+• NIST AI RMF profiling and risk control mapping 
 • ISO/IEC 42001-oriented management system implementation  
 • UL 4600-style safety case development for autonomous systems  
 • IEEE standards development discussions  
