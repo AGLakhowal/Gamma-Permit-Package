@@ -26,6 +26,17 @@ If any condition fails, execution is denied under fail-closed enforcement.
 Gamma introduces a runtime authorization boundary that separates AI decision-making from execution authority.
  
 This ensures that externally effective actions occur only under explicitly validated, evidence-bound conditions.
+
+## IEEE Study Group Proposal
+
+A proposal has been submitted to initiate an IEEE Study Group on:
+
+**Execution-Layer Governance for AI Systems (Permit-to-Act and Permit-to-Adapt Control Models)**
+
+This repository provides a reference implementation and technical foundation aligned with that effort.
+
+If you are interested in contributing or participating in early discussions, please reach out.
+
 ---
 ## Key Idea
  
@@ -46,8 +57,6 @@ Gamma is NOT:
 Gamma does not attempt to improve model behavior.  
 Gamma enforces whether model outputs are permitted to execute.
 ---
- 
-## Scope
  
 ## Scope
  
@@ -262,7 +271,6 @@ This prevents systems from learning under degraded, unstable, or non-compliant c
 ### Evidence Integrity and Tamper Resistance
  
 Governance evidence (ERTuples) MUST be:
- 
 • append-only  
 • cryptographically hash-linked  
 • optionally signed  
@@ -431,32 +439,14 @@ README.txt
 Every permit decision produces a governance evidence artifact called an ERTuple.
  
 Example fields include:
- 
-timestamp  
-ICS  
-I_PHI  
-PR_LCB  
-CI_WIDTH  
-H_X  
-ACT_PERMIT  
-ADAPT_PERMIT  
-hash_prev  
-hash_current  
- 
-Metric descriptions:
- 
-ICS       → Integrity Constraint Score  
-I_PHI     → Policy Coherence Index  
-PR_LCB    → Lower confidence bound of risk prediction  
-CI_WIDTH  → Uncertainty confidence interval width  
-H_X       → Entropy of decision distribution  
- 
-ICS       → Integrity Constraint Score  
-I_PHI     → Policy Coherence Index  
-PR_LCB    → Lower confidence bound of risk prediction  
-CI_WIDTH  → Uncertainty confidence interval width  
-H_X       → Entropy of decision distribution  
- 
+### Metric Descriptions
+
+ICS       → Integrity Constraint Score (system integrity and constraint compliance)  
+I_PHI     → Policy Coherence Index (alignment with governance policies)  
+PR_LCB    → Lower Confidence Bound of Risk Prediction (conservative estimate of risk)  
+CI_WIDTH  → Uncertainty Confidence Interval Width (degree of prediction uncertainty)  
+H_X       → Entropy of Decision Distribution (measure of decision randomness or dispersion)   
+
 These artifacts function as deterministic, per-action audit records, enabling traceability, compliance verification, and alignment with regulatory expectations for AI system accountability.
  
 These artifacts form a cryptographically linked governance audit trail intended to support deterministic replay, compliance verification, revocation analysis, and post-incident review.
