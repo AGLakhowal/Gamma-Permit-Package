@@ -102,12 +102,12 @@ However, execution is permitted only when the governance layer authorizes action
  
 ## Governance Predicate Model
  
-The Gamma condition is evaluated as a function of governance predicates:
- 
 Γ = f(stability_violation,  
     fairness_violation,  
     policy_violation,  
     uncertainty_exceedance)
+
+Where Γ = 0 indicates that all governance predicates are satisfied concurrently, and Γ > 0 indicates one or more violations, triggering deterministic denial of execution.
  
 Decision rule:
  
@@ -143,15 +143,6 @@ Governance predicates evaluated
 Yes → ACT_PERMIT  
 No  → SAFE_STATE / ABSTAIN  
  
-AI system proposes action  
-       ↓  
-Governance predicates evaluated  
-       ↓  
-Γ = 0 ?  
-       ↓  
-Yes → ACT_PERMIT  
-No  → SAFE_STATE / ABSTAIN  
- 
 The governance engine is deployed as an intercepting execution control point—for example, at an API gateway, service mesh sidecar, or Kubernetes admission controller—ensuring all externally effective actions are validated against permit conditions before execution.
  
 Example implementation pipeline:
@@ -166,8 +157,8 @@ Predicate Evaluator
   ↓  
 ERTuple Logger  
   ↓  
-Execution Permit  
- 
+Execution Permit
+
 ---
  
 ## Fail-Safe Behavior
