@@ -1,0 +1,2 @@
+Project: IEEE Gamma-0 Standard (v1.1)
+Scope: Specifies a mandatory, non-bypassable enforcement boundary for AI execution using the Lakhowal Law of Concurrence (LLC).
