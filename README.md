@@ -1,11 +1,12 @@
 # Gamma Runtime Governance Engine (G-0 Standard)
+## A Reference Implementation of the L-DERE Framework
  
-Author: Abhinandan Gill-Lakhowal
-Version: v1.0 — November 2025
+**Author:** Abhinandan Gill-Lakhowal  
+**Version:** v1.1 — March 2026  
  
-The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority.
+The Gamma Runtime Governance Engine is a deterministic runtime control layer that separates AI capability generation from execution authority. It serves as the primary reference implementation for the **Lakhowal Deterministic Execution and Runtime Enforcement (L-DERE)** framework.
  
-This repository contains the Gamma Permit Package, including the Lakhowal Law of Concurrence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, procurement frameworks, conformity assessment tools, and sample governance evidence artifacts.
+This repository contains the Gamma Permit Package, including the Lakhowal Law of Concurrence (LLC), Γ-Standard v1.0, the G-0 Certification Scheme, regulatory submission materials, and sample governance evidence artifacts.
  
 The package provides:
  
@@ -48,12 +49,15 @@ Gamma enforces whether model outputs are permitted to execute.
  
 ## Scope
  
-The Gamma Runtime Governance Engine is architecture-neutral and model-agnostic.
+## Scope
  
-It does not replace AI models or decision systems.
-It governs when those systems may act or adapt.
+The Gamma Runtime Governance Engine is architecture-neutral and model-agnostic. It implements a **Dual Permission Model** designed to govern both:
  
-The governance layer evaluates authorization conditions at the externalization boundary, where internal computation becomes real-world action.
+1. **Permit-to-Act:** Authorizing externally effective actions (financial, physical, or digital).
+2. **Permit-to-Adapt:** Authorizing internal system modifications (parameter updates, reinforcement learning).
+ 
+The governance layer evaluates authorization conditions at the externalization boundary, where internal computation becomes real-world action or adaptation.
+
 ---
  
 ## System Assumptions
