@@ -3,10 +3,11 @@
  
 **Author:** Abhinandan Gill-Lakhowal  
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/AGLakhowal/Gamma-Permit-Package/blob/main/LICENSE)
-![Version](https://img.shields.io/badge/Version-v1.1-green)
-![Status](https://img.shields.io/badge/Status-Validated%20Prototype-brightgreen)
-![Validation](https://img.shields.io/badge/Validation-ECST%20Tested-success)
-![Domain](https://img.shields.io/badge/Domain-Financial%20Services-blueviolet)
+[![Version](https://img.shields.io/badge/Version-v1.1-green)](https://github.com/AGLakhowal/Gamma-Permit-Package/releases)
+[![Status](https://img.shields.io/badge/Status-Validated%20Prototype-brightgreen)](https://github.com/AGLakhowal/Gamma-Permit-Package/blob/main/docs/prototype_validation.md)
+[![Validation](https://img.shields.io/badge/Validation-ECST%20Tested-success)](https://github.com/AGLakhowal/Gamma-Permit-Package/blob/main/docs/ecst_validation.md)
+[![Domain](https://img.shields.io/badge/Domain-Financial%20Services-blueviolet)](https://github.com/AGLakhowal/Gamma-Permit-Package/blob/main/docs/g0_financial_services.md)
+
 
 **Version:** v1.1 — March 2026
  
