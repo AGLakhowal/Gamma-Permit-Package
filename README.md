@@ -20,6 +20,9 @@
 8. [The Governance Evidence Model: ERTuples](#8-the-governance-evidence-model-ertuples)
 9. [Comprehensive Regulatory & Procurement Framework](#9-comprehensive-regulatory--procurement-framework)
 10. [Global Standards Alignment & Strategic Adoption](#10-global-standards-alignment--strategic-adoption)
+11. [Intellectual Property & Commercial Licensing](#11-intellectual-property--commercial-licensing)
+
+
 
 ---
 
