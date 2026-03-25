@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Standard](https://img.shields.io/badge/IEEE-Study_Group_Proposed-orange.svg)
 
-**A Fundamental Infrastructural Primitive for Autonomous and Intelligent Systems** *Author: Abhinandan Gill-Lakhowal | Principle, AI Strategy, Governance & Innovation*
+**A Fundamental Infrastructural Primitive for Autonomous and Intelligent Systems** *Author: Abhinandan Gill-Lakhowal | AI Strategy, Governance & Innovation*
 
 ---
 
