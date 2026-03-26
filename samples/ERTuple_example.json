@@ -1,1 +1,20 @@
-
+{
+  "ertuple_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "timestamp_utc": "2026-03-24T14:32:01Z",
+  "model_binding_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "action_proposed": "FUNDS_TRANSFER_500000_USD",
+  "gamma_computation": {
+    "gamma_value": 0,
+    "ICS": 0.99,
+    "I_PHI": 1.0,
+    "PR_LCB": 0.12,
+    "CI_WIDTH": 0.05,
+    "H_X": 0.22
+  },
+  "permits": {
+    "act_permit": true,
+    "adapt_permit": false
+  },
+  "previous_hash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+  "signature": "MEUCIFv..."
+}
