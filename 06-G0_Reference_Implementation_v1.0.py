@@ -1,29 +1,34 @@
-from gamma_governance import GammaEngine, ActionProposal
-from execution_layer import FinancialActuator
+Gamma-Permit-Package/
 
-# Initialize the deterministic governance engine
-# v1.1 implements the Lakhowal Law of Concurrence (LLC)
-gamma = GammaEngine(
-    policy_version="1.4.2",
-    fail_closed=True
-)
+README.md
+LICENSE
 
-# AI model proposes an externally effective action (e.g., from an LLM or RL agent)
-proposal = ActionProposal(
-    action_type="FUNDS_TRANSFER",
-    amount=500000,
-    target_node="EXTERNAL_GATEWAY",
-    uncertainty_score=0.85
-)
+/docs/
+    architecture.md
+    gamma_model.md
+    enforcement_flow.md
 
-# Governance layer evaluates the Gamma value (Γ)
-permit = gamma.evaluate(proposal)
+/specs/
+    02-ERTuple_Schema_v1.0.json
+    07-G0_Execution_Token_Schema.txt
 
-if permit.is_valid() and permit.gamma_value == 0:
-    # SUCCESS: The actuator MUST cryptographically verify the token before acting.
-    # This is the non-bypassable enforcement boundary.
-    FinancialActuator.verify_and_execute(proposal, permit.get_cryptographic_token())
-else:
-    # FAILURE: Deterministic denial → transition to safe state.
-    print(f"Execution Denied. Violations: {permit.get_violations()}")
-    FinancialActuator.safe_halt()
+/implementation/
+    gamma_engine.py
+    permit_model.py
+    predicate_evaluator.py
+
+/examples/
+    financial_transaction.py
+    healthcare_case.py
+
+/procurement/
+    04-Procurement_Clause_Pack_LLC-G0.txt
+
+/regulatory/
+    11-NIST_AIRMF_Gamma_Profile_v1.0.txt
+
+/samples/
+    ERTuple_example.json
+    revocation_test_report.txt
+
+06-G0_Reference_Implementation.md
