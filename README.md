@@ -1,3 +1,15 @@
+# Gamma Runtime Governance Engine (G-0 Standard)
+
+![Version](https://img.shields.io/badge/version-v2.0-blue.svg)
+![Status](https://img.shields.io/badge/status-Reference_Implementation-success.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Standard](https://img.shields.io/badge/IEEE-Study_Group_Proposed-orange.svg)
+
+**A Fundamental Infrastructural Primitive for Autonomous and Intelligent Systems** *Author: Abhinandan Gill-Lakhowal | AI Strategy, Governance & Innovation*
+
+
+---
+
 ### Operationalizing the Standard (Enterprise & Low-Code Deployment)
 
 The Gamma Runtime Governance Engine is not just a theoretical standard—it is designed for immediate deployment within real enterprise workflows using modern AI tooling and no/low-code platforms.
@@ -39,18 +51,6 @@ Gamma enables:
 → **Safe, scalable deployment of AI in real-world environments**
 
 The objective is not to limit AI capability—but to ensure that every action taken by an AI system is **authorized, verifiable, and safe by design**.
-
-
-
-
-# Gamma Runtime Governance Engine (G-0 Standard)
-
-![Version](https://img.shields.io/badge/version-v2.0-blue.svg)
-![Status](https://img.shields.io/badge/status-Reference_Implementation-success.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Standard](https://img.shields.io/badge/IEEE-Study_Group_Proposed-orange.svg)
-
-**A Fundamental Infrastructural Primitive for Autonomous and Intelligent Systems** *Author: Abhinandan Gill-Lakhowal | AI Strategy, Governance & Innovation*
 
 ---
 
