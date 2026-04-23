@@ -37,6 +37,24 @@
 
 -----
 
+# Specification Package
+
+This README provides the executive and strategic overview of the Gamma Runtime Governance Engine. The full technical specification is maintained as the authoritative implementation reference.
+
+| Artifact | Purpose |
+|---|---|
+| [`FULL_SPEC.md`](FULL_SPEC.md) | Complete technical specification, runtime architecture, predicate evaluation logic, permit model, ERTuple evidence model, and sector reference architectures |
+| [`specs/`](specs/) | Formal standardization artifacts, schemas, procurement clauses, conformance materials, and regulatory mappings |
+| [`reference_impl/`](reference_impl/) | Reference implementation patterns and executable examples |
+| [`governance/`](governance/) | Governance alignment materials for NIST AI RMF, ISO/IEC 42001, EU AI Act, OWASP Agentic AI, and enterprise risk programs |
+| [`samples/`](samples/) | Example workflows and deployment patterns |
+| [`schemas/`](schemas/) | Machine-readable schemas for evidence, permit, and runtime artifacts |
+
+> The README is designed for executives, standards reviewers, and enterprise stakeholders.  
+> `FULL_SPEC.md` is designed for architects, implementers, auditors, and technical reviewers.
+
+-----
+
 # Board-Level Summary
 
 AI agents are now executing real actions inside enterprise systems — booking transactions, modifying records, issuing commands — with no deterministic control over what they are authorized to do. The SEC’s 2026 Examination Priorities elevate AI operational risk and cybersecurity into cross-cutting focus areas for virtually every registrant exam, a notable shift from the crypto-dominated priorities of prior years [[1]](#references)[[2]](#references). Three out of four CISOs have already discovered unsanctioned AI tools running inside their environments, often with embedded credentials and elevated system access that no one is monitoring [[3]](#references). Existing controls — Zero Trust, policy engines, LLM guardrails — govern access and output. None govern execution.
