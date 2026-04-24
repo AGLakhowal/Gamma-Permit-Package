@@ -563,7 +563,7 @@ AI governance is no longer a technology question. It is a board-level accountabi
 
 **For strategic implementation, board-level risk briefings, federated policy architecture, or executive advisory on AI governance transformation:**
 
-📧 **Abhinandan Gill-Lakhowal** — aggg2107@gmail.com
+📧 **Abhinandan Gill-Lakhowal** — sovran@lakhowal.com
 
 *Available for C-suite advisory engagements, board presentations, and institutional pilot programs.*
 
