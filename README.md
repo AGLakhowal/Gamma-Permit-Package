@@ -1,10 +1,11 @@
-# Gamma Runtime Governance Engine (G-0 Standard)
+# Gamma Runtime Governance Engine (G-0 plementation-success.svg)
 
-![Version](https://img.shields.io/badge/version-v2.0-blue.svg)
-![Status](https://img.shields.io/badge/status-Reference_Implementation-success.svg)
-![License](https://img.shields.io/badge/license-Dual__License_(BSL)-red.svg)
-![Patent](https://img.shields.io/badge/Patent-Pending_(UIPM)-purple.svg)
-![Standard](https://img.shields.io/badge/IEEE-Execution_Layer_Standardization-orange.svg)
+![Version](https://img.shields.io/badge/version-v2.1-blue.svg)
+![Status](https://img.shields.io/badge/status-Active_Standard-success.svg)
+![License](https://img.shields.io/badge/license-Source_Available-orange.svg)
+![Patent](https://img.shields.io/badge/IP-Protected_(Filed)-purple.svg)
+![Standard](https://img.shields.io/badge/IEEE-Under_Development-yellow.svg)
+![Access](https://img.shields.io/badge/Spec-Controlled_Access-critical.svg)
 
 **A Deterministic Execution Control Layer for AI Systems Operating Beyond Advisory Boundaries**
 
