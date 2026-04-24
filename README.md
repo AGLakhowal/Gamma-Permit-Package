@@ -2,10 +2,14 @@
 
 ![Version](https://img.shields.io/badge/version-v2.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-Reference_Implementation-success.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-Dual__License_(BSL)-red.svg)
+![Patent](https://img.shields.io/badge/Patent-Pending_(UIPM)-purple.svg)
 ![Standard](https://img.shields.io/badge/IEEE-Execution_Layer_Standardization-orange.svg)
 
 **A Deterministic Execution Control Layer for AI Systems Operating Beyond Advisory Boundaries**
+
+> *The Gamma Engine serves as the commercial reference implementation of the Universal Intelligence and Perception Model (UIPM) architecture, enforcing deterministic, non-compensatory gating over execution authority.*
+
 
 > **Author:** Abhinandan Gill-Lakhowal
 > Independent researcher and framework architect specializing in execution-layer governance for autonomous AI systems. Developed in response to the governance gap identified by NIST, OWASP, and enterprise practitioners ahead of the 2026 agentic deployment wave.
