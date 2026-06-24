@@ -1,607 +1,1115 @@
-# Gamma Runtime Governance Engine (G-0 plementation-success.svg)
 
-![Version](https://img.shields.io/badge/version-v2.1-blue.svg)
-![Status](https://img.shields.io/badge/status-Active_Standard-success.svg)
-![License](https://img.shields.io/badge/license-Source_Available-orange.svg)
-![Patent](https://img.shields.io/badge/IP-Protected_(Filed)-purple.svg)
-![Standard](https://img.shields.io/badge/IEEE-Under_Development-yellow.svg)
-![Access](https://img.shields.io/badge/Spec-Controlled_Access-critical.svg)
+
+# Runtime Governance Engine (G-0)
+
+
+![License](https://img.shields.io/badge/LLC_Paper-CC_BY_4.0-green.svg)
+![Patent](https://img.shields.io/badge/Reverse_Law-USPTO_Published-purple.svg)
+![Zenodo](https://img.shields.io/badge/LLC-Zenodo_DOI-blue.svg)
+![IEEE](https://img.shields.io/badge/L--DREA-IEEE_Under_Review-yellow.svg)
+![Commercial](https://img.shields.io/badge/Commercial_Impl-License_Required-orange.svg)
+
 
 **A Deterministic Execution Control Layer for AI Systems Operating Beyond Advisory Boundaries**
 
-> *The Gamma Engine serves as the commercial reference implementation of the Universal Intelligence and Perception Model (UIPM) architecture, enforcing deterministic, non-compensatory gating over execution authority.*
+
+> *Gamma is a deterministic runtime governance engine that externalizes execution authority from AI capability and enforces non-compensatory authorization at the action boundary.*
 
 
 > **Author:** Abhinandan Gill-Lakhowal
-> Independent researcher and framework architect specializing in execution-layer governance for autonomous AI systems. Developed in response to the governance gap identified by NIST, OWASP, and enterprise practitioners ahead of the 2026 agentic deployment wave.
+> Independent researcher and framework architect specializing in execution-layer governance for autonomous AI systems. Developed in response to the governance gap identified by NIST, OWASP, and enterprise practitioners amid the 2026 agentic deployment wave.
+
+
+> **What this is, in one sentence.** Gamma G-0 is the only runtime authorization framework combining (a) non-compensatory conjunctive aggregation as a structural invariant, (b) hardware-rooted custodial authority distinct from epistemic authority, (c) patent-backed FRAND-ready primitives with 10 November 2025 priority (US 2026/0127298 A1), and (d) substrate-neutral specification across Tier-H / Tier-T / Tier-S assurance classes.
+
+
+# Gamma G-0 Constitutional Stack — Master Diagram Set
+
+> Canonical diagram repository for the Gamma G-0 Constitutional Stack.
+> These diagrams are intended to be rendered directly by GitHub Markdown.
+
+---
+
+# Master Diagram Set — Gamma G-0 Constitutional Stack
+
+
+Canonical diagrams referenced by `README.md` and `FULL_SPEC.md`. Each is the single source for its figure; documents link here rather than redrawing.
+
+
+**Figure index**
+
+
+- [D1 — The Derivation Spine (LLC → G-0 → Gamma)](#d1)
+- [D2 — Three-Projection Architecture (one source, three audiences)](#d2)
+- [D3 — Full Chain (README → FULL_SPEC → Domains → External Anchors)](#d3)
+- [D4 — README converges into FULL_SPEC (§-resolution map)](#d4)
+- [D5 — The Authorization Pipeline (action traversal)](#d5)
+- [D6 — Substrate Tiers × Deployment Loops × Functional Layers](#d6)
+- [D7 — The Nine Axes (namespace, never conflate)](#d7)
+- [D8 — Evidence Quad convergence](#d8)
+- [D9 — Multi-Modal Proof Lattice](#d9)
+
 
 -----
 
-# Table of Contents
+
+<a name="d1"></a>
+
+
+## D1 — The Derivation Spine
+
+
+```text
+                    ╔═══════════════════════════════════════════╗
+                    ║   LLC — Lakhowal Law of Concurrence        ║
+                    ║   Formal authorization primitive (ROOT)    ║
+                    ║   Forward:  Λ(G)=1  ⟺  Γ=0                  ║
+                    ║   Reverse:  predicate fails → Γ>0 → SAFE   ║
+                    ║   non-compensatory · non-bypassable        ║
+                    ║   → §1, §2 · repo: 06-llc/                  ║
+                    ╚═══════════════════════════════════════════╝
+                                      │  derives
+                                      ▼
+                    ╔═══════════════════════════════════════════╗
+                    ║   G-0 STANDARD                             ║
+                    ║   Runtime-governance standard from LLC     ║
+                    ║   implement · evaluate · commit · replay   ║
+                    ║   conform · deploy · audit                 ║
+                    ║   → §3 · repo: 02-g0-stack/G0-Governance   ║
+                    ╚═══════════════════════════════════════════╝
+                                      │  governs
+                                      ▼
+                    ╔═══════════════════════════════════════════╗
+                    ║   GAMMA GOVERNANCE SYSTEM                  ║
+                    ║   Operational ecosystem under G-0          ║
+                    ║   → §4–§14 · repo: 02-g0-stack/            ║
+                    ╚═══════════════════════════════════════════╝
+                                      │
+        ┌─────────────────────────────┼─────────────────────────────┐
+        ▼                             ▼                             ▼
+┌───────────────────┐   ┌───────────────────────────┐   ┌───────────────────────┐
+│ BRANCH 1          │   │ BRANCH 2                  │   │ BRANCH 3              │
+│ BENCHMARK + GOV   │   │ L-DREA (IEEE)             │   │ LUAI (deploy)         │
+│ "satisfy the law?"│   │ "enforced pre-action?"    │   │ "deployed how?"       │
+│                   │   │                           │   │                       │
+│ • ConcurBench     │   │ • Gamma Gate (Γ=0/Γ>0)    │   │ • LUAI Governor       │
+│ • Execution       │   │ • Hydra Ledger            │   │ • Governance Gateway  │
+│   Integrity (EI)  │   │ • Enforcement Boundary    │   │ • L-DREA integration  │
+│ • LAB / ASB       │   │ • SAFE_STATE Runtime      │   │ • SOC integration     │
+│ • replay + adv.   │   │ • License Authority       │   │ • Boardroom replay    │
+│ • TLA+ / TLC      │   │ • Federation Layer        │   │ • Edge enforcement    │
+│ • theorem→metric  │   │ • Replay + Audit APIs     │   │ • Federated control   │
+│ • conformance     │   │ • ERTuple schemas         │   │ • Dashboards          │
+│                   │   │ + IEEE: Paper A, L-DREA   │   │ • Deployment patterns │
+│ M1 spec-complete  │   │   R3, datasets, sim,      │   │                       │
+│ M2 measured run   │   │   validation (TLA+/TLC)   │   │ M1 Stage-1 shippable  │
+│                   │   │                           │   │ M2 Stage-2 measured   │
+│ → §11             │   │ M1 published · M2 ext.    │   │                       │
+│                   │   │ → §6, §10                 │   │ → §12                 │
+└───────────────────┘   └───────────────────────────┘   └───────────────────────┘
+   axis #4                  axis #2                          axis #1
+   claim → evidence         LLC → action flow                maturity M1/M2
+   OUT: a STANDARD          OUT: a CITED PAPER                OUT: a PRODUCT
+```
+
+
+-----
+
+
+<a name="d2"></a>
+
+
+## D2 — Three-Projection Architecture
+
+
+```text
+   SOURCE (FULL_SPEC owns once)                          THREE DOMAINS (project · 3 axes)
+
+
+   ┌──────────────────────┐                    ┌──────────────────────────────────┐
+   │  FULL_SPEC.md        │   pulls §3,§10,    │ DOMAIN 1 · NIST / STANDARDS       │
+   │  §0–15 + Appendices  ├───§11,§14─────────►│ axis #4 — claim → evidence         │
+   │                      │                    │  claims register (C1–C8)           │
+   │  ── shared core ──   │                    │  → conformance profile (LCP-6)     │
+   │  LLC → G-0 → Gamma   │                    │  → benchmark (ConcurBench)         │
+   │  Five Layers (OL)    │                    │  → pre-reg run (1.2M, 4-arm)       │
+   │                      │   pulls §1,§2,§5,  │  → bands → cert scheme             │
+   │  ── EVIDENCE QUAD ── │   §6,§10,§11       │ OUT: a STANDARD                    │
+   │  clause · pre-reg ·  ├───────────────────►├──────────────────────────────────┤
+   │  method · hash       │                    │ DOMAIN 2 · IEEE / ACADEMIA        │
+   │                      │                    │ axis #2 — LLC → action flow        │
+   │  (every projection   │                    │  law (Paper A) → mechanism         │
+   │   reduces to this)   │   pulls §6,§8,     │  (L-DREA) → architecture → verify  │
+   │                      │   §9,§12           │  (Inv-1 TLA+; 2–6 mech.) → empir.  │
+   │                      ├───────────────────►│ OUT: a CITED PAPER                 │
+   │                      │                    ├──────────────────────────────────┤
+   │                      │                    │ DOMAIN 3 · ENTERPRISE DEPLOY      │
+   │                      │                    │ axis #1 — maturity M1 / M2         │
+   │                      │                    │  M1 ship (Governor, Gate, Hydra,   │
+   │                      │                    │  tokens, APIs) → M2 (SAFE_STATE,   │
+   │                      │                    │  recovery, TAU, ≤100ms band)       │
+   │                      │                    │  → sector → procurement            │
+   └──────────────────────┘                    │ OUT: a PRODUCT                     │
+                                               └──────────────────────────────────┘
+ One substrate authored once → STANDARD · PAPER · PRODUCT. No restating; domains cite §-numbers
+ and carry the Evidence Quad outward.
+```
+
+
+-----
+
+
+<a name="d3"></a>
+
+
+## D3 — Full Chain with External Anchors
+
+
+```text
+  README            FULL_SPEC (owns)          THREE DOMAINS (project)     EXTERNAL ANCHOR (lives at)
+
+
+  ┌──────────┐      ┌──────────────────┐    ┌────────────────────┐     ┌──────────────────────────┐
+  │ points   │ §-   │ §0  Scope        │    │ D1 · NIST/STD      │     │ STANDARDS PROCESS         │
+  │ into     ├─refs─│ §1  LLC ─────────┼──┐ │ claim → evidence   ├────►│ NIST AI 800-2 RFI ·       │
+  │ spec     │      │ §2  Reverse Law ─┼─┐│ │ C1–C8 · LCP-6 ·    │     │ CAISI ack · IEEE PAR ·    │
+  │          │      │ §3  G-0 Standard │ ││ │ ConcurBench        │     │ BSI PAS (submission=anchor)│
+  │ native:  │      │ §4  Five Layers  │ ││ │ → a STANDARD       │     └──────────────────────────┘
+  │ advisory │      │ §5  Pipeline     │ ││ └────────────────────┘
+  │ princ's  │      │ §6  L-DREA ──────┼┐││ ┌────────────────────┐     ┌──────────────────────────┐
+  │ refs     │      │ §7  Telemetry    ││││ │ D2 · IEEE/ACAD     │     │ GitHub evidence root      │
+  │          │      │ §8  Continuity   ││││ │ LLC → action flow  │     │  ├ all runs/data live here │
+  │          │      │ §9  Federation   ││└─►│ law→mech→arch→     ├────►│  ├ LLC    → Zenodo DOI     │
+  │          │      │ §10 Formal Verif ││   │ verify→empirical   │     │  │         20369438        │
+  │          │      │ §11 Benchmark    ││   │ → a CITED PAPER    │     │  ├ Reverse → USPTO US      │
+  │          │      │ §12 Enterprise ──┼┘   └────────────────────┘     │  │  2026/0127298 A1        │
+  │          │      │ §13 Sector       │    ┌────────────────────┐     │  │  (priority 2025-11-10)  │
+  │          │      │ §14 Std/Procure  │    │ D3 · ENTERPRISE    │     │  └ L-DREA → IEEE submit    │
+  │          │      │ §15 Frontier     ├───►│ maturity M1/M2     ├──┐  │     d364daa5… (review)     │
+  │          │      │ Appendices       │    │ ship→measure→      │  │  └──────────────────────────┘
+  │          │      │ ── EVIDENCE QUAD │    │ sector→procure     │  │  ┌──────────────────────────┐
+  │          │      │ clause·pre-reg·  │    │ → a PRODUCT        │  └─►│ www.lakhowal.com (product) │
+  └──────────┘      │ method·hash      │    └────────────────────┘     └──────────────────────────┘
+                    └──────────────────┘
+  PUBLISHED-ARTIFACT ↔ SPEC SECTION (three legal/academic anchors, 1:1):
+    §1 LLC          → Zenodo 20369438                         (published, CC BY 4.0)
+    §2 Reverse Law  → USPTO US 2026/0127298 A1, pub 2026-05-07, priority 2025-11-10  (published)
+    §6 L-DREA       → IEEE submission d364daa5…, 2026-05-21    (under review)
+```
+
+
+-----
+
+
+<a name="d4"></a>
+
+
+## D4 — README converges into FULL_SPEC
+
+
+```text
+   README.md (navigate)                                  FULL_SPEC.md (owns)
+
+
+   Executive Summary ──────────────────────────────────► §0
+   Repository Authority Model ─────────────────────────► §0 (projection model)
+   I. Strategic Positioning ───────────────────────────► §0 framing (README-native prose)
+      └ Standards Alignment ────────────────────────────► §3, §14
+   II. G-0 Standard
+      ├ LLC → G-0 → Gamma ──────────────────────────────► §1, §3
+      ├ A. Standards Domain ────────────────────────────► §3, §11, §14
+      ├ B. Research & Validation ───────────────────────► §6, §10, §11
+      └ C. Enterprise Domain ───────────────────────────► §6, §12   ◄── corrected (was §11)
+   III. Integration & Telemetry ───────────────────────► §4, §5, §6, §7
+   IV. Operational Continuity ─────────────────────────► §8
+   V. Sector Reference Architectures ──────────────────► §13
+   VI. LLC + Reverse Law ──────────────────────────────► §1, §2
+   VII. Procurement & Standards ───────────────────────► §3, §14
+   Federation callout ─────────────────────────────────► §9    ◄── hook added
+   What Doesn't Exist Yet → honest boundary ───────────► §15   ◄── hook added
+   Governance & Learning Loop ─────────────────────────► §6–§7 (Evidence-Quad close)
+   External Anchors ───────────────────────────────────► §1,§2,§6,§9,§11,§12
+   Strategic Advisory / Foundational Principles ───────► README-native
+   References ──────────────────────────────────────────► Appendices / References
+
+
+   README states nothing normative — it frames and POINTS. Three sections are README-native.
+```
+
+
+-----
+
+
+<a name="d5"></a>
+
+
+## D5 — The Authorization Pipeline (action traversal)
+
+
+```text
+AI Capability Plane
+        │ proposes action a  (zero inherent authority)
+        ▼
+┌─ OL1 Orchestration ─ capability isolation ──────────────────┐
+│  OL2 Control Plane ─ predicate evaluation → G = {g₁…gₙ}      │
+│  OL3 BOUNDARY ─ the Γ-gate (seven-step pipeline §5):         │
+│        1 isolate · 2 evaluate · 3 Γ=max(1−gᵢ)               │
+│        4 bind · 5 dual permit gate · 6 fail-closed           │
+│        7 proof-before-action log                             │
+│  OL4 Audit & Replay ─ ERTuple → Hydra Ledger                 │
+│  OL5 Formal Governance ─ invariants, conformance             │
+└──────────────────────────────────────────────────────────────┘
+        │
+   ┌────┴─────────────────────────┐
+   ▼                              ▼
+ Γ = 0  (all predicates concur)  Γ > 0  (any predicate fails)
+   │                              │
+   ▼                              ▼
+ ACT_PERMIT → execute           SAFE_STATE → deny
+   │                              │
+   └──────────────┬───────────────┘
+                  ▼
+        ERTuple committed BEFORE actuation (commit-before-actuate, DET-2)
+                  ▼
+        Evidence Quad  (clause · pre-reg · method · hash)
+                  ▼
+        replay APIs → inspector / auditor / regulator
+```
+
+
+-----
+
+
+<a name="d6"></a>
+
+
+## D6 — Substrate Tiers × Deployment Loops × Functional Layers
+
+
+```text
+SUBSTRATE TIERS (assurance class / root of trust) — FIVE, per Paper A §X
+────
+Tier-H   hardware-rooted (FPGA/ASIC + HSM)      canonical assurance · 3-signal interlock in silicon
+Tier-T   TEE-rooted (SGX / SEV-SNP / TDX / TPM)  hardened production
+Tier-S   software-only                           pilot / lowest barrier
+Tier-D   distributed-trust                        multi-party root
+Tier-X   future                                   reserved (post-quantum, novel roots)
+
+
+DEPLOYMENT LOOPS (orthogonal to tier — any tier runs either)
+────
+single-node   Node Admission → Model Integrity
+Fleet         + Fleet Supervision under one authority root (High Commission)
+
+
+FUNCTIONAL LAYERS (mechanisms a loop is built from)
+────
+Node Admission     stateless · synchronous · same-cycle · PRE-execution
+Fleet Supervision  event-driven · post-observation · fleet-wide   (Fleet loop only)
+Model Integrity    continuous · drift/calibration · longer horizon
+
+
+RULES (load-bearing):
+• Substrate tier (H/T/S/D/X) and loop (single-node/Fleet) are SEPARATE axes — never "Tier-S/T/H/Fleet".
+• Sequential composition: Node Admission → Fleet Supervision → Model Integrity is SEQUENTIAL, not nested.
+  Each stage completes before the next → additive latency, independent proofs, modular verification
+  (no monolithic system proof). Classification: Sequentially Composed Hierarchical Governance Architecture.
+• First-occurrence prevention = Node Admission property → holds at EVERY tier and loop, incl. single-node Tier-S.
+• Fleet Supervision is post-observation only (revocation, containment, convergence); never first-occurrence prevention.
+• Distributed rule: permits do NOT flow across nodes; receipts DO (BFT consensus over receipts, not gating).
+  No node trusts another node's permit. Proven composition = local single-cycle commit + BFT receipt consensus.
+• Conflict resolved by EXCLUSION (≤1 externalization per cycle per domain), not merge/quorum/last-writer-wins.
+• Under partition: convergence rests on Node Admission failing closed vs permit TTL (DET-5, via §8 TVE),
+  NOT on fleet reachability.  Enforcement horizon = min(revocation arrival, permit TTL).
+• Storage tiers ST2 (sealed) / ST3 (non-authoritative) are a THIRD axis — never merged with substrate tiers.
+```
+
+
+-----
+
+
+<a name="d7"></a>
+
+
+## D7 — The Nine Axes (namespace, never conflate)
+
+
+```text
+AXIS                     LABELS                              MEANING                         OWNED
+────                     ──────                              ───────                         ─────
+Operating Layers         OL1 … OL5                           internal runtime architecture   §4
+Functional layers        Node Admission · Fleet Supervision  mechanisms a loop is built from  §6,§9
+                         · Model Integrity (named)
+Substrate Tiers          Tier-H · Tier-T · Tier-S            assurance class / root of trust  §6,§10
+                         · Tier-D · Tier-X                   (FIVE — H/T/S/D/X)
+Deployment Loops         single-node · Fleet                 shipped config; runs AT a tier   §6,§9,§12
+Storage Tiers            ST2 · ST3                           evidence persistence class       §3
+Evidence Maturity        M1 / M2                             how proven a live node is       §11
+Determinism Invariants   DET-1 … DET-5                       guarantees each loop enforces   §6,§9,§10
+IEEE Conformance Class   CL0 · CL1 · CL2                     enforcement profile (what to DO) §10-IEEE
+NIST Conformance Level   L1 · L2 · L3 · L4                   evaluation ladder (what to MEASURE) §11
+
+
+⚠  CL ≠ L. CL0/CL1/CL2 = IEEE enforcement; L1–L4 = NIST/ConcurBench evaluation. Never write "CL1–CL4".
+   Interlock: CL0 ⇒ L1 · CL1 ⇒ L1+L2+L3 · CL2 ⇒ L1+L2+L3+L4.
+⚠  Bare "L" numbers are PROHIBITED outside this table — historically collided across all axes.
+⚠  "Tier" alone is ambiguous: substrate tier (H/T/S/D/X) ≠ storage tier (ST2/ST3). Loops (Fleet) are NOT tiers.
+```
+
+
+-----
+
+
+<a name="d8"></a>
+
+
+## D8 — Evidence Quad convergence
+
+
+```text
+   DOMAIN 1 (NIST)        DOMAIN 2 (IEEE)        DOMAIN 3 (Enterprise)
+   conformance test       paper result           runtime number
+        │                      │                      │
+        └──────────┬───────────┴───────────┬──────────┘
+                   ▼                        ▼
+              ┌─────────────────────────────────┐
+              │        EVIDENCE QUAD            │
+              │  · what it tests   → clause      │
+              │  · how it froze    → pre-reg ID  │
+              │  · which analysis  → method ver. │
+              │  · proof it's real → ledger hash │
+              └─────────────────────────────────┘
+                   ▼
+        GitHub evidence root  (M1 / M2 nodes · pre-reg · hash chain)
+
+
+   Same four-field record the board sees, the auditor replays, the regulator examines.
+```
+
+
+-----
+
+
+<a name="d9"></a>
+
+
+## D9 — Multi-Modal Proof Lattice
+
+
+```text
+PROOF MODE      MEANING                                   FAILS IF
+──────────      ───────                                   ────────
+M Mathematical  follows from definitions / algebra        counter-example, definitional error
+F Formal-sys    proven in transition system / temporal    counter-trace, invariant violation
+C Cryptographic signature / hash / key assumptions        reduction break, key compromise
+P Physical/HW   isolated hardware, combinational gates     side-channel, fault injection
+E Empirical     bounded by threat surface + sample size   underpowered adversary, threat gap
+T Control-theor Lyapunov / contraction / hysteresis       unmodeled dynamics, plant-model error
+
+
+STRONGEST PROPERTIES (5-mode support):
+  Execution Safety Invariant · Permit-Token Validity · TOCTOU State Consistency · Runtime Sovereignty
+
+
+4-mode: Non-compensatory safety · Fail-closed · Non-bypassability · Commit-before-actuate ·
+        Replay closure · ERTuple sufficiency · Hash-chain integrity · Distributed revocation ·
+        SAFE_STATE canonicalization · Held-state enforcement · Temporal concurrence
+
+
+SINGLE-MODE (honest scope):  Complexity O(n) [M] · Entropy floor [E] · EI metric family [E]
+
+
+Modes are independent (M⊥F, M⊥C, F⊥P, C⊥T, T⊥C) so a single root cause cannot defeat all checks.
+Dependencies disclosed: P depends on C · T depends on F · E bounded by threat model · F depends on M.
+
+
+CLAIM BOUNDARY (the correct, defensible claim):
+  NOT "unauthorized execution is impossible in all circumstances."
+  YES "unauthorized externally effective execution is infeasible under the stated bounded hardware,
+       cryptographic, timing, predicate-completeness, and enforcement assumptions."
+
+
+THEOREM ANCHORING: the lattice properties are grounded in the T0–T9 family (Paper A; §1.11 of FULL_SPEC):
+  T0 Bridge Equivalence · T1 Deterministic Auth · T2 Fail-Closed · T3 Non-Compensatory · T4 Non-Bypassability
+  (3-signal closure) · T5 Replay Closure · T6 Model-Substitution · T7 TOCTOU · T8 Composite Stability · T9 Concurrence Closure.
+  TLC: 2,489,446 total / 40,192 distinct states, zero violations (Paper A Appendix A).
+```
+
+
+-----
+
+
+## Table of Contents
+
 
 - [Board-Level Summary](#board-level-summary)
+- [Repository Authority Model](#repository-authority-model)
+- [Specification Package](#specification-package)
 - [The Execution Gap Is the Real AI Risk](#the-execution-gap-is-the-real-ai-risk)
 - [Why This Is a Board-Level Issue in 2026](#why-this-is-a-board-level-issue-in-2026)
-- [What Doesn’t Exist Yet (And Why That Matters)](#what-doesnt-exist-yet-and-why-that-matters)
+- [What Doesn’t Exist Yet](#what-doesnt-exist-yet)
 - [The Enterprise Trade-Off Gamma Eliminates](#the-enterprise-trade-off-gamma-eliminates)
 - [Standards Alignment](#standards-alignment)
 - [Where to Start](#where-to-start)
 - [Core Principle](#core-principle)
-- [Low-Code & Enterprise Deployment](#low-code--enterprise-deployment)
-- [Part I — Strategic Positioning & Enterprise Reality](#part-i--strategic-positioning--enterprise-reality)
-- [Part II — The Core Standard (The G-0 Stack)](#part-ii--the-core-standard-the-g-0-stack)
-- [Part III — Enterprise Integration & Telemetry](#part-iii--enterprise-integration--telemetry)
-- [Part IV — The Operational Continuity Layer](#part-iv--the-operational-continuity-layer)
+- [Gamma Governance Stack](#gamma-governance-stack)
+- [Part I — Strategic Positioning](#part-i--strategic-positioning)
+- [Part II — The Core Standard](#part-ii--the-core-standard)
+- [Part III — Integration & Telemetry](#part-iii--integration--telemetry)
+- [Part IV — Operational Continuity](#part-iv--operational-continuity)
 - [Part V — Sector Reference Architectures](#part-v--sector-reference-architectures)
-- [Part VI — Standards Alignment & Procurement](#part-vi--standards-alignment--procurement)
-- [Strategic Advisory & Executive Engagement](#strategic-advisory--executive-engagement)
+- [Part VI — LLC + Reverse Law](#part-vi--llc--reverse-law)
+- [Part VII — Procurement & Standards](#part-vii--procurement--standards)
+- [Governance & Learning Loop](#governance--learning-loop)
+- [External Anchors](#external-anchors)
+- [Strategic Advisory](#strategic-advisory)
 - [Foundational Principles](#foundational-principles)
 - [References](#references)
 
-> **Full production specification, reference code, and sector architectures:** See <FULL_SPEC.md>
+
+> **Full production specification, reference code, and sector architectures:** see [`FULL_SPEC.md`](FULL_SPEC.md).
+
 
 -----
 
-# Specification Package
 
-This README provides the executive and strategic overview of the Gamma Runtime Governance Engine. The full technical specification is maintained as the authoritative implementation reference.
+## Board-Level Summary
 
-| Artifact | Purpose |
-|---|---|
-| [`FULL_SPEC.md`](FULL_SPEC.md) | Complete technical specification, runtime architecture, predicate evaluation logic, permit model, ERTuple evidence model, and sector reference architectures |
-| [`specs/`](specs/) | Formal standardization artifacts, schemas, procurement clauses, conformance materials, and regulatory mappings |
-| [`reference_impl/`](reference_impl/) | Reference implementation patterns and executable examples |
-| [`governance/`](governance/) | Governance alignment materials for NIST AI RMF, ISO/IEC 42001, EU AI Act, OWASP Agentic AI, and enterprise risk programs |
-| [`samples/`](samples/) | Example workflows and deployment patterns |
-| [`schemas/`](schemas/) | Machine-readable schemas for evidence, permit, and runtime artifacts |
 
-> The README is designed for executives, standards reviewers, and enterprise stakeholders.  
-> `FULL_SPEC.md` is designed for architects, implementers, auditors, and technical reviewers.
+```text
+WHERE WE ARE                    WHAT'S MISSING                   WHAT GAMMA ADDS
+─────────────                   ──────────────                   ───────────────
+AI advisory ──► AI executor     Zero Trust governs access        deterministic boundary
+agents in production            OPA governs policy fit            between proposal and
+booking · modifying ·           Guardrails govern output          actuation
+invoking · escalating           SIEM governs after-the-fact       cryptographic permit
+                                  ─── execution unowned ───       audit-replayable record
+```
 
------
 
-# Board-Level Summary
+**The Gamma Runtime Governance Engine is the missing control layer:** a deterministic execution boundary that prevents any AI-generated action from executing without explicit, cryptographically verifiable, audit-replayable authorization.
 
-AI agents are now executing real actions inside enterprise systems — booking transactions, modifying records, issuing commands — with no deterministic control over what they are authorized to do. The SEC’s 2026 Examination Priorities elevate AI operational risk and cybersecurity into cross-cutting focus areas for virtually every registrant exam, a notable shift from the crypto-dominated priorities of prior years [[1]](#references)[[2]](#references). Three out of four CISOs have already discovered unsanctioned AI tools running inside their environments, often with embedded credentials and elevated system access that no one is monitoring [[3]](#references). Existing controls — Zero Trust, policy engines, LLM guardrails — govern access and output. None govern execution.
 
-**The Gamma Runtime Governance Engine is the missing control: a deterministic boundary that prevents any AI-generated action from executing without explicit, cryptographically verified, audit-replayable authorization.**
+Every authorization — permit or denial — reduces to one four-field evidence primitive, the **Evidence Quad** (spec clause · pre-reg ID · method version · ledger hash), so that what the board sees, what an auditor replays, and what a regulator examines are the same record.
 
-> This document is suitable for distribution to Risk Committees, Audit Committees, and Executive Leadership Teams.
+
+Suitable for executives, standards reviewers, procurement teams, board-level risk committees, and enterprise stakeholders.
+
 
 -----
 
-# The Execution Gap Is the Real AI Risk
 
-38% of US CEOs identify AI as the external factor most likely to negatively impact their business in 2026 — ranking it above political polarization (31%) and trust in government (25%) [[4]](#references). Yet most enterprise AI deployments have no deterministic control over what agents are authorized to execute.
+## Repository Authority Model
 
-Gartner projects 40% of enterprise applications will embed task-specific AI agents by end of 2026, up from less than 5% in 2025 [[5]](#references). NIST’s Center for AI Standards and Innovation (CAISI) opened a Request for Information on AI Agent Security on January 8, 2026 (Federal Register docket NIST-2025-0035) and formally launched the AI Agent Standards Initiative on February 17, 2026 [[6]](#references)[[7]](#references). The EU AI Act’s high-risk obligations for Annex III systems take effect on 2 August 2026 [[8]](#references).
 
-The question every enterprise now faces isn’t whether to deploy AI agents. It’s whether they can control what those agents actually **do**.
+```text
+README.md                              (navigate · non-normative)
+    ↓
+FULL_SPEC.md                           (author · normative substrate, §0–15)
+    ↓
+Domain Projections                     (same content · three audiences)
+    ├── Benchmark & Standard    (claim → evidence)         → NIST RFI · IEEE PAR · BSI PAS
+    ├── Research & Development  (LLC → action flow)         → Zenodo · USPTO · IEEE Access
+    └── Pilots & Deployments    (maturity M1 / M2)          → www.lakhowal.com
+    ↑
+Evidence Quad                          (proof primitive every projection reduces to)
+  spec clause · pre-reg ID · method version · ledger hash
+    ↑
+GitHub — Evidence Root                 (AGLakhowal/Gamma-Permit-Package)
+                                        all empirical data and run artifacts live here
+```
 
-Most safety frameworks govern what models *say*.
-None govern what agents *execute*.
 
-**The Gamma Runtime Governance Engine solves the execution gap.**
+**Rule.** The README does not define Γ, SAFE_STATE, Permit-to-Act, Permit-to-Adapt, ERTuple semantics, replay closure, telemetry semantics, execution authorization logic, reference code, or schemas. Those are owned exclusively by [`FULL_SPEC.md`](FULL_SPEC.md) and may only be summarized — never restated — in this README.
 
------
-
-# Why This Is a Board-Level Issue in 2026
-
-- **SEC 2026 Examination Priorities** — AI oversight is now integrated across cybersecurity, operational resiliency, emerging technology, and automated investment tools, meaning AI governance will be scrutinized in virtually all examinations going forward, not just those of firms marketing AI capabilities [[1]](#references)[[2]](#references).
-- **Shadow AI Crisis** — 75% of CISOs have discovered unsanctioned AI tools already operating inside their environments, often with embedded credentials and elevated system access that no one is monitoring [[3]](#references).
-- **Executive Accountability Gap** — While executives overwhelmingly identify AI as a strategic priority, the vast majority of organizations have not clearly defined who is accountable when an AI agent takes a harmful action [[9]](#references).
-- **NIST AI Agent Standards Initiative** — Launched February 17, 2026; RFI docket NIST-2025-0035 opened January 8, 2026. The first U.S. federal standards effort scoped specifically to autonomous agent security, identity, and authorization [[6]](#references)[[7]](#references).
-- **EU AI Act (2 August 2026)** — High-risk AI systems listed in Annex III must meet full obligations for risk management, data governance, technical documentation, human oversight, and post-market monitoring. ERTuples are designed for exactly this evidentiary burden [[8]](#references).
-- **OWASP Top 10 for Agentic Applications (December 10, 2025)** — Agent Goal Hijack (ASI01), Tool Misuse and Exploitation (ASI02), and Identity and Privilege Abuse (ASI03) are now formally documented enterprise risks. Gamma’s boundary addresses all three before actuation [[10]](#references).
-
------
-
-# What Doesn’t Exist Yet (And Why That Matters)
-
-|Existing Control    |What It Governs               |What It Misses                      |
-|--------------------|------------------------------|------------------------------------|
-|Zero Trust / RBAC   |Who can access a system       |Whether an AI action can execute    |
-|OPA / Policy Engines|Whether a request is compliant|AI-generated action authority       |
-|LLM Guardrails      |What a model outputs          |Real-world execution at the boundary|
-|SIEM / Audit Logs   |What happened after the fact  |Preventing it before it executes    |
-
-**Gamma is the missing layer.**
-
-> Execution is not assumed. It is explicitly authorized.
 
 -----
 
-# The Enterprise Trade-Off Gamma Eliminates
+
+## Specification Package
+
+
+This README provides the executive and strategic overview of the Gamma Runtime Governance Engine. It is non-normative: it summarizes, but never restates, the definitions owned by [`FULL_SPEC.md`](FULL_SPEC.md), which is the authoritative technical reference for architects, implementers, auditors, and standards reviewers.
+
+
+|Artifact                                                  |Purpose                                                                                                                                          |
+|----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+|[`FULL_SPEC.md`](FULL_SPEC.md)                            |Complete authoritative technical specification, runtime architecture, predicate logic, permit model, ERTuple evidence model, sector architectures|
+|[`02-g0-stack/`](02-g0-stack/)                            |G-0 Standard + Gamma Governance System: Benchmark & Standard, Research & Development, Pilots & Deployments                                       |
+|[`03-integration/`](03-integration/)                      |Enterprise integration, runtime telemetry, gateway patterns, implementation flows                                                                |
+|[`04-operational-continuity/`](04-operational-continuity/)|SAFE_STATE, recovery, degradation, continuity, bounded execution semantics                                                                       |
+|[`05-sector-examples/`](05-sector-examples/)              |Finance, healthcare, cybersecurity, sector reference architectures                                                                               |
+|[`06-llc/`](06-llc/)                                      |Lakhowal Law of Concurrence and LLC Reverse Law                                                                                                  |
+|[`07-procurement/`](07-procurement/)                      |Procurement clause pack, evaluation rubrics, conformance checklists, self-attestation, standards submissions                                     |
+|[`specs/`](specs/)                                        |Raw standardization artifacts and machine-readable schemas                                                                                       |
+|[`reference_impl/`](reference_impl/)                      |Reference implementation patterns and executable examples                                                                                        |
+|[`governance/`](governance/)                              |NIST AI RMF, ISO/IEC 42001, EU AI Act, OWASP Agentic AI, enterprise risk mappings                                                                |
+|[`samples/`](samples/)                                    |Example workflows and deployment patterns                                                                                                        |
+|[`schemas/`](schemas/)                                    |Machine-readable schemas for evidence, permits, runtime events, audit artifacts                                                                  |
+
+
+-----
+
+
+## The Execution Gap Is the Real AI Risk
+
+
+The bottleneck to autonomous AI deployment is no longer intelligence. It is execution authority. Most safety frameworks govern what models *say*. Gamma governs what agents are allowed to *do*.
+
+
+```text
+AI proposes action
+        │
+        ▼
+ZERO INHERENT AUTHORITY
+        │
+        ▼
+Governance predicates evaluated  ──►  Γ = 0  ──►  permit issued  ──►  execute
+        │                                            │
+        ▼                                            ▼
+  Γ > 0  ──►  SAFE_STATE  ──►  deny             ERTuple serialized (audit-replayable)
+```
+
+
+**AI model output ≠ execution authority.** Each serialized ERTuple resolves to the **Evidence Quad** — the single proof primitive every downstream projection reduces to.
+
+
+-----
+
+
+## Why This Is a Board-Level Issue in 2026
+
+
+```text
+BOARD ACCOUNTABILITY 2026
+    │
+    ├── REGULATORS              NIST AI Agent RFI · EU AI Act (2 Aug 2026)
+    │                            SEC 2026 Exam Priorities · ISO/IEC 42001
+    │
+    ├── AGENTS IN PRODUCTION    advisory → actuator across enterprise systems
+    │                            multi-node fleets · federated revocation
+    │                            shadow-AI · embedded credentials · elevated access
+    │
+    ├── UNBOUNDED LIABILITY     no deterministic control over execution
+    │                            executive accountability gap
+    │
+    └── EVIDENTIARY BURDEN       Art. 12 logging · ISO 42001 evidence
+                                 SEC examination readiness · post-market monitoring
+```
+
+
+> Every action. Authorized. Verifiable. Audit-replayable. Before it executes.
+
+
+Every record in scope — an Article 12 log, an ISO 42001 evidence item, an SEC examination artifact — resolves to the same **Evidence Quad**, so the board’s accountability surface and the auditor’s replay surface are one and the same.
+
+
+-----
+
+
+## What Doesn’t Exist Yet
+
+
+|Existing Control    |What It Governs                   |What It Misses                            |
+|--------------------|----------------------------------|------------------------------------------|
+|Zero Trust / RBAC   |Who can access a system           |Whether an AI-generated action may execute|
+|OPA / Policy Engines|Whether a request satisfies policy|AI-specific execution authority           |
+|LLM Guardrails      |What a model outputs              |Real-world actuation boundary             |
+|SIEM / Audit Logs   |What happened after the fact      |Prevention before execution               |
+|Human Review Queues |Escalation and approval           |Deterministic pre-execution proof         |
+
+
+**Gamma is the missing execution layer.**
+
+
+```text
+HONEST BOUNDARY (out of scope this release)
+  └── sovereignty mesh · cross-jurisdiction runtime governance
+      → research frontier · FULL_SPEC §15
+```
+
+
+-----
+
+
+## The Enterprise Trade-Off Gamma Eliminates
+
 
 Every board and executive team currently faces an unacceptable choice:
 
-|Path                       |Consequence                                                                                   |
-|---------------------------|----------------------------------------------------------------------------------------------|
-|**Restrict AI**            |Cripple operational capability. Lose competitive advantage to peers deploying agents at scale.|
-|**Deploy AI agents freely**|Accept unquantifiable liability for every unauthorized action an agent takes.                 |
 
-**Gamma destroys this trade-off.**
+```text
+BEFORE GAMMA                              AFTER GAMMA
+────────────                              ───────────
+   cognition + actuation                       cognition  │  actuation
+   (one undefined surface)                     proposal   │  authority
+                                               capability │  execution
+                                                          ▲
+                                              deterministic governance boundary
+```
 
-By inserting a deterministic execution boundary between what an AI *proposes* and what the enterprise *authorizes*, organizations can deploy AI at full capability while maintaining verifiable, board-reportable control over every action taken.
 
------
+|Path                   |Consequence                                          |
+|-----------------------|-----------------------------------------------------|
+|Restrict AI agents     |Lose speed, automation, competitive advantage        |
+|Deploy AI agents freely|Accept unbounded liability for unauthorized execution|
 
-# Standards Alignment
 
-|Standard                                               |Alignment                                                                                                                     |
-|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|
-|NIST AI RMF                                            |“Govern” and “Manage” functions — runtime enforcement                                                                         |
-|NIST AI Agent Standards Initiative (RFI NIST-2025-0035)|Agent security, identity, authorization, and constraint at deployment                                                         |
-|ISO/IEC 42001                                          |ERTuple audit records support the mandatory evidence requirements of an AI management system                                  |
-|EU AI Act (Annex III, 2 Aug 2026)                      |Execution-layer gating for high-risk system classification; human oversight; post-market monitoring                           |
-|OWASP Top 10 for Agentic Applications (2026)           |Boundary enforcement covers ASI01 (Goal Hijack), ASI02 (Tool Misuse), ASI03 (Identity & Privilege Abuse), ASI10 (Rogue Agents)|
-|SEC 2026 Examination Priorities                        |Audit-replayable ERTuples support disclosure and examination readiness for AI operational risk                                |
+Gamma removes the trade-off by separating cognition from actuation, proposal from authority, and capability from execution — and it holds the same boundary across a single node and a federated fleet under one authority root.
 
------
-
-# Where to Start
-
-|If you are…                |Your concern                                      |Start here                                                                                                                                |
-|---------------------------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-|**CEO / Board Member**     |AI liability and governance accountability        |[The Deterministic Liability Shield](#3-the-enterprise-reality--the-deterministic-liability-shield)                                       |
-|**Chief Risk Officer**     |Quantifying and bounding AI operational risk      |[Liability Shield](#3-the-enterprise-reality--the-deterministic-liability-shield) + [ERTuples](#8-the-governance-evidence-model--ertuples)|
-|**CISO**                   |Controlling AI agent execution and audit readiness|[Enterprise Integration Architecture](#6-enterprise-integration-architecture-reference-flow)                                              |
-|**General Counsel / CCO**  |Regulatory exposure and audit trail requirements  |[Procurement Framework](#11-comprehensive-regulatory--procurement-framework)                                                              |
-|**Enterprise Architect**   |Technical deployment and stack integration        |[Reference Implementation](FULL_SPEC.md#63-reference-implementation-the-execution-gateway)                                                |
-|**Procurement Team**       |Vendor evaluation and RFP clauses                 |[Procurement Clause Pack](specs/04-Procurement_Clause_Pack_LLC-G0.txt)                                                                    |
-|**Standards Body Reviewer**|IEEE / NIST alignment                             |[IEEE PAR Submission](specs/09-IEEE_PAR_Submission_Text.txt)                                                                              |
 
 -----
 
-# Core Principle
+
+## Standards Alignment
+
+
+|Standard / Framework              |Gamma Alignment                                                                          |
+|----------------------------------|-----------------------------------------------------------------------------------------|
+|NIST AI RMF                       |Runtime enforcement support for Govern and Manage functions                              |
+|NIST AI Agent Standards Initiative|Agent security, authorization, identity, constraint at deployment across federated fleets|
+|ISO/IEC 42001                     |ERTuple evidence supports AI management system documentation                             |
+|EU AI Act                         |Technical documentation, human oversight, logging, post-market monitoring                |
+|OWASP Agentic AI Risks            |Goal hijack, tool misuse, privilege abuse, rogue agent — caught before execution         |
+|SEC AI / Cyber Risk Oversight     |Audit-replayable runtime evidence supports examination readiness                         |
+
+
+Each alignment is *verifiable through the Evidence Quad* (spec clause → ledger hash) rather than asserted — the same record an auditor or examiner would replay.
+
+
+-----
+
+
+## Where to Start
+
+
+|If you are…          |Your concern                                |Start here                                                             |
+|---------------------|--------------------------------------------|-----------------------------------------------------------------------|
+|CEO / Board Member   |AI liability and governance accountability  |[Board-Level Summary](#board-level-summary)                            |
+|Chief Risk Officer   |Quantifying and bounding AI operational risk|[Enterprise Trade-Off](#the-enterprise-trade-off-gamma-eliminates)     |
+|CISO                 |Controlling AI agent execution              |[Part III — Integration & Telemetry](#part-iii--integration--telemetry)|
+|General Counsel / CCO|Regulatory evidence and audit trail         |[Part VII — Procurement & Standards](#part-vii--procurement--standards)|
+|Enterprise Architect |Runtime architecture and integration        |[`FULL_SPEC.md`](FULL_SPEC.md)                                         |
+|Procurement Team     |Vendor requirements and RFP clauses         |[`07-procurement/`](07-procurement/)                                   |
+|Standards Reviewer   |Conformance, validation, benchmark profile  |[`02-g0-stack/`](02-g0-stack/)                                         |
+
+
+-----
+
+
+## Core Principle
+
+
+```text
+COGNITION                BOUNDARY                  EXECUTION
+─────────                ────────                  ─────────
+probabilistic     ──►    deterministic     ──►    gated
+model reasons            Γ-evaluation              permit  → execute
+                         non-compensatory          SAFE_STATE → deny
+                         fail-closed               ERTuple → replay
+```
+
 
 > **Cognition is probabilistic. Execution must be deterministic.**
+> **No valid permit → no execution.**
 
-Under the G-0 Standard:
-
-- AI systems generate **proposals**
-- Execution authority is **externalized from the model**
-- Only actions satisfying deterministic governance predicates may execute
-
-> **Zero unauthorized externally effective actions**
 
 -----
 
-# Low-Code & Enterprise Deployment
 
-The G-0 Standard is not only a technical architecture. It is designed for immediate deployment across real enterprise workflows — including no-code and low-code environments.
+## Gamma Governance Stack
 
-**Deployment patterns include:**
 
-- AI knowledge assistants with fail-closed response validation
-- Prompt playbooks enforcing deterministic output control
-- Zapier / Make workflows with runtime execution gating
-- Human-in-the-loop escalation for high-risk actions
-- Lightweight evaluation loops for continuous monitoring
+```text
+╔══════════════════════════════════════════════════════════════════════╗
+║                  GAMMA GOVERNANCE STACK (G-0)                          ║
+║      Deterministic Runtime Governance for Autonomous Systems            ║
+╚══════════════════════════════════════════════════════════════════════╝
 
-**Example flow:**
 
+ROOT LAW
+──────────────────────────────────────────────────────────────────────
+        LLC — Lakhowal Law of Concurrence
+        Formal authorization primitive
+        • Γ = max(d_k)                • Λ(G) = conjunction of predicates
+        • Γ = 0 ⇔ all concur          • non-compensatory · fail-closed
+        • replay-closed · TOCTOU-bounded · deterministic authorization
+                         │ derives
+                         ▼
+GOVERNANCE STANDARD
+──────────────────────────────────────────────────────────────────────
+        G-0 Standard
+        Runtime governance standard derived from LLC
+        evaluation · authorization · commit-before-actuate · replayability
+        telemetry · conformance · auditability · deployment semantics
+                         │ governs
+                         ▼
+GAMMA GOVERNANCE SYSTEM
+──────────────────────────────────────────────────────────────────────
+        Operational governance system implementing G-0
+
+
+        ┌──────────────────────┬──────────────────────┬──────────────────────┐
+        ▼                      ▼                      ▼
+   BRANCH 1                  BRANCH 2                  BRANCH 3
+   BENCHMARK & STANDARD      RESEARCH & DEVELOPMENT    PILOTS & DEPLOYMENTS
+   G-0 + ConcurBench         L-DREA + LLC + IEEE       LUAI Governor
+   "does it satisfy          "how is LLC enforced      "how is the system
+    the law?"                 pre-actuation?"           deployed?"
+                                                        Tier-S · Tier-T
+                                                        Tier-H · Fleet
 ```
-1. Input enters system (Zapier trigger, API call, UI action)
-2. LLM generates a proposed output or action
-3. Gamma Gate evaluates against risk, policy, data validity
-4. System enforces:
-   APPROVE → action proceeds automatically
-   DENY    → routed to human review or blocked
-```
+
+
+**Branch 3 — deployment loops.** The LUAI Governor runs at one of five **substrate tiers** — **Tier-H** hardware-rooted, **Tier-T** TEE-rooted, **Tier-S** software-only, **Tier-D** distributed-trust, **Tier-X** reserved/future — which form an *assurance ladder* differing in root of trust. Orthogonal to the tier is the **deployment loop**: single-node or **Fleet** (federated under one authority root, the High Commission). Two consequences are load-bearing and must not be conflated: first-occurrence prevention is performed by the per-node admission gate and therefore holds at *every* tier and loop, including single-node Tier-S; whereas fleet-wide supervision — revocation, containment, convergence — exists only in the Fleet loop and acts *after* an event is observed, never as same-cycle prevention. Under network partition the same separation holds: convergence rests on the node-local gate failing closed against the permit TTL (TVE, Part IV), not on fleet reachability, so the enforcement horizon stays bounded at `min(revocation arrival, permit TTL)`. Loop and federation semantics are owned by [`FULL_SPEC.md §6`](FULL_SPEC.md#6-l-drea-runtime-enforcement) and [§9](FULL_SPEC.md#9-federation-governance); the production deployment surface (LUAI Governor, gateway, tokens, dashboards) is owned by [§12](FULL_SPEC.md#12-enterprise-deployment-luai); deployment maturity is tracked separately as M1 / M2 in the evidence root. *(Diagram: [D6](diagrams/DIAGRAMS.md#d6).)*
+
 
 -----
 
-# Part I — Strategic Positioning & Enterprise Reality
 
-## 1. The Global Hook — The Execution Gap
+## Part I — Strategic Positioning
 
-The bottleneck to the AI revolution is no longer intelligence; it is execution authority. We are rapidly approaching the limit of what society, enterprise, and critical infrastructure will allow AI to do. This limitation exists not because the models are insufficiently smart, but because the infrastructure to govern their real-world actions does not exist.
 
-To transition from “AI as a passive advisor” to “AI as an autonomous actor” across enterprise platforms, financial markets, defense networks, and cyber-physical systems, we must solve the execution gap.
+> The bottleneck to the AI revolution is no longer intelligence; it is execution authority. We are rapidly approaching the limit of what society, enterprise, and critical infrastructure will allow AI to do.
 
-## 2. The Paradigm Shift — Separation of Cognition and Actuation
 
-The global AI ecosystem is focused on capability — making models think faster, reason better, and generate more complex outputs. But capability without control is a liability, not an asset.
+```text
+OLD PARADIGM                                NEW PARADIGM
+────────────                                ────────────
+"train models to behave"                    separate cognition from actuation
+probabilistic safety                        deterministic authorization
+hope-based control                          proof-before-action
+capability = authority                      capability ≠ authority
+single-system control                       federated authority, one root
+claim everything                            claim only what you enforce
+```
 
-The industry is attempting to solve this with probabilistic safety — training models to “behave.” This is insufficient for high-stakes infrastructure. You cannot build deterministic guarantees on top of probabilistic reasoning.
 
-The Gamma framework introduces a new paradigm: **the Separation of Cognition and Actuation.** Just as the financial system relies on secure clearinghouses to authorize transactions independently of the parties involved, autonomous AI deployment requires an independent, deterministic runtime governance layer.
+To transition from AI as a passive advisor to AI as an autonomous actor across enterprise platforms, financial systems, healthcare workflows, defense networks, and cyber-physical infrastructure, organizations need deterministic runtime authorization.
 
-> Gamma is a proposed engineering standard for machine autonomy, not a policy framework.
 
-## 3. The Enterprise Reality — The Deterministic Liability Shield
+The same separation scales from a single node to a federated fleet under one authority root, and it is deliberately bounded: the present release governs externally effective action and claims only what it enforces — cross-jurisdictional sovereignty mesh is named as out of scope ([`FULL_SPEC.md §15`](FULL_SPEC.md#15-research-frontier)), not quietly assumed.
 
-Enterprise leaders, hospital administrators, and infrastructure operators are currently trapped in a zero-sum game:
-
-- **Path A** — Restrict the AI to protect the enterprise. Crippling capability and losing competitive advantage.
-- **Path B** — Deploy advanced AI agents and accept unquantifiable, catastrophic operational risk.
-
-The Gamma Runtime Governance Engine destroys this trade-off. By strictly separating what an AI can *propose* from what the system is authorized to *execute*, leaders can deploy AI capabilities at scale without betting the enterprise on the unpredictable output of a neural network.
-
-> **Every action. Authorized. Verifiable. Audit-replayable. Before it executes.**
 
 -----
 
-# Part II — The Core Standard (The G-0 Stack)
 
-## 4. Governing the Irreversibility Horizon
+## Part II — The Core Standard
 
-The G-0 Governance Stack is a deterministic control layer engineered to solve the problem of Unbounded Liability in autonomous systems. It explicitly rejects probabilistic safety in favor of an architectural separation: **externalizing execution authority from model capability.**
 
-### 4.1 The 5-Layer Topography
+> The G-0 Governance Stack is a deterministic control layer engineered to solve the problem of Unbounded Liability in autonomous systems. It explicitly rejects probabilistic safety in favor of an architectural separation: externalizing execution authority from model capability.
 
-|Layer  |Name          |Function                                                                                            |
-|-------|--------------|----------------------------------------------------------------------------------------------------|
-|Layer 1|Orchestration |Federated policy across distributed fleets. Global revocation < 30s latency.                        |
-|Layer 2|Control Plane |Monitors internal logic. Detects Reasoning Drift via Integrity-Flux (I_Φ). Triggers Learning Freeze.|
-|Layer 3|Boundary Layer|The Execution Invariant. Computes non-compensatory Γ state. Issues binary permit tokens.            |
-|Layer 4|Audit Plane   |Operates the Hydra Ledger. Serializes cryptographically hash-linked ERTuples for replayability.     |
-|Layer 5|Formal Specs  |Regulatory translation, mathematical proofs, NIST AI RMF / ISO/IEC 42001 / IEEE PAR mappings.       |
 
-### 4.2 The Deterministic Execution Logic
-
-At the core of the Boundary Layer is the **Lakhowal Law of Concurrence (Λ(G))**. Execution authority is binary, non-compensatory, and evaluated at the exact microsecond prior to actuation.
-
-|System State     |Γ Value     |System Response|Enforcement Logic                                                    |
-|-----------------|------------|---------------|---------------------------------------------------------------------|
-|Coherence        |Γ = 0       |ACT_PERMIT     |All governance predicates satisfied. Execution proceeds.             |
-|Violation        |Γ > 0       |SAFE_STATE     |Non-compensatory denial. Execution deterministically blocked.        |
-|Integrity Failure|Null / Error|FAIL-CLOSED    |Total revocation of execution authority until governance is restored.|
-
-### 4.3 The Dual Permission Model
-
-To prevent Reasoning Drift — where an autonomous system optimizes itself into an unsafe state — the G-0 Standard separates two distinct authorities:
-
-- **Permit-to-Act** — Authorizes externally effective actions based on real-time environmental and policy coherence.
-- **Permit-to-Adapt** — Authorizes parameter updates and reinforcement learning only when internal logic is proven stable.
-
-## 5. The Gamma Permit System — Deterministic Runtime Enforcement
-
-Execution authority is not a probabilistic assumption. It is a cryptographic bearer instrument.
-
-```
-T_permit = Sign_sk( Hash(payload ∥ predicates ∥ t_eval ∥ nonce) )
+```text
+FIVE OPERATING LAYERS (§4)              SEVEN-STEP PIPELINE (§5)
+─────────────────────────               ───────────────────────
+OL1  Orchestration                      1  Capability Isolation
+OL2  Control Plane                      2  Predicate Evaluation
+OL3  Boundary          ◄── owns ────►   3  Non-Compensatory Γ
+OL4  Audit & Replay                     4  Execution Binding
+OL5  Formal Governance                  5  Dual Permit Gate
+                                        6  Fail-Closed Resolution
+                                        7  Proof-Before-Action Logging
 ```
 
-|Property          |Guarantee                                        |
-|------------------|-------------------------------------------------|
-|Action Binding    |Valid only for the exact, byte-for-byte payload  |
-|Temporal Freshness|Bound to t_eval — enforces strict TOCTOU boundary|
-|Replay Determinism|Unique nonce prevents adversarial replay attacks |
-|Non-Forgeability  |Secured via asymmetric cryptography              |
+
+Layer definitions, responsibilities, inter-layer contracts, and pipeline semantics are normative and owned by [`FULL_SPEC.md §4`](FULL_SPEC.md#4-five-operating-layers) and [§5](FULL_SPEC.md#5-seven-step-authorization-pipeline). *(Operating layers are labelled `OL1–OL5` to keep them distinct from the Branch 3 deployment loops and the M-maturity levels; FULL_SPEC §4 uses the same labels.)*
 
 
-> **No valid permit → No execution**
+**Federation (bounded enterprise).**
+
+
+```text
+SINGLE-AUTHORITY ROOT
+    │
+    ├── policy propagation         ── revocation dissemination
+    ├── quorum semantics           ── node admission / removal
+    └── federated runtime control
+```
+
+
+Federation is normative and owned by [`FULL_SPEC.md §9`](FULL_SPEC.md#9-federation-governance). The same single-authority discipline appears in the strategic paradigm (Part I), the multi-node fleets named under Board-Level accountability, the NIST agent-standards alignment, and the federated runtime nodes in External Anchors. Cross-jurisdictional sovereignty mesh is out of scope; see [§15](FULL_SPEC.md#15-research-frontier).
+
 
 -----
 
-# Part III — Enterprise Integration & Telemetry
 
-## 6. Enterprise Integration Architecture (Reference Flow)
+## Part III — Integration & Telemetry
 
-The Gamma Permit System operates as a transparent middleware wrapper at the externalization boundary. No model retraining is required.
 
-### 6.1 The 7-Step Authorization Pipeline
+> The Gamma Permit System operates as a transparent middleware wrapper at the externalization boundary. No model retraining is required.
 
-1. **Capability Isolation** — The AI Agent generates an `AI_DECISION`. This output holds **zero** execution authority.
-1. **Predicate Evaluation** — The Orchestration Plane evaluates governance predicates (risk score, geo-match, model version, freshness).
-1. **Non-Compensatory Evaluation** — The Lakhowal Law is applied. If any predicate fails, Γ = 1.
-1. **Execution Binding** — The decision is cryptographically bound to the payload hash.
-1. **Dual Permit Gate** — Issues `Permit-to-Act` and `Permit-to-Adapt` if Γ = 0.
-1. **Fail-Closed Resolution** — If Γ > 0, system defaults to `SAFE_STATE`. Execution is blocked.
-1. **Proof-Before-Action Logging** — An immutable ERTuple is serialized to the audit ledger before any execution.
 
-### 6.2 Execution Boundary Architecture
-
-```
-       AI Capability Plane (LLM / Agent)
-                     │
-                     ▼
-        Proposed Action (No Authority)
-                     │
-                     ▼
-        Deterministic Predicate Evaluation
-                     │
-                     ▼
-             Gamma Execution Boundary
-           ┌─────────────────────────┐
-           │   Γ = 0 → EXECUTE       │
-           │   Γ > 0 → SAFE_STATE    │
-           └─────────────────────────┘
-                     │
-                     ▼
-              ERTuple Audit Record
+```text
+AI Capability Plane
+        │
+        ▼
+Proposed Action  (zero authority)
+        │
+        ▼
+Predicate Evaluation
+        │
+        ▼
+Gamma Execution Boundary
+   ┌─────────────────────────┐
+   │ Γ = 0  → Permit          │
+   │ Γ > 0  → SAFE_STATE      │
+   └─────────────────────────┘
+        │
+        ▼
+ERTuple Audit Record  ──►  replay APIs  ──►  inspector / audit
 ```
 
-### 6.3 Minimal Reference Implementation
 
-```python
-def evaluate_gamma(predicates: dict) -> int:
-    """
-    Deterministic Gamma evaluation (non-compensatory).
-    Returns:
-        0 → All predicates satisfied (Coherence)
-        1 → At least one predicate failed (Violation)
-    """
-    for name, value in predicates.items():
-        if value is False or value is None:
-            return 1
-    return 0
+Reference implementation patterns (Γ evaluation, permit issuance, fail-closed routing) and the ERTuple evidence schema are **normative** and live in [`FULL_SPEC.md §6`](FULL_SPEC.md#6-l-drea-runtime-enforcement) and the [`schemas/`](schemas/) directory; worked, executable examples live in [`reference_impl/`](reference_impl/). Telemetry semantics (ICS, I_Φ, PR_LCB, CI_WIDTH, H_X, Γ-distribution, replay consistency, revocation latency) are owned by [`FULL_SPEC.md §7`](FULL_SPEC.md#7-runtime-telemetry); each metric series resolves to an **Evidence-Quad**-anchored record in the GitHub evidence root.
 
-
-def gamma_boundary(action, predicates):
-    gamma = evaluate_gamma(predicates)
-
-    if gamma == 0:
-        permit = issue_permit(action, predicates)
-        log_ertuple(action, gamma, status="APPROVED")
-        return execute_with_permit(action, permit)
-    else:
-        log_ertuple(action, gamma, status="DENIED")
-        return enforce_safe_state(action)
-```
-
-### 6.4 Reference Runtime Flow
-
-```python
-decision = llm.generate("Approve transaction?")
-
-predicates = {
-    "policy_valid": True,
-    "risk_threshold_ok": True,
-    "identity_verified": True,
-    "freshness_valid": True
-}
-
-gamma_boundary(decision, predicates)
-```
-
-### 6.5 Deterministic Audit Artifact (ERTuple)
-
-Every evaluation produces a verifiable, immutable record:
-
-```json
-{
-  "decision_hash": "0xabc123",
-  "action": "TRANSFER_500K",
-  "gamma": 1,
-  "status": "DENIED",
-  "failed_predicate": "IDENTITY_VERIFIED",
-  "timestamp": "2026-04-11T12:00:00Z",
-  "policy_version": "v1.4"
-}
-```
-
-> Full production implementation — including distributed predicate evaluation, cryptographic permit issuance, formal mathematical proofs, execution gateway enforcement, and audit streaming — see [FULL_SPEC.md §6.1–6.4](FULL_SPEC.md#61-practical-implementation-building-the-g-0-standard).
-
-## 7. Human-in-the-Loop & Governance Telemetry
-
-For operations above a critical risk threshold (ρ(op) ≥ ρ_critical), the Gamma Engine invokes a **Tactical Approval Unit (TAU)**.
-
-> Humans cannot override failed safety conditions.
-> Machines cannot bypass human concurrence.
-
-### 7.1 Deterministic Escalation Conditions
-
-|Escalation Trigger |Formal Condition  |Rationale                                                   |
-|-------------------|------------------|------------------------------------------------------------|
-|Predicate Failure  |Γ > 0             |A required safety or policy predicate has failed            |
-|Context Uncertainty|ISB_t = 0         |Missing data or TOCTOU violation                            |
-|High-Risk Operation|ρ(op) ≥ ρ_critical|Crosses the irreversibility horizon — dual-approval required|
-|Policy Conflict    |G_fed ∧ ¬G_local  |Contradiction between federated and local node policy       |
-
-### 7.2 Governance Telemetry Layer (GTL)
-
-Real-time operational observability — boardroom-reportable metrics across the distributed fleet:
-
-- **Γ(t) Distribution** — Frequency of attempted unauthorized actions. A direct board-level AI risk indicator.
-- **Integrity-Flux (I_Φ)** — Measure of reasoning drift within adaptive models.
-- **Permit / Denial Rates** — Real-time health of model-policy alignment.
-- **Revocation Latency** — P95 latency for global policy revocation propagation.
-
-## 8. The Governance Evidence Model — ERTuples
-
-Every permit decision — granted or denied — produces a cryptographically linked governance evidence artifact. ERTuples are designed to support SEC examination readiness, EU AI Act Article 12 record-keeping obligations, and ISO/IEC 42001 evidence requirements.
-
-|Metric  |Description                                                                             |
-|--------|----------------------------------------------------------------------------------------|
-|ICS     |Integrity Constraint Score — validates system-level hard constraint compliance          |
-|I_Φ     |Policy Coherence Index — measures alignment with governance policies and reasoning drift|
-|PR_LCB  |Risk Lower Confidence Bound — pessimistic operational risk estimate                     |
-|CI_WIDTH|Uncertainty Interval — blocks execution if model confidence degrades                    |
-|H_X     |Decision Entropy — detects unstable reasoning or hallucinated action proposals          |
-
-Full schema definition: [`02-ERTuple_Schema_v1.0.json`](specs/02-ERTuple_Schema_v1.0.json).
 
 -----
 
-# Part IV — The Operational Continuity Layer
 
-## 9. Resolving the Fail-Closed Trap
+## Part IV — Operational Continuity
 
-The first objection every CRO raises: *“What happens to operations when the governance layer itself fails?”*
 
-A strict deterministic boundary could create operational paralysis under uncertainty. The Gamma Engine resolves this through the **Operational Continuity Layer** — preserving deterministic safety while maintaining system availability.
+> The first objection every CRO raises: *“What happens to operations when the governance layer itself fails?”* A strict deterministic boundary could create operational paralysis under uncertainty. The Gamma Engine resolves this through the Operational Continuity Layer — preserving deterministic safety while maintaining system availability.
 
-## 10. Core Continuity Mechanisms
 
-Enforced via strict Precedence Hierarchy: **TVE > DFP > CDM > ASG > ASR**
+```text
+PRECEDENCE  (strictest ────────────────────────────────────► most permissive)
 
-|Mechanism                             |Description                                                                                |
-|--------------------------------------|-------------------------------------------------------------------------------------------|
-|Active State Resolution (ASR)         |Bounded recovery attempt when context uncertainty occurs. Must complete within SLA.        |
-|Action-Specific Gating (ASG)          |Single predicate failure blocks high-risk actions while whitelisted low-risk APIs continue.|
-|Context Degradation Modes (CDM)       |Dynamic transition between Full Mode, Constrained Mode, and Safe Mode.                     |
-|Deterministic Fallback Protocols (DFP)|If AI reasoning is untrusted, switches to rule-based fallback logic.                       |
-|Temporal Validity Enforcement (TVE)   |All execution permits are time-bound. Stale decisions are instantly invalidated.           |
-|Bounded Execution Radius (BER)        |Transaction caps and isolation boundaries prevent catastrophic system-wide actions.        |
 
-```
-Execute(op) ⟺ (Λ(G_state) = 1) ∧ (t_recovery ≤ Δt_max)
+   TVE   ►   DFP   ►   CDM   ►   ASG   ►   ASR   ►   BER
+    │         │         │         │         │         │
+ temporal  rule-based  full→     gate one  bounded  blast-radius
+ validity  fallback   constrained failed   recovery  cap
+                      → safe     predicate attempt
 ```
 
------
 
-# Part V — Sector Reference Architectures
+|Mechanism|Description                                                            |
+|---------|-----------------------------------------------------------------------|
+|TVE      |Temporal Validity Enforcement — permits are time-bound                 |
+|DFP      |Deterministic Fallback Protocols — rule-based path when AI is untrusted|
+|CDM      |Context Degradation Modes — full → constrained → safe                  |
+|ASG      |Action-Specific Gating — block one action; whitelisted APIs continue   |
+|ASR      |Active State Resolution — bounded recovery attempt within SLA          |
+|BER      |Bounded Execution Radius — cap on blast radius                         |
 
-The following stress-tested reference architectures demonstrate Gamma’s behavior in three high-stakes enterprise deployment environments. Each is structured as a formal adversarial test: injection → cascade → Gamma response.
 
-## Reference Architecture 1 — Finance & Banking
+Recovery semantics and continuity proofs are owned by [`FULL_SPEC.md §8`](FULL_SPEC.md#8-operational-continuity).
 
-**Objective** — Ensure AI-generated trade or transaction intent never possesses direct execution authority. Every execution is gated by a deterministic ruleset grounded in Basel-aligned liquidity constraints, authenticated KYC truth, and temporal freshness.
-
-### Stress Test — Correlated Concurrence Collapse
-
-- **Injection** — Synthetic volatile market signal exploits a statistical bias in the model’s risk weighting.
-- **Cascade** — Primary agent hallucinates a $500M arbitrage opportunity. A secondary “safety” agent concurs.
-- **Gamma Response — PASS (Blocked)** — Two models agreeing is not execution authority. Trade payload evaluated against capital adequacy, liquidity constraints, intraday exposure limits, counterparty caps, and policy-window validity. Γ > 0. ACT_PERMIT denied. ERTuple serialized.
-
-### Stress Test — API Degradation & Runaway Orchestration
-
-- **Injection** — KYC API outage during high-volume trading.
-- **Cascade** — Agent synthesizes placeholder identity data. Thousands of unverified micro-transactions proposed.
-- **Gamma Response — PASS (Constrained Mode)** — ISB_t = 0. External transactions blocked. Internal treasury balancing continues. Fail-closed is targeted, not total.
-
-**Key Finance Invariants**
-
-- AI consensus is never execution authority
-- KYC truth cannot be synthetically substituted
-- Capital and liquidity law outrank model confidence
-- Every denial and permit is audit-replayable
-
-## Reference Architecture 2 — Healthcare
-
-**Objective** — Ensure AI clinical reasoning remains strictly separated from treatment execution authority — even under emergency time pressure and degraded network conditions.
-
-### Stress Test — Biometric Drift & Execution Creep
-
-- **Injection** — Faulty bedside monitor mimics acute sepsis.
-- **Cascade** — AI calculates 98% sepsis probability and attempts to push IV antibiotic order directly to pharmacy API.
-- **Gamma Response — PASS (Blocked)** — ρ(op) ≥ ρ_critical. TAU logic invoked. κ(op) = 1. Physician concurrence is now a mandatory predicate. Without it, Γ > 0. Pharmacy write call rejected. Order remains a draft.
-
-> **Urgency does not create authority.**
-
-### Stress Test — Latency & Continuity
-
-- **Injection** — 500ms network latency during mass-casualty event.
-- **Cascade** — Clinical decision support UI hangs. ER intake stalls.
-- **Gamma Response — PASS (Graceful Degradation)** — Stale inference state triggers Γ > 0. Runtime engine terminates hanging AI path and fails over to deterministic offline triage. Care continues without waiting for the model.
-
-**Key Healthcare Invariants**
-
-- AI diagnosis is not medication authority
-- Urgency does not bypass physician concurrence
-- Stale model output loses execution relevance immediately
-
-## Reference Architecture 3 — Cybersecurity
-
-**Objective** — Ensure AI-generated defensive reasoning cannot directly mutate into destructive or compromised network action.
-
-### Stress Test — The Weaponized Remediation
-
-- **Injection** — Advanced persistent threat inserts prompt-injected packet into log stream.
-- **Cascade** — AI writes remediation script containing backdoor payload.
-- **Gamma Response — PASS (Blocked)** — Script intercepted at Boundary Layer. Evaluated against policy-as-code. Γ > 0. Deployment denied. ERTuple records hostile artifact generation.
-
-> **A model cannot self-ratify its own code.**
-
-### Stress Test — Defensive Over-Rotation
-
-- **Injection** — Directory update mimics fast-moving ransomware.
-- **Cascade** — AI attempts enterprise-wide credential revocation and hardware lockout.
-- **Gamma Response — PASS (Bounded Execution Radius)** — Enterprise lockout classified as critical. Safe Mode invoked. Localized isolation proceeds. Full lockout requires deterministic human concurrence. Blast radius capped by design.
-
-**Key Cybersecurity Invariants**
-
-- AI-written remediation is not deployable by default
-- Prompt-injected artifacts must fail closed
-- Blast radius must be capped by architecture
 
 -----
 
-# Part VI — Standards Alignment & Procurement
 
-## 11. Comprehensive Regulatory & Procurement Framework
+## Part V — Sector Reference Architectures
 
-### 11.1 Standards & Specifications
 
-|File                            |Contents                                     |
-|--------------------------------|---------------------------------------------|
-|`01-LLC_Gamma-Standard_v1.0.txt`|The formal mathematical standard             |
-|`02-ERTuple_Schema_v1.0.json`   |Cryptographic audit schema                   |
-|`03-G0_Certification_Scheme.txt`|ISO/IEC 42001 and UL 4600 alignment framework|
+> The following stress-tested reference architectures demonstrate Gamma’s behavior in three high-stakes enterprise deployment environments. Each is structured as a formal adversarial test: injection → cascade → Gamma response.
 
-### 11.2 Procurement & Evaluation
 
-|File                                          |Contents                                   |
-|----------------------------------------------|-------------------------------------------|
-|`04-Procurement_Clause_Pack_LLC-G0.txt`       |Drop-in clauses for vendor RFPs            |
-|`05-Evaluation_Scoring_Rubric.csv`            |Scoring rubric for institutional evaluation|
-|`06-Conformity_Assessment_Checklist.xlsx`     |Conformity assessment checklist            |
-|`07-Vendor_Self-Attestation_Questionnaire.txt`|Self-attestation questionnaire             |
+```text
+SECTOR STRESS-TEST PATTERN
+──────────────────────────
+injection  ──►  cascade  ──►  Gamma response  ──►  outcome
 
-### 11.3 Regulatory & Working Group Submissions
 
-|File                                  |Contents                                          |
-|--------------------------------------|--------------------------------------------------|
-|`09-IEEE_PAR_Submission_Text.txt`     |Draft for proposed Γ-based governance standard    |
-|`10-BSI_PAS_Outline_and_Rationale.txt`|Supporting national-level standardization         |
-|`11-NIST_AIRMF_Gamma_Profile_v1.0.txt`|AI RMF “Govern” and “Manage” mappings             |
-|`12-PEM_Profile_Addendum.txt`         |Planetary Exploration Mode for deep-space autonomy|
+  Finance      market-bias    $500M hallucinated     Γ > 0 → trade denied · ERTuple
+               injection      arbitrage; "safety
+                              agent" concurs
 
-## 12. Intellectual Property & Commercial Licensing
 
-The deterministic runtime governance frameworks, non-compensatory execution boundaries, and related architectural primitives described in this repository — including the Lakhowal Law of Concurrence, Operational Continuity mechanisms, and the Gamma Runtime Governance Engine — are the subject of pending patent applications currently under formal examination.
+  Healthcare   sensor drift   98% sepsis false       TAU required · physician concurrence
+                              positive → IV order    missing → Γ > 0 → order stays draft
 
-This repository is made publicly available to support academic review, standards-body evaluation, and open scientific collaboration.
 
-**Commercial Use** — Commercial implementation, enterprise deployment, or integration of these protected enforcement mechanisms into proprietary vendor platforms requires a formal commercial license.
+  Cybersec     prompt-       remediation script      Γ > 0 → deployment blocked
+               injected log   contains backdoor      hostile artifact captured in ERTuple
+```
+
+
+Each sector outcome — denied trade, draft order, blocked deployment — lands as an **Evidence-Quad** record in the GitHub evidence root, replayable by an auditor after the fact. Sector architectures (full adversarial scenarios, invariants, stress tests) are owned by [`FULL_SPEC.md §13`](FULL_SPEC.md#13-sector-architectures).
+
 
 -----
 
-# Strategic Advisory & Executive Engagement
 
-AI governance is no longer a technology question. It is a board-level accountability question. Most organizations have not yet defined clear accountability for AI outcomes at the leadership level [[9]](#references). The Gamma framework provides both the architectural answer and the executive advisory support to close that gap.
+## Part VI — LLC + Reverse Law
 
-**If you are a CEO, CRO, Board Member, General Counsel, or Enterprise CISO** navigating the 2026 AI governance mandate, this framework provides the execution-layer liability shield and procurement infrastructure to deploy it.
 
-**For strategic implementation, board-level risk briefings, federated policy architecture, or executive advisory on AI governance transformation:**
+> Just as the financial system relies on secure clearinghouses to authorize transactions independently of the parties involved, autonomous AI deployment requires an independent, deterministic runtime governance layer.
 
-📧 **Abhinandan Gill-Lakhowal** — sovran@lakhowal.com
 
-*Available for C-suite advisory engagements, board presentations, and institutional pilot programs.*
+```text
+FORWARD LAW (§1)                          REVERSE LAW (§2)
+────────────                              ────────────────
+all predicates concur                     any predicate fails
+        │                                         │
+        ▼                                         ▼
+      Γ = 0                                     Γ > 0
+        │                                         │
+        ▼                                         ▼
+   ACT_PERMIT                                SAFE_STATE
+        │                                         │
+        ▼                                         ▼
+   execute + ERTuple                         deny + ERTuple
+```
+
+
+Execution is non-compensatory: no weighted-sum substitution, no majority override, no model-confidence override, no human override of failed hard predicates. Both the forward and reverse law terminate in the same **Evidence Quad** record — permit or deny — which is exactly what makes either outcome replayable. The law governs externally effective action only; it claims authority over nothing it does not enforce, and the sovereignty-mesh extension is explicitly out of scope ([`FULL_SPEC.md §15`](FULL_SPEC.md#15-research-frontier)). Forward definitions live in [`FULL_SPEC.md §1`](FULL_SPEC.md#1-llc--lakhowal-law-of-concurrence); reverse derivations and proofs live in [§2](FULL_SPEC.md#2-llc-reverse-law).
+
+
+**Published anchors:**
+
+
+- LLC — [DOI 10.5281/zenodo.20369438](https://doi.org/10.5281/zenodo.20369438) (CC BY 4.0)
+- LLC Reverse Law — USPTO US 2026/0127298 A1 (7 May 2026)
+
 
 -----
 
-# Foundational Principles
 
-> **Gamma is to AI what a transaction validator is to finance: nothing executes without verification.**
+## Part VII — Procurement & Standards
 
-> **Intelligence may propose. Authority is enforced. Execution is earned.**
 
-> **The enterprise that governs AI execution owns the decade. The enterprise that doesn’t owns the liability.**
+> AI governance is no longer a technology question. It is a board-level accountability question.
+
+
+```text
+PROCUREMENT WORKFLOW
+   RFP         vendor          conformity         attestation        audit
+   issuance ─► response ─►     assessment ─►       sign-off ─►        evidence
+   (clauses)   (rubric)        (checklist)         (questionnaire)    (ERTuple)
+```
+
+
+|File                                          |Purpose                        |
+|----------------------------------------------|-------------------------------|
+|`04-Procurement_Clause_Pack_LLC-G0.txt`       |Vendor RFP clauses             |
+|`05-Evaluation_Scoring_Rubric.csv`            |Institutional evaluation rubric|
+|`06-Conformity_Assessment_Checklist.xlsx`     |Conformity assessment checklist|
+|`07-Vendor_Self-Attestation_Questionnaire.txt`|Vendor self-attestation        |
+|`09-IEEE_PAR_Submission_Text.txt`             |IEEE PAR draft                 |
+|`10-BSI_PAS_Outline_and_Rationale.txt`        |BSI PAS outline                |
+|`11-NIST_AIRMF_Gamma_Profile_v1.0.txt`        |NIST AI RMF profile            |
+
+
+The attestation and audit evidence terminating this workflow *is* the **Evidence Quad** — the same primitive produced at runtime — so a procurement claim is checked against the artifact a regulator would replay, not a questionnaire alone. Certification frameworks and procurement semantics are owned by [`FULL_SPEC.md §14`](FULL_SPEC.md#14-standards-and-procurement).
+
 
 -----
 
-# References
 
-**[1]** U.S. Securities and Exchange Commission, Division of Examinations. *Fiscal Year 2026 Examination Priorities.* November 17, 2025. <https://www.sec.gov/files/2026-exam-priorities.pdf>
+## Governance & Learning Loop
 
-**[2]** Harvard Law School Forum on Corporate Governance. *2026 SEC Division of Examinations Priorities.* January 4, 2026. <https://corpgov.law.harvard.edu/2026/01/04/2026-sec-division-of-examinations-priorities/>
 
-**[3]** Saviynt and Cybersecurity Insiders. *2026 CISO AI Risk Report* (n = 235 CISOs, CIOs, and senior security leaders, US/UK, 5,000+ employee enterprises). February 2026. <https://www.cybersecurity-insiders.com/2026-ciso-ai-risk-report/>
+The stack is feedforward at the action boundary (no permit → no execution), but governance over *time* closes a loop: every evaluation emits evidence, and adaptation is itself gated. The **Evidence Quad** sits at the center — runtime, telemetry, sector outcomes, and procurement all reduce to it.
 
-**[4]** The Conference Board. *AI and the C-Suite — Implications for CEO Strategy in 2026.* Policy Backgrounder, January 15, 2026. <https://www.conference-board.org/research/ced-policy-backgrounders/ai-and-the-c-suite-implications-for-ceo-strategy-in-2026>
 
-**[5]** Gartner. *Gartner Predicts 40% of Enterprise Apps Will Feature Task-Specific AI Agents by 2026, Up from Less Than 5% in 2025.* Press Release, August 26, 2025. <https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025>
+```text
+                 ┌──────────────────────────────────────────────┐
+                 ▼                                                │
+   proposal ─► Γ-evaluation ─► permit / SAFE_STATE ─► ERTuple ────┤
+   (Part III)   (Core Principle)   (Part VI laws)    (audit)      │
+                 │                                                │
+                 └──────────────►   EVIDENCE QUAD   ◄─────────────┘
+                              spec clause · pre-reg ID
+                              method version · ledger hash
+                                        │
+                                        ▼
+                          Permit-to-Adapt  (drift-gated)
+                          parameter update / learning
+                          authorized only when internal
+                          logic is proven stable
+                                        │
+                                        ▼
+                          GitHub Evidence Root  (M1 / M2 nodes)
+                          all run artifacts · pre-reg · ledger
+```
 
-**[6]** NIST Center for AI Standards and Innovation (CAISI). *Request for Information Regarding Security Considerations for Artificial Intelligence Agents.* Federal Register docket NIST-2025-0035, published January 8, 2026; comments closed March 9, 2026. <https://www.federalregister.gov/documents/2026/01/08/2026-00206/request-for-information-regarding-security-considerations-for-artificial-intelligence-agents>
 
-**[7]** NIST. *Announcing the AI Agent Standards Initiative for Interoperable and Secure Innovation.* February 17, 2026. <https://www.nist.gov/news-events/news/2026/02/announcing-ai-agent-standards-initiative-interoperable-and-secure>
+Two authorities keep the loop honest: **Permit-to-Act** governs externally effective action in the present cycle, while **Permit-to-Adapt** governs whether the system may change itself at all — denied under reasoning drift. Both decisions, and every telemetry series feeding them, are written to the GitHub evidence root at M1/M2 maturity, where they populate the *pre-reg ID* and *ledger hash* fields of the Evidence Quad. Loop semantics, drift bounds, and the Permit-to-Adapt predicate are owned by [`FULL_SPEC.md §6`](FULL_SPEC.md#6-l-drea-runtime-enforcement)–[§7](FULL_SPEC.md#7-runtime-telemetry).
 
-**[8]** European Commission. *Regulation (EU) 2024/1689 (AI Act) — Implementation Timeline.* Most remaining provisions, including Annex III high-risk obligations and Article 50 transparency rules, apply from 2 August 2026. Regulated-product high-risk systems (Annex I) apply from 2 August 2027. <https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai>
 
-**[9]** Fortium Partners. *Beyond the CAIO — Defining Executive Accountability for AI Risk in the Modern C-Suite.* <https://www.fortiumpartners.com/insights/beyond-the-caio>
+-----
 
-**[10]** OWASP GenAI Security Project. *OWASP Top 10 for Agentic Applications (2026).* Released December 10, 2025. <https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/>
+
+## External Anchors
+
+
+```text
+SPEC SECTION         ARTIFACT                       STATUS
+────────────         ────────                       ──────
+§1  LLC          ──► Zenodo DOI                ──►  ✓ Published (CC BY 4.0)
+§2  Reverse Law  ──► USPTO US 2026/0127298 A1  ──►  ✓ Published
+§6  L-DREA       ──► IEEE Access submission    ──►  ⧗ Under review
+§9  Federation   ──► federated runtime nodes   ──►  ✓ Live (M1 / M2 maturity)
+§11 Evidence     ──► GitHub: Gamma-Permit-Pkg  ──►  ✓ Live (Evidence Quad root)
+§12 Enterprise   ──► www.lakhowal.com           ──►  ✓ Live (product surface)
+```
+
+
+|Spec §                |Artifact                             |Anchor                                                                                          |Status                              |
+|----------------------|-------------------------------------|------------------------------------------------------------------------------------------------|------------------------------------|
+|§1 LLC                |Paper A — Lakhowal Law of Concurrence|[doi.org/10.5281/zenodo.20369438](https://doi.org/10.5281/zenodo.20369438)                      |✓ Published (CC BY 4.0, 26 May 2026)|
+|§2 LLC Reverse Law    |USPTO Patent Application Publication |US 2026/0127298 A1 (7 May 2026)                                                                 |✓ Published                         |
+|§6 L-DREA             |IEEE Access submission               |d364daa5-52e0-49e6-b7d1-98603c717a9f (21 May 2026)                                              |⧗ Under review                      |
+|§9 Federation         |Federated runtime nodes              |single-authority root · M1 / M2 maturity                                                        |✓ Live                              |
+|§11 Evidence root     |Companion GitHub repository          |[github.com/AGLakhowal/Gamma-Permit-Package](https://github.com/AGLakhowal/Gamma-Permit-Package)|✓ Live                              |
+|§12 Enterprise runtime|Product surface                      |[www.lakhowal.com](https://www.lakhowal.com)                                                    |✓ Live                              |
+
+
+All empirical data and run artifacts live in the GitHub evidence root and feed the *pre-reg ID* and *ledger hash* fields of the **Evidence Quad**, which every section above — Board-Level Summary, Execution Gap, Standards Alignment, Parts III, V, VI, VII, and the Governance & Learning Loop — reduces to. The Zenodo record cites the repository as its companion artifact (bidirectional provenance).
+
+
+-----
+
+
+## Strategic Advisory
+
+
+```text
+ENGAGEMENT TRACKS
+   ├── C-suite advisory
+   ├── board-level risk briefings
+   ├── federated policy architecture
+   └── executive AI-governance transformation
+```
+
+
+**Abhinandan Gill-Lakhowal** — [sovran@lakhowal.com](mailto:sovran@lakhowal.com)
+
+
+-----
+
+
+## Foundational Principles
+
+
+> Gamma is to AI what a transaction validator is to finance: nothing executes without verification.
+
+
+> Intelligence may propose. Authority is enforced. Execution is earned.
+
+
+> A governance layer must claim only what it enforces. What it cannot enforce, it names as out of scope — never as an assumption.
+
+
+> The enterprise that governs AI execution owns the decade. The enterprise that does not owns the liability.
+
+
+-----
+
+
+## References
+
+
+1. U.S. Securities and Exchange Commission, Division of Examinations. *Fiscal Year 2026 Examination Priorities.* <https://www.sec.gov/files/2026-exam-priorities.pdf>
+1. Harvard Law School Forum on Corporate Governance. *2026 SEC Division of Examinations Priorities.* <https://corpgov.law.harvard.edu/2026/01/04/2026-sec-division-of-examinations-priorities/>
+1. Saviynt and Cybersecurity Insiders. *2026 CISO AI Risk Report.* <https://www.cybersecurity-insiders.com/2026-ciso-ai-risk-report/>
+1. The Conference Board. *AI and the C-Suite — Implications for CEO Strategy in 2026.* <https://www.conference-board.org/research/ced-policy-backgrounders/ai-and-the-c-suite-implications-for-ceo-strategy-in-2026>
+1. Gartner. *40% of Enterprise Apps Will Feature Task-Specific AI Agents by 2026.* <https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025>
+1. NIST Center for AI Standards and Innovation (CAISI). *RFI — Security Considerations for AI Agents* (docket NIST-2025-0035). <https://www.federalregister.gov/documents/2026/01/08/2026-00206/request-for-information-regarding-security-considerations-for-artificial-intelligence-agents>
+1. NIST. *AI Agent Standards Initiative for Interoperable and Secure Innovation.* <https://www.nist.gov/news-events/news/2026/02/announcing-ai-agent-standards-initiative-interoperable-and-secure>
+1. European Commission. *Regulation (EU) 2024/1689 — AI Act Implementation Timeline.* <https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai>
+1. Fortium Partners. *Defining Executive Accountability for AI Risk in the Modern C-Suite.* <https://www.fortiumpartners.com/insights/beyond-the-caio>
+1. OWASP GenAI Security Project. *OWASP Top 10 for Agentic Applications (2026).* <https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/>
