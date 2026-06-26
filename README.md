@@ -435,6 +435,13 @@ THEOREM ANCHORING: the lattice properties are grounded in the T0–T9 family (Pa
   TLC: 2,489,446 total / 40,192 distinct states, zero violations (Paper A Appendix A).
 ```
 
+----
+## 📂 Report Link to the Codebase for Test Cases
+
+The complete source code used for implementing and validating the test cases is available in the following GitHub repository:
+
+**GitHub Repository:**  
+https://github.com/Sukhmangill977/code_lakhowal
 
 -----
 
