@@ -657,7 +657,51 @@ BEFORE GAMMA                              AFTER GAMMA
 
 Gamma removes the trade-off by separating cognition from actuation, proposal from authority, and capability from execution — and it holds the same boundary across a single node and a federated fleet under one authority root.
 
+| Path | The Enterprise Trade-Off |
+| :--- | :--- |
+| **Block Deployment** | Forfeit autonomous capability and market velocity to maintain traditional safety. |
+| **Deploy Unbounded** | Accept unquantifiable liability for epistemic model failures crossing into physical actuation. |
+| **Deploy with Gamma** | **Scale agentic systems with deterministic, hardware-backed execution boundaries.** |
 
+-----
+
+## System Architecture Overview: The Gamma Gate Pipeline (D5)
+
+The dual permit verification process introduces a critical dependency boundary protected by an atomic **Two-Phase Transactional Commit Loop**, ensuring that physical actuation cannot decouple from its audit trail.
+
+* **Logical Validation:** Governance predicates systematically evaluate the AI's proposed action. 
+* **Write-Ahead Log (WAL):** Before unmasking physical control registers, the local runtime compiles the binary `ERTuple` payload into non-volatile, radiation-hardened memory (MRAM).
+* **Commit Verification:** The actuator path remains hardware-blocked until a checksum/cryptographic digest confirms the write-ahead block is uncorrupted. 
+
+If a serialization fault or power fluctuation occurs mid-commit, an asynchronous **Hardware Intercept Protocol** instantly pulls down actuator output drivers, forcing the system into a fail-closed `SAFE_STATE` ($\Gamma > 0$) and preventing unlogged execution.
+
+-----
+
+## Network Topology & Fault Tolerance: Partition and Degradation (D6)
+
+Under conditions of complete network partition where a node loses access to centralized NTP pools and distributed consensus pairs, Gamma shifts reliance from symmetric wall-clock synchronization to localized **Relative Monotonic Drift Bound Checks**.
+
+Convergence does not rely on fleet reachability. Instead, the system enforces a strict time-to-live (TTL) boundary on all cryptographic permits. The local validity evaluation incorporates a pessimistic divergence factor ($\epsilon_{\text{drift}}$) scaled against the local hardware oscillator's maximum certified drift rate. If the maximum boundary of local time variance exceeds the absolute expiry horizon by even a single microsecond, the hardware trips autonomously, isolating the asset. 
+
+**First-occurrence prevention holds at every tier and loop, regardless of upstream connectivity.**
+
+-----
+
+## Standards Alignment
+
+Gamma maps directly to the operational evidence and risk-management requirements of the 2026 global regulatory landscape:
+
+* **NIST AI 800-2:** Provides the formal "Execution Integrity" evaluation construct.
+* **ISO/IEC 42001:** Satisfies real-time risk treatment and deterministic audit logging mandates.
+* **EU AI Act (Article 12):** Automates the generation of non-repudiable, replayable system logs prior to high-risk actuation.
+
+-----
+
+## Where to Start
+
+1. **For System Architects & Implementers:** Begin with [`FULL_SPEC.md`](FULL_SPEC.md) Sections 4 through 7 to understand the Gate Pipeline and ERTuple serialization.
+2. **For Standards & Compliance Officers:** Review `07-procurement/` for the conformance checklists and L1-L4 evaluation rubrics.
+3. **For Academic & Formal Verification:** Review `06-llc/` for the foundational Lakhowal Law of Concurrence and `02-g0-stack/` for the TLA+ invariants.
 -----
 
 
