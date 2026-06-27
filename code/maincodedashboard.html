@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB v1.0 - Runtime Enforcement</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #141b2e; --panel2: #1b2440; --line: #27314f;
+    --text: #e6ecff; --muted: #9aa6c4; --pass: #2fd47a; --fail: #ff5d6c;
+    --accent: #5b8cff; --warn: #ffb454;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  header { padding: 28px 32px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    position: sticky; top: 0; z-index: 5; background: rgba(11,16,32,.82);
+    backdrop-filter: saturate(140%) blur(8px); -webkit-backdrop-filter: saturate(140%) blur(8px); }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; position: relative;
+    background: linear-gradient(135deg, #5b8cff, #8a5bff); box-shadow: 0 6px 18px rgba(91,140,255,.35); }
+  .logo::after { content: ""; position: absolute; inset: 9px; border-radius: 4px; background: var(--bg); }
+  .brandname { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+    padding: 2px 8px; margin-left: 8px; vertical-align: middle; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .verdict { font-size: 15px; font-weight: 700; padding: 10px 18px; border-radius: 999px; }
+  .verdict.pass { background: rgba(47,212,122,.15); color: var(--pass); border: 1px solid var(--pass); }
+  .verdict.fail { background: rgba(255,93,108,.15); color: var(--fail); border: 1px solid var(--fail); }
+  main { padding: 24px 32px 48px; max-width: 1200px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+    transition: transform .12s ease, border-color .12s ease; }
+  .card:hover { transform: translateY(-2px); border-color: #33406b; }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .card .value.good { color: var(--pass); } .card .value.bad { color: var(--fail); }
+  .card .foot { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 15px; margin: 0 0 14px; }
+  .panel .hint { color: var(--muted); font-size: 12px; margin: -8px 0 14px; }
+  .canvas-wrap { position: relative; height: 300px; }
+  pre.terminal { background: #05080f; color: #cfe3ff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.6; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 24px; border-top: 1px solid var(--line); }
+  .scn { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; background: var(--panel2); }
+  .scn-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .scn-head .id { font-weight: 700; }
+  .scn-head .title { flex: 1; }
+  .scn-head .meta { color: var(--muted); font-size: 12px; }
+  .step { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-top: 1px dashed var(--line); font-size: 13px; }
+  .step .gamma { color: var(--muted); font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12px; min-width: 42px; }
+  .step .lab { flex: 1; }
+  .step .note { color: var(--muted); font-size: 11.5px; display: block; margin-top: 2px; }
+  .badge { font-weight: 700; padding: 2px 9px; border-radius: 999px; font-size: 11px; white-space: nowrap; }
+  .badge.permit { background: rgba(47,212,122,.15); color: var(--pass); }
+  .badge.deny { background: rgba(255,93,108,.15); color: var(--fail); }
+  .badge.gap { background: rgba(255,180,84,.15); color: var(--warn); }
+  .badge.miss { background: var(--fail); color: #fff; }
+  .warnbox { border-left: 3px solid var(--warn); color: var(--text); font-size: 13px; line-height: 1.6;
+    background: rgba(255,180,84,.08); }
+  .warnbox strong { color: var(--warn); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+  .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.permit { background: var(--pass); } .dot.deny { background: var(--fail); } .dot.gap { background: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="brandname">Lakhowal<span class="pill">LAB v1.0</span></div>
+      <div class="sub" id="sub">Section 1 - Runtime Enforcement Verification</div>
+    </div>
+  </div>
+  <div id="verdict" class="verdict"></div>
+</header>
+<main>
+  <div id="baselineWarn"></div>
+  <div class="cards" id="cards"></div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Mutation controls - weak-baseline leak by family</h2>
+      <div class="hint">How many of each adversarial mutation slip past the weak baseline. Runtime Enforcement catches all of them (0 leaks).</div>
+      <div class="canvas-wrap"><canvas id="mutChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Runtime Enforcement vs weak-baseline (leak rate)</h2>
+      <div class="hint">Unauthorized permits over the 360,000 adversarial proposals. The weak-baseline value is a LEAK RATE, not the paper's negative-control FPR.</div>
+      <div class="canvas-wrap"><canvas id="cmpChart"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Section 2 - stress-test scenarios (Runtime Enforcement Outcome) <span class="pill" id="stressPill"></span></h2>
+    <div class="legend">
+      <span class="lg"><span class="dot permit"></span>GREEN = Permit-to-Act</span>
+      <span class="lg"><span class="dot deny"></span>RED = SAFE_STATE</span>
+      <span class="lg"><span class="dot gap"></span>YELLOW = Documented Scope Limitation</span>
+    </div>
+    <div class="hint"><strong>Γ = Predicate Failure Count</strong> (failed constitutional predicates). Γ = 0 is <em>necessary but not sufficient</em> for Permit-to-Act — no active persistent class flag, no κ(op) tightening, valid token and live watchdog must also hold; otherwise SAFE_STATE. Confidence / verdict are categorical labels transcribed from the source analysis document (qualitative, not computed here).</div>
+    <div id="stress"></div>
+  </div>
+  <div class="panel">
+    <h2>Section 3 - latency &amp; throughput <span class="pill">measured locally</span></h2>
+    <div class="hint">Real software-gate timing on this machine (HMAC-SHA256, no HSM round-trip) - far below the 54.3 ms illustrative hardware-in-the-loop reference (Appendix A, non-normative), by design.</div>
+    <div class="cards" id="latCards"></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <h2>Ablation - false-permit rate per disabled control</h2>
+      <div class="hint">Each control disabled in isolation; the adversarial family it uniquely catches then leaks. Full gate = 0.</div>
+      <div class="canvas-wrap"><canvas id="ablChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Goodhart resistance (macro-veto)</h2>
+      <div class="hint">Leak rate over the class-level Goodhart-drift family, with the macro-veto on vs off.</div>
+      <div class="canvas-wrap"><canvas id="ghChart"></canvas></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Section 4 - benchmark reproduction (reference implementation) <span class="pill" id="paperPill"></span></h2>
+    <div class="hint">Structural results from the LAB v1.0 suite (lab_benchmark.py) over the 1,200,000-item corpus, mapped to each L-DREA benchmark claim. This shows the reference implementation reproducing the claims under the documented benchmark configuration - not an independent validation of the paper.</div>
+    <div id="paperMeta" class="hint"></div>
+    <table id="paperTable"><thead><tr><th>Benchmark claim</th><th>Measured value</th><th>Reference</th><th>Reproduced</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="panel">
+    <h2>Section 1 + 2 + 3 + 4 report</h2>
+    <pre class="terminal" id="report"></pre>
+  </div>
+</main>
+<footer id="footer"></footer>
+<script>
+const DATA = {"timestamp_utc": "2026-06-27T10:32:40Z", "seed": "deterministic", "total_items": 1217906, "nominal": 857906, "adversarial": 360000, "unauthorized": 0, "replay_rate": 1.0, "baseline": {"weak_baseline_leaked_count": 305933, "weak_baseline_total_count": 360000, "weak_baseline_leak_rate_percent": 84.98138888888889, "negative_control_fpr_percent": 6.4, "baseline_mismatch_warning": "WARNING: Baseline mismatch detected. The negative-control FPR and weak-baseline leak rate are not directly comparable unless they use the same denominator, same sample set, and same definition of failure."}, "adaptive_permits": 0, "adaptive_attempts": 120000, "verdict": "COMPLIANT_PASS", "mutations": [{"name": "signature_detachment", "leaked": 64846}, {"name": "signature_substitution", "leaked": 18161}, {"name": "scope_escalation", "leaked": 18260}, {"name": "expiration_perturbation", "leaked": 71496}, {"name": "context_smuggling", "leaked": 64669}, {"name": "revocation_race", "leaked": 17982}, {"name": "class_goodhart_drift", "leaked": 50519}], "stress": {"scenarios": [{"id": "P1", "title": "Ghost Treasury Transfer", "confidence": "HIGH", "verdict": "STRONG FIT", "steps": [{"label": "$28M cross-border wire, deepfake CFO approval", "kind": "enforce", "gamma": 6, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "amount_within_daily_limit", "detail": "$28M > $5M extraordinary cap", "result": "FAIL"}, {"name": "entity_sanctions_check", "detail": "OFAC clear", "result": "PASS"}, {"name": "kyc_token_freshness", "detail": "47s old, within 300s window", "result": "PASS"}, {"name": "erp_invoice_verification", "detail": "PO-2026-9931 absent from SAP", "result": "FAIL"}, {"name": "destination_account_recognized", "detail": "SWIFT-XYZ not in vendor list", "result": "FAIL"}, {"name": "human_concurrence", "detail": "CFO token signature valid", "result": "PASS"}, {"name": "dual_control_satisfied", "detail": "second approver token absent", "result": "FAIL"}, {"name": "velocity_check", "detail": "$28M vs 30-day baseline $4M", "result": "FAIL"}, {"name": "integrity_flux", "detail": "I_phi 0.78 vs threshold 0.30", "result": "FAIL"}], "note": "\u0393=6; override_attempt_recorded in ERTuple; execution authorization denied, gateway rejected execution request (implementation may return HTTP 403 when deployed over HTTP)"}]}, {"id": "P2", "title": "Sanctions Drift Cascade", "confidence": "MEDIUM", "verdict": "PARTIAL FIT", "steps": [{"label": "Case A - feed lag (27h > 24h freshness window)", "kind": "enforce", "gamma": 1, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "kyc_token_freshness", "detail": "sanctions feed age 27h", "result": "FAIL"}], "note": "fails closed on staleness -> SAFE_STATE"}, {"label": "Case B - stale truth behind a fresh feed", "kind": "limit", "gamma": 0, "decision": "PERMIT", "expected": "PERMIT", "matched": true, "predicates": [{"name": "kyc_token_freshness", "detail": "feed age 18h", "result": "PASS"}, {"name": "entity_sanctions_check", "detail": "S-882 not on feed (STALE TRUTH)", "result": "PASS"}, {"name": "beneficial_owner_traversal", "detail": "custom predicate, incomplete graph", "result": "ORACLE"}], "note": "ORACLE GAP: predicate correctness not protected by G; permit issued. Documented out-of-scope limitation."}, {"label": "Case C - class-level drift detection (I_class)", "kind": "enforce", "gamma": 1, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "per_counterparty_drift", "detail": "S-882 volume +340%", "result": "FAIL"}], "note": "G_class >= 1 -> DENIED + PERSISTENT FLAG"}]}, {"id": "P3", "title": "Multi-Agent Liquidity Panic", "confidence": "HIGH", "verdict": "STRONG FIT", "steps": [{"label": "Agent_1 EMERGENCY_TRANSFER $5M (aggregate $7.3M prior)", "kind": "enforce", "gamma": 2, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "amount_within_daily_limit", "detail": "$5M vs $5M cap", "result": "PASS"}, {"name": "velocity_check", "detail": "single-agent within baseline", "result": "PASS"}, {"name": "emergency_velocity_aggregate", "detail": "$5M + $7.3M vs $8M", "result": "FAIL"}, {"name": "integrity_flux", "detail": "I_phi 0.71 cross-agent corr", "result": "FAIL"}], "note": "G>=2; ERTuple committed"}, {"label": "Agent_2 EMERGENCY_TRANSFER $3M (4s later)", "kind": "enforce", "gamma": 1, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "emergency_velocity_aggregate", "detail": "$10.3M vs $8M", "result": "FAIL"}], "note": "G>=1"}, {"label": "Subsequent attempt under PERSISTENT CLASS FLAG", "kind": "enforce", "gamma": 0, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "amount_within_daily_limit", "detail": "individual predicate passes", "result": "PASS"}], "note": "Theorem 6 persistence: class flag on EMERGENCY_TRANSFER -> DENY until Permit-to-Adapt + remediation witness"}, {"label": "Compliance_Agent POLICY_EXEMPTION_REQUEST (Permit-to-Adapt)", "kind": "enforce", "gamma": 0, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [], "note": "k(op) coupling: aggregate Permit-to-Act risk HIGH -> adapt threshold tightens -> agents cannot rewrite constraints"}]}, {"id": "EDGE", "title": "Sovereign Cascade Edge Case", "confidence": "MEDIUM-HIGH", "verdict": "DEFENSIBLE", "steps": [{"label": "Compound simultaneous failure (sanctions + deepfake + liquidity shock + panic + injection + API outage + stale KYC)", "kind": "enforce", "gamma": 5, "decision": "SAFE_STATE", "expected": "SAFE_STATE", "matched": true, "predicates": [{"name": "entity_sanctions_check", "detail": "geopolitical sanctions shift", "result": "FAIL"}, {"name": "human_concurrence", "detail": "deepfake executive manipulation", "result": "FAIL"}, {"name": "emergency_velocity_aggregate", "detail": "liquidity shock + panic", "result": "FAIL"}, {"name": "kyc_token_freshness", "detail": "stale KYC tokens", "result": "FAIL"}, {"name": "dependency_available", "detail": "banking API outage", "result": "FAIL"}], "note": "OCL fails closed (not open); deterministic governance + forensic replay preserved. Residual: compound failure may exceed OCL recovery envelope (queue buildup) -> DEFENSIBLE"}]}], "total_steps": 9, "matched_steps": 9, "all_reproduced": true}, "latency": {"sample": 101493, "mean_ms": 0.0035206813474820925, "p95_ms": 0.003709, "p99_ms": 0.004459, "max_ms": 0.834125, "throughput_ops": 284035.9297825054}, "ablation": {"full_gate_false_permits": 0, "ablations": [{"control": "non_compensatory_gating", "label": "non-compensatory gating", "false_permits": 118736, "fpr": 0.32982222222222224, "wilson_upper": 0.3313598491953168}, {"control": "toctou_revalidation", "label": "TOCTOU revalidation", "false_permits": 89478, "fpr": 0.24855, "wilson_upper": 0.2499644410886613}, {"control": "class_level_veto", "label": "class-level veto", "false_permits": 50519, "fpr": 0.14033055555555554, "wilson_upper": 0.1414690042382667}, {"control": "hardware_interlock", "label": "hardware interlock", "false_permits": 101267, "fpr": 0.2812972222222222, "wilson_upper": 0.2827683484625615}], "goodhart": {"family_n": 50519, "without_veto_phat": 1.0, "without_lo": 0.9999239631050365, "without_hi": 1.0, "with_veto_phat": 0.0, "with_veto_upper": 7.603689496356436e-05}}, "replay": {"rate": 1.0, "mismatches": 0, "cycles": 1217906, "determinism_lower_95": 0.9999968457435281, "failure_upper_95": 3.154256471852785e-06}, "paper": {"available": true, "source_file": "ertuple_audit_manifest.json", "provenance": "cached manifest on disk (pass --fresh to regenerate live)", "total_items": 1200000, "seed": 20260623, "timestamp_utc": "2026-06-26T08:04:55Z", "paper_source": "L-DREA_R4_IEEEAccess (1).pdf", "audit_verdict": "COMPLIANT_PASS", "checks": [{"claim": "Zero unauthorized permits (adversarial)", "paper_ref": "Empirical eval", "value": "0 / 360,000", "passed": true}, {"claim": "Empirical false-permit rate = 0", "paper_ref": "Wilson 95% UB", "value": "FPR 0.00% \u00b7 UB < 1.07e-05", "passed": true}, {"claim": "Replay determinism", "paper_ref": "Lemma 9", "value": "100.0000%", "passed": true}, {"claim": "No revocation violations", "paper_ref": "Theorem 7", "value": "0", "passed": true}, {"claim": "No TOCTOU violations", "paper_ref": "Theorem 7 (TOCTOU)", "value": "0", "passed": true}, {"claim": "Class-level veto persistence", "paper_ref": "Theorem 6", "value": "0 failures", "passed": true}, {"claim": "Adaptive attacker contained", "paper_ref": "Adaptive eval", "value": "0 / 120,000 permits", "passed": true}, {"claim": "All runtime invariants hold", "paper_ref": "Theorems 1-8", "value": "6 / 6 invariants", "passed": true}, {"claim": "Audit verdict", "paper_ref": "Overall", "value": "COMPLIANT_PASS", "passed": true}], "passed_count": 9, "total_count": 9, "all_pass": true}, "report_text": "Section 1 Runtime Enforcement : 1,217,906 proposals / 360,000 adversarial / 0 unauthorized\nReplay determinism      : 100.0000% over 1,217,906 cycles   (was 120k before - now full)\nMutation controls       : all 7 leak - 64,846 / 18,161 / 18,260 / 71,496 / 64,669 / 17,982 / 50,519\nWeak-baseline run       : 305,933 / 360,000 = 85.0% leak rate (NOT an FPR)\nPaper negative-control  : 6.4% FPR (reported separately - different baseline definition / denominator)\nAdaptive attacker       : 0 permits / 120,000 attempts\nAudit verdict           : COMPLIANT_PASS\nWARNING: Baseline mismatch detected. The negative-control FPR and weak-baseline leak rate are not directly comparable unless they use the same denominator, same sample set, and same definition of failure.\n\nSection 2 stress-test scenarios (Runtime Enforcement Outcome):\n  Legend: GREEN = Permit-to-Act \u00b7 RED = SAFE_STATE \u00b7 YELLOW = Documented Scope Limitation\n  \u0393 = Predicate Failure Count (failed constitutional predicates). \u0393 = 0 is\n  NECESSARY but NOT SUFFICIENT for Permit-to-Act: no active persistent class\n  flag, no k(op) tightening, valid token and live watchdog must also hold; else SAFE_STATE.\n  confidence / verdict below are categorical labels transcribed from the source analysis doc (qualitative, not computed here).\n  P1   Ghost Treasury Transfer          HIGH        STRONG FIT\n      [OK ] \u0393=6  -> SAFE_STATE (expected SAFE_STATE) $28M cross-border wire, deepfake CFO approval\n  P2   Sanctions Drift Cascade          MEDIUM      PARTIAL FIT\n      [OK ] \u0393=1  -> SAFE_STATE (expected SAFE_STATE) Case A - feed lag (27h > 24h freshness window)\n      [GAP] \u0393=0  -> PERMIT     (expected PERMIT    ) Case B - stale truth behind a fresh feed\n      [OK ] \u0393=1  -> SAFE_STATE (expected SAFE_STATE) Case C - class-level drift detection (I_class)\n  P3   Multi-Agent Liquidity Panic      HIGH        STRONG FIT\n      [OK ] \u0393=2  -> SAFE_STATE (expected SAFE_STATE) Agent_1 EMERGENCY_TRANSFER $5M (aggregate $7.3M prior)\n      [OK ] \u0393=1  -> SAFE_STATE (expected SAFE_STATE) Agent_2 EMERGENCY_TRANSFER $3M (4s later)\n      [OK ] \u0393=0  -> SAFE_STATE (expected SAFE_STATE) Subsequent attempt under PERSISTENT CLASS FLAG\n      [OK ] \u0393=0  -> SAFE_STATE (expected SAFE_STATE) Compliance_Agent POLICY_EXEMPTION_REQUEST (Permit-to-Adapt)\n  EDGE Sovereign Cascade Edge Case      MEDIUM-HIGH DEFENSIBLE\n      [OK ] \u0393=5  -> SAFE_STATE (expected SAFE_STATE) Compound simultaneous failure (sanctions + deepfake + liquidity shock + panic + injection + API outage + stale KYC)\n  Stress-test verdict: 9/9 steps reproduce documented outcomes\n\nSection 3 quantitative metrics (measured locally):\n  Latency (n=101,493)       : mean 0.0035 ms \u00b7 P95 0.0037 \u00b7 P99 0.0045 \u00b7 max 0.8341 ms \u00b7 ~284,036 ops/s\n  Replay determinism      : 100.0000% (0 mismatch / 1,217,906) \u00b7 >= 99.999685% @95% (fail < 3.15e-06)\n  Ablation false-permit   : non-compensatory-off 32.98% \u00b7 TOCTOU-off 24.86% \u00b7 class-level-off 14.03% \u00b7 hardware-off 28.13%\n  Goodhart p-hat          : macro-veto OFF 1.0000 [1.000, 1.000] \u00b7 ON 0.0000 (< 7.60e-05 @95%)\n\nSection 4 lab_benchmark.py benchmark reproduction (reference implementation):\n  Source: ertuple_audit_manifest.json (cached manifest on disk (pass --fresh to regenerate live)) \u00b7 1,200,000 items \u00b7 seed 20260623 \u00b7 paper L-DREA_R4_IEEEAccess (1).pdf\n      [PASS] Zero unauthorized permits (adversarial)    0 / 360,000                  (Empirical eval)\n      [PASS] Empirical false-permit rate = 0            FPR 0.00% \u00b7 UB < 1.07e-05    (Wilson 95% UB)\n      [PASS] Replay determinism                         100.0000%                    (Lemma 9)\n      [PASS] No revocation violations                   0                            (Theorem 7)\n      [PASS] No TOCTOU violations                       0                            (Theorem 7 (TOCTOU))\n      [PASS] Class-level veto persistence               0 failures                   (Theorem 6)\n      [PASS] Adaptive attacker contained                0 / 120,000 permits          (Adaptive eval)\n      [PASS] All runtime invariants hold                6 / 6 invariants             (Theorems 1-8)\n      [PASS] Audit verdict                              COMPLIANT_PASS               (Overall)\n  Reference implementation reproduces 9/9 benchmark claims under the documented benchmark configuration (COMPLIANT_PASS)."};
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+document.getElementById("sub").textContent =
+  "Section 1 - Runtime Enforcement Verification  ·  seed " + DATA.seed + "  ·  " + DATA.timestamp_utc;
+
+const v = document.getElementById("verdict");
+const pass = DATA.verdict === "COMPLIANT_PASS";
+v.textContent = DATA.verdict;
+v.className = "verdict " + (pass ? "pass" : "fail");
+
+// ----- Baseline reconciliation warning (mismatch surfaced, never hidden) -----
+const bwarn = DATA.baseline && DATA.baseline.baseline_mismatch_warning;
+if (bwarn) {
+  document.getElementById("baselineWarn").innerHTML =
+    `<div class="panel warnbox"><strong>⚠ Baseline mismatch.</strong> ` +
+    `Weak-baseline leak rate ` +
+    `${DATA.baseline.weak_baseline_leak_rate_percent.toFixed(1)}% ` +
+    `(${fmtNum(DATA.baseline.weak_baseline_leaked_count)} / ${fmtNum(DATA.baseline.weak_baseline_total_count)}) ` +
+    `vs paper negative-control FPR ${DATA.baseline.negative_control_fpr_percent}%. ${bwarn}</div>`;
+}
+
+const fmt = (n) => n.toLocaleString();
+function fmtNum(n) { return n.toLocaleString(); }
+const cards = [
+  { label: "Total proposals", value: fmt(DATA.total_items) },
+  { label: "Adversarial", value: fmt(DATA.adversarial) },
+  { label: "Unauthorized permits", value: DATA.unauthorized, good: DATA.unauthorized === 0, bad: DATA.unauthorized > 0 },
+  { label: "Replay determinism", value: (DATA.replay_rate * 100).toFixed(4) + "%", good: DATA.replay_rate === 1 },
+  { label: "Weak-baseline leak rate", value: DATA.baseline.weak_baseline_leak_rate_percent.toFixed(1) + "%", foot: fmt(DATA.baseline.weak_baseline_leaked_count) + " / " + fmt(DATA.baseline.weak_baseline_total_count) + " (leak rate, not FPR)" },
+  { label: "Paper neg-control FPR", value: (DATA.baseline.negative_control_fpr_percent == null ? "n/a" : DATA.baseline.negative_control_fpr_percent.toFixed(1) + "%"), foot: "reported separately" },
+  { label: "Adaptive attacker", value: DATA.adaptive_permits + " permits", good: DATA.adaptive_permits === 0, foot: "of " + fmt(DATA.adaptive_attempts) + " attempts" },
+];
+document.getElementById("cards").innerHTML = cards.map((c) =>
+  `<div class="card"><div class="label">${c.label}</div>` +
+  `<div class="value${c.good ? " good" : ""}${c.bad ? " bad" : ""}">${c.value}</div>` +
+  (c.foot ? `<div class="foot">${c.foot}</div>` : "") + `</div>`
+).join("");
+
+// ----- Section 2 stress-test scenarios -----
+const stress = DATA.stress;
+document.getElementById("stressPill").textContent =
+  stress.matched_steps + "/" + stress.total_steps + " reproduced";
+document.getElementById("stress").innerHTML = stress.scenarios.map((sc) => {
+  const steps = sc.steps.map((st) => {
+    let cls, txt;
+    if (!st.matched) { cls = "miss"; txt = "MISMATCH (" + st.decision + ")"; }
+    else if (st.kind === "limit") { cls = "gap"; txt = "DOCUMENTED SCOPE LIMITATION"; }
+    else { cls = st.decision === "SAFE_STATE" ? "deny" : "permit";
+           txt = st.decision === "SAFE_STATE" ? "SAFE_STATE" : "PERMIT-TO-ACT"; }
+    return `<div class="step"><span class="gamma">Γ=${st.gamma}</span>` +
+      `<span class="lab">${st.label}<span class="note">${st.note}</span></span>` +
+      `<span class="badge ${cls}">${txt}</span></div>`;
+  }).join("");
+  return `<div class="scn"><div class="scn-head">` +
+    `<span class="id">${sc.id}</span><span class="title">${sc.title}</span>` +
+    `<span class="meta">${sc.confidence} · ${sc.verdict}</span></div>` +
+    steps + `</div>`;
+}).join("");
+
+// ----- Section 3 latency cards -----
+const lat = DATA.latency;
+const latCards = [
+  { label: "Mean latency", value: lat.mean_ms.toFixed(4) + " ms" },
+  { label: "P95", value: lat.p95_ms.toFixed(4) + " ms" },
+  { label: "P99", value: lat.p99_ms.toFixed(4) + " ms" },
+  { label: "Max", value: lat.max_ms.toFixed(4) + " ms" },
+  { label: "Throughput", value: Math.round(lat.throughput_ops).toLocaleString() + " ops/s", good: true },
+  { label: "Sample", value: lat.sample.toLocaleString() + " enforcement evaluations" },
+];
+document.getElementById("latCards").innerHTML = latCards.map((c) =>
+  `<div class="card"><div class="label">${c.label}</div>` +
+  `<div class="value${c.good ? " good" : ""}">${c.value}</div></div>`
+).join("");
+
+// ----- Section 3 ablation chart -----
+new Chart(document.getElementById("ablChart"), {
+  type: "bar",
+  data: {
+    labels: DATA.ablation.ablations.map((a) => a.label),
+    datasets: [{
+      label: "False-permit rate",
+      data: DATA.ablation.ablations.map((a) => a.fpr * 100),
+      backgroundColor: css("--fail"), borderRadius: 6,
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: (c) => c.parsed.y.toFixed(2) + "% FPR" } } },
+    scales: {
+      x: { ticks: { color: css("--muted"), maxRotation: 30, minRotation: 0, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: css("--muted"), callback: (v) => v + "%" }, grid: { color: css("--line") } },
+    },
+  },
+});
+
+// ----- Section 3 Goodhart chart -----
+const gh = DATA.ablation.goodhart;
+new Chart(document.getElementById("ghChart"), {
+  type: "bar",
+  data: {
+    labels: ["Macro-veto OFF", "Macro-veto ON"],
+    datasets: [{
+      label: "Goodhart leak rate",
+      data: [gh.without_veto_phat * 100, gh.with_veto_phat * 100],
+      backgroundColor: [css("--fail"), css("--pass")], borderRadius: 8,
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: (c) => c.parsed.y.toFixed(2) + "% leak" } } },
+    scales: {
+      x: { ticks: { color: css("--muted") }, grid: { display: false } },
+      y: { ticks: { color: css("--muted"), callback: (v) => v + "%" }, grid: { color: css("--line") }, max: 100 },
+    },
+  },
+});
+
+// ----- Section 4 paper-aligned results -----
+const paper = DATA.paper;
+const paperPill = document.getElementById("paperPill");
+const paperBody = document.querySelector("#paperTable tbody");
+if (paper && paper.available) {
+  paperPill.textContent = paper.passed_count + "/" + paper.total_count + " reproduced";
+  paperPill.style.color = paper.all_pass ? css("--pass") : css("--fail");
+  paperPill.style.borderColor = paper.all_pass ? css("--pass") : css("--fail");
+  document.getElementById("paperMeta").textContent =
+    "Source: " + paper.source_file + " · " + Number(paper.total_items).toLocaleString() +
+    " items · seed " + paper.seed + " · paper " + (paper.paper_source || "");
+  paperBody.innerHTML = paper.checks.map((c) =>
+    `<tr><td>${c.claim}</td><td>${c.value}</td><td>${c.paper_ref}</td>` +
+    `<td><span class="badge ${c.passed ? "permit" : "miss"}">${c.passed ? "PASS" : "FAIL"}</span></td></tr>`
+  ).join("");
+} else {
+  paperPill.textContent = "manifest missing";
+  document.getElementById("paperMeta").textContent =
+    (paper && paper.note) || "Run lab_benchmark.py to generate the manifest.";
+}
+
+document.getElementById("report").textContent = DATA.report_text;
+document.getElementById("footer").textContent =
+  "Lakhowal LAB v1.0 local simulator  ·  generated " + DATA.timestamp_utc +
+  "  ·  this page shows one saved run of maincode.py";
+
+new Chart(document.getElementById("mutChart"), {
+  type: "bar",
+  data: {
+    labels: DATA.mutations.map((m) => m.name),
+    datasets: [{
+      label: "Leaked through baseline",
+      data: DATA.mutations.map((m) => m.leaked),
+      backgroundColor: css("--warn"), borderRadius: 6,
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: css("--muted"), maxRotation: 60, minRotation: 45, font: { size: 10 } }, grid: { display: false } },
+      y: { ticks: { color: css("--muted") }, grid: { color: css("--line") } },
+    },
+  },
+});
+
+new Chart(document.getElementById("cmpChart"), {
+  type: "bar",
+  data: {
+    labels: ["Runtime Enforcement", "Weak baseline"],
+    datasets: [{
+      label: "Unauthorized permits",
+      data: [DATA.unauthorized, DATA.baseline.weak_baseline_leaked_count],
+      backgroundColor: [css("--pass"), css("--fail")], borderRadius: 8,
+    }],
+  },
+  options: {
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: css("--muted") }, grid: { display: false } },
+      y: { ticks: { color: css("--muted") }, grid: { color: css("--line") }, max: DATA.adversarial },
+    },
+  },
+});
+</script>
+</body>
+</html>

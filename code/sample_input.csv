@@ -1,0 +1,12 @@
+id,op,node_risk,node_threshold,class_name,class_risk,class_threshold,token_kind,watchdog,expected
+1,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,valid,true,allow
+2,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,forged,true,block
+3,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,expired,true,block
+4,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,revoked,true,block
+5,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,missing,true,block
+6,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,scope_mismatch,true,block
+7,WIRE_TRANSFER,0.80,0.50,finance,0.01,0.10,valid,true,block
+8,WIRE_TRANSFER,0.10,0.50,finance,0.95,0.10,valid,true,block
+9,PAYMENT,0.05,0.50,,,,valid,true,allow
+10,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,valid,false,block
+]

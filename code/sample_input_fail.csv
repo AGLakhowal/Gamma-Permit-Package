@@ -1,0 +1,7 @@
+id,op,node_risk,node_threshold,class_name,class_risk,class_threshold,token_kind,watchdog,expected
+1,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,valid,true,allow
+2,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,forged,true,block
+3,WIRE_TRANSFER,0.80,0.50,finance,0.01,0.10,valid,true,block
+4,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,valid,true,block
+5,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,forged,true,allow
+6,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,expired,true,allow

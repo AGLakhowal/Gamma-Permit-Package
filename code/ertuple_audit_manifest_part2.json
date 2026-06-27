@@ -1,0 +1,101 @@
+{
+  "audit_verdict": "REVIEW_REQUIRED",
+  "input_file": "sample_input_fail.csv",
+  "mode": "custom",
+  "results": {
+    "accuracy": 0.5,
+    "correct_decisions": 3,
+    "expected_allow": 3,
+    "expected_block": 3,
+    "false_denials_count": 2,
+    "false_permits_count": 1,
+    "fdr": 0.6666666666666666,
+    "final_ledger_root_hash": "97c8c5b394a3957f340490ee45c9f0f6b5ed64faffb65033d915a97a863bb1d8",
+    "fpr": 0.3333333333333333,
+    "invariant_checks": {
+      "class_level_veto_persistence": true,
+      "execution_sovereignty": true,
+      "non_bypassability": true,
+      "non_compensatory_soundness": true,
+      "runtime_sovereignty_composition": true,
+      "toctou_state_consistency": true
+    },
+    "items": [
+      {
+        "actual": "allow",
+        "correct": true,
+        "expected": "allow",
+        "gamma": 0.0,
+        "id": "1",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "valid"
+      },
+      {
+        "actual": "block",
+        "correct": true,
+        "expected": "block",
+        "gamma": 0.0,
+        "id": "2",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "forged"
+      },
+      {
+        "actual": "block",
+        "correct": true,
+        "expected": "block",
+        "gamma": 0.3,
+        "id": "3",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "valid"
+      },
+      {
+        "actual": "allow",
+        "correct": false,
+        "expected": "block",
+        "gamma": 0.0,
+        "id": "4",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "valid"
+      },
+      {
+        "actual": "block",
+        "correct": false,
+        "expected": "allow",
+        "gamma": 0.0,
+        "id": "5",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "forged"
+      },
+      {
+        "actual": "block",
+        "correct": false,
+        "expected": "allow",
+        "gamma": 0.0,
+        "id": "6",
+        "op": "WIRE_TRANSFER",
+        "token_kind": "expired"
+      }
+    ],
+    "mode": "custom",
+    "token_kind_breakdown": {
+      "expired": {
+        "correct": 0,
+        "count": 1,
+        "wrong": 1
+      },
+      "forged": {
+        "correct": 1,
+        "count": 2,
+        "wrong": 1
+      },
+      "valid": {
+        "correct": 2,
+        "count": 3,
+        "wrong": 1
+      }
+    },
+    "total_items": 6
+  },
+  "seed": 20260623,
+  "timestamp_utc": "2026-06-25T11:23:26Z"
+}

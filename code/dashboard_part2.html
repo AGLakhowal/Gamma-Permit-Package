@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LAB v1.0 Verification Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #141b2e; --panel2: #1b2440; --line: #27314f;
+    --text: #e6ecff; --muted: #9aa6c4; --pass: #2fd47a; --fail: #ff5d6c;
+    --accent: #5b8cff; --warn: #ffb454;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  header { padding: 28px 32px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  h1 { font-size: 20px; margin: 0; }
+  .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .verdict { font-size: 15px; font-weight: 700; padding: 10px 18px; border-radius: 999px; }
+  .verdict.pass { background: rgba(47,212,122,.15); color: var(--pass); border: 1px solid var(--pass); }
+  .verdict.fail { background: rgba(255,93,108,.15); color: var(--fail); border: 1px solid var(--fail); }
+  main { padding: 24px 32px 48px; max-width: 1200px; margin: 0 auto; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+  .card .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card .value { font-size: 26px; font-weight: 700; margin-top: 6px; }
+  .card .value.good { color: var(--pass); } .card .value.bad { color: var(--fail); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+  .panel h2 { font-size: 15px; margin: 0 0 14px; }
+  .panel .hint { color: var(--muted); font-size: 12px; margin: -8px 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  .badge { font-weight: 700; padding: 3px 10px; border-radius: 999px; font-size: 12px; }
+  .badge.pass { background: rgba(47,212,122,.15); color: var(--pass); }
+  .badge.fail { background: rgba(255,93,108,.15); color: var(--fail); }
+  tr.rowbad td { background: rgba(255,93,108,.07); }
+  tr.rowbad td:first-child { box-shadow: inset 3px 0 0 var(--fail); }
+  pre.terminal { background: #05080f; color: #cfe3ff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; overflow-x: auto; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.5; }
+  .canvas-wrap { position: relative; height: 300px; }
+  /* --- brand + polish --- */
+  header { position: sticky; top: 0; z-index: 5; background: rgba(11,16,32,.82);
+    backdrop-filter: saturate(140%) blur(8px); -webkit-backdrop-filter: saturate(140%) blur(8px); }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; position: relative;
+    background: linear-gradient(135deg, #5b8cff, #8a5bff); box-shadow: 0 6px 18px rgba(91,140,255,.35); }
+  .logo::after { content: ""; position: absolute; inset: 9px; border-radius: 4px; background: var(--bg); }
+  .brandname { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px;
+    padding: 2px 8px; margin-left: 8px; vertical-align: middle; font-weight: 600; }
+  .card { transition: transform .12s ease, border-color .12s ease; }
+  .card:hover { transform: translateY(-2px); border-color: #33406b; }
+  .btn { appearance: none; border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+    font-size: 13px; font-weight: 600; padding: 10px 16px; border-radius: 10px; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+  .btn:hover { border-color: #33406b; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.primary { background: linear-gradient(135deg, #5b8cff, #7b6bff); border: none; color: #fff; }
+  .btn.ghost { background: transparent; }
+  .upload h2 { margin-top: 0; }
+  .dropzone { border: 1.5px dashed #33406b; border-radius: 14px; padding: 30px; text-align: center;
+    color: var(--muted); transition: .15s; background: rgba(91,140,255,.03); }
+  .dropzone.drag { border-color: var(--accent); background: rgba(91,140,255,.10); color: var(--text); }
+  .dropzone .link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .dropzone input[type=file] { display: none; }
+  .filename { margin-top: 10px; font-size: 13px; color: var(--text); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .status { margin-top: 12px; font-size: 13px; min-height: 18px; }
+  .status.err { color: var(--fail); } .status.ok { color: var(--pass); } .status.busy { color: var(--warn); }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 24px; border-top: 1px solid var(--line); }
+  .notice { border-left: 3px solid var(--accent); color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .notice strong { color: var(--text); }
+  code { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px;
+    font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12px; color: #cfe3ff; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo"></div>
+    <div>
+      <div class="brandname">Lakhowal<span class="pill">LAB v1.0</span></div>
+      <div class="sub" id="sub">Runtime Enforcement Verification Console</div>
+    </div>
+  </div>
+  <div id="verdict" class="verdict" style="display:none"></div>
+</header>
+<main>
+  <div id="uploader"></div>
+  <!-- ===== LAB (generated data) view ===== -->
+  <section id="labView" style="display:none">
+    <div class="cards" id="cards"></div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h2>Test cycles per threat class</h2>
+        <div class="hint">How many test cases were run against each category of attack.</div>
+        <div class="canvas-wrap"><canvas id="catChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h2>Why each safeguard matters (ablations)</h2>
+        <div class="hint">Attacker success rate if a given safeguard were removed. Lower is safer. Full system = 0%.</div>
+        <div class="canvas-wrap"><canvas id="ablChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Safety invariant checks</h2>
+      <div class="hint">Core guarantees the system must never break.</div>
+      <table id="invTable"><thead><tr><th>Invariant</th><th>Status</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2>Threat profile breakdown</h2>
+      <table id="catTable"><thead><tr><th>Category</th><th>Test cycles</th><th>Violations</th><th>Status</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2>Raw verification report (terminal output)</h2>
+      <div class="hint">The exact text printed in the terminal, kept here for the record.</div>
+      <pre class="terminal" id="terminal"></pre>
+    </div>
+  </section>
+
+  <!-- ===== Custom (uploaded data) view ===== -->
+  <section id="customView" style="display:none">
+    <div class="cards" id="cCards"></div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h2>Decision accuracy</h2>
+        <div class="hint">Of the proposals you supplied, how many the engine decided correctly vs your expected verdict.</div>
+        <div class="canvas-wrap"><canvas id="accChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h2>Results by token kind</h2>
+        <div class="hint">Correct vs wrong decisions grouped by the kind of token each proposal carried.</div>
+        <div class="canvas-wrap"><canvas id="tkChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Per-proposal results</h2>
+      <div class="hint">Every row of your data, with what you expected and what the engine decided.</div>
+      <table id="itemsTable"><thead><tr><th>ID</th><th>Operation</th><th>Token kind</th><th>Expected</th><th>Engine decision</th><th>Result</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2>Safety invariant checks</h2>
+      <div class="hint">Core engine guarantees (independent of your data).</div>
+      <table id="cInvTable"><thead><tr><th>Invariant</th><th>Status</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="panel">
+      <h2>Raw verification report (terminal output)</h2>
+      <div class="hint">The exact text printed in the terminal, kept here for the record.</div>
+      <pre class="terminal" id="cTerminal"></pre>
+    </div>
+  </section>
+</main>
+<footer>Lakhowal · Deterministic Runtime Enforcement Console · runs locally on your machine</footer>
+
+<script>
+let __CHARTS = [];
+function chart(el, cfg) { const c = new Chart(el, cfg); __CHARTS.push(c); return c; }
+
+function renderDashboard(MANIFEST, REPORT_TEXT) {
+  __CHARTS.forEach(c => c.destroy()); __CHARTS = [];
+  const r = MANIFEST.results;
+  const pct = (x) => (x * 100).toFixed(x === 0 ? 0 : 4) + "%";
+  const AXIS = { ticks: { color: "#9aa6c4" }, grid: { color: "#27314f" } };
+
+  document.getElementById("labView").style.display = "none";
+  document.getElementById("customView").style.display = "none";
+
+  const pass = MANIFEST.audit_verdict === "COMPLIANT_PASS";
+  const v = document.getElementById("verdict");
+  v.style.display = "";
+  v.textContent = pass ? "✓ " + MANIFEST.audit_verdict : "✗ " + MANIFEST.audit_verdict;
+  v.className = "verdict " + (pass ? "pass" : "fail");
+
+function cardHtml(c) {
+  return `<div class="card"><div class="label">${c.label}</div>`
+    + `<div class="value ${c.good ? "good" : ""} ${c.bad ? "bad" : ""}">${c.value}</div></div>`;
+}
+function badge(ok) { return `<span class="badge ${ok ? "pass" : "fail"}">${ok ? "PASS" : "FAIL"}</span>`; }
+
+if (MANIFEST.mode === "custom") { renderCustom(); } else { renderLab(); }
+
+function renderCustom() {
+  document.getElementById("customView").style.display = "block";
+  document.getElementById("sub").textContent =
+    (MANIFEST.input_file || "custom data") + " · " + (MANIFEST.timestamp_utc || "") + " · " + r.total_items.toLocaleString() + " proposals";
+
+  const cards = [
+    { label: "Proposals tested", value: r.total_items.toLocaleString() },
+    { label: "Expected allow", value: r.expected_allow.toLocaleString() },
+    { label: "Expected block", value: r.expected_block.toLocaleString() },
+    { label: "Correct decisions", value: r.correct_decisions + " / " + r.total_items, good: r.correct_decisions === r.total_items },
+    { label: "Accuracy", value: pct(r.accuracy), good: r.accuracy === 1 },
+    { label: "False permits", value: r.false_permits_count, good: r.false_permits_count === 0, bad: r.false_permits_count > 0 },
+    { label: "False denials", value: r.false_denials_count, good: r.false_denials_count === 0, bad: r.false_denials_count > 0 },
+  ];
+  document.getElementById("cCards").innerHTML = cards.map(cardHtml).join("");
+
+  const wrong = r.total_items - r.correct_decisions;
+  chart(document.getElementById("accChart"), {
+    type: "doughnut",
+    data: { labels: ["Correct", "Incorrect"], datasets: [{ data: [r.correct_decisions, wrong], backgroundColor: ["#2fd47a", "#ff5d6c"], borderWidth: 0 }] },
+    options: { plugins: { legend: { labels: { color: "#e6ecff" } } }, maintainAspectRatio: false }
+  });
+
+  const tk = r.token_kind_breakdown;
+  const tkLabels = Object.keys(tk);
+  chart(document.getElementById("tkChart"), {
+    type: "bar",
+    data: { labels: tkLabels, datasets: [
+      { label: "Correct", data: tkLabels.map(k => tk[k].correct), backgroundColor: "#2fd47a", borderRadius: 6 },
+      { label: "Wrong", data: tkLabels.map(k => tk[k].wrong), backgroundColor: "#ff5d6c", borderRadius: 6 },
+    ] },
+    options: { plugins: { legend: { labels: { color: "#e6ecff" } } }, scales: { x: { stacked: true, ...AXIS, grid: { display: false } }, y: { stacked: true, ...AXIS } }, maintainAspectRatio: false }
+  });
+
+  document.querySelector("#itemsTable tbody").innerHTML = r.items.map(it =>
+    `<tr class="${it.correct ? "" : "rowbad"}"><td>${it.id}</td><td>${it.op}</td><td>${it.token_kind}</td>`
+    + `<td>${it.expected}</td><td>${it.actual}</td><td>${badge(it.correct)}</td></tr>`
+  ).join("");
+
+  document.querySelector("#cInvTable tbody").innerHTML = Object.entries(r.invariant_checks).map(([name, ok]) =>
+    `<tr><td>${name.replace(/_/g, " ")}</td><td>${badge(ok)}</td></tr>`
+  ).join("");
+
+  document.getElementById("cTerminal").textContent = REPORT_TEXT;
+}
+
+function renderLab() {
+  document.getElementById("labView").style.display = "block";
+  document.getElementById("sub").textContent =
+    "Seed " + MANIFEST.seed + " · " + (MANIFEST.timestamp_utc || "") + " · " + r.total_items.toLocaleString() + " proposals";
+
+// Cards
+const cards = [
+  { label: "Total proposals", value: r.total_items.toLocaleString() },
+  { label: "Adversarial proposals", value: r.total_adversarial_items.toLocaleString() },
+  { label: "Unauthorized permits", value: r.false_permits_count, good: r.false_permits_count === 0, bad: r.false_permits_count > 0 },
+  { label: "False permit rate", value: pct(r.fpr), good: r.fpr === 0 },
+  { label: "False denial rate", value: pct(r.fdr), good: r.fdr === 0 },
+  { label: "Replay determinism", value: pct(r.replay_determinism_rate), good: r.replay_determinism_rate === 1 },
+  { label: "Revocation violations", value: r.revocation_violations, good: r.revocation_violations === 0 },
+  { label: "Adaptive attacker FPR", value: pct(r.adaptive_attacker.fpr), good: r.adaptive_attacker.fpr === 0 },
+];
+document.getElementById("cards").innerHTML = cards.map(c =>
+  `<div class="card"><div class="label">${c.label}</div>`
+  + `<div class="value ${c.good ? "good" : ""} ${c.bad ? "bad" : ""}">${c.value}</div></div>`
+).join("");
+
+// Per-category chart + table
+const cats = Object.keys(r.per_category);
+const trials = cats.map(c => r.per_category[c].trials);
+const violations = cats.map(c => r.per_category[c].violations);
+chart(document.getElementById("catChart"), {
+  type: "bar",
+  data: { labels: cats, datasets: [{ label: "Test cycles", data: trials, backgroundColor: "#5b8cff", borderRadius: 6 }] },
+  options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { color: "#9aa6c4" }, grid: { color: "#27314f" } }, x: { ticks: { color: "#9aa6c4" }, grid: { display: false } } }, maintainAspectRatio: false }
+});
+document.querySelector("#catTable tbody").innerHTML = cats.map((c, i) => {
+  const ok = violations[i] === 0;
+  return `<tr><td>${c}</td><td>${trials[i].toLocaleString()}</td><td>${violations[i]}</td>`
+    + `<td><span class="badge ${ok ? "pass" : "fail"}">${ok ? "PASS" : "FAIL"}</span></td></tr>`;
+}).join("");
+
+// Ablations chart
+const ablKeys = Object.keys(r.ablations);
+const ablFpr = ablKeys.map(k => r.ablations[k].fpr * 100);
+chart(document.getElementById("ablChart"), {
+  type: "bar",
+  data: { labels: ablKeys.map(k => k.replace(/_/g, " ")),
+    datasets: [{ label: "Attacker success %", data: ablFpr, backgroundColor: "#ff5d6c", borderRadius: 6 }] },
+  options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { ticks: { color: "#9aa6c4", callback: v => v + "%" }, grid: { color: "#27314f" } }, y: { ticks: { color: "#9aa6c4" }, grid: { display: false } } }, maintainAspectRatio: false }
+});
+
+// Invariants
+document.querySelector("#invTable tbody").innerHTML = Object.entries(r.invariant_checks).map(([name, ok]) =>
+  `<tr><td>${name.replace(/_/g, " ")}</td>`
+  + `<td><span class="badge ${ok ? "pass" : "fail"}">${ok ? "PASS" : "FAIL"}</span></td></tr>`
+).join("");
+
+// Terminal text
+document.getElementById("terminal").textContent = REPORT_TEXT;
+}
+}
+document.getElementById('uploader').innerHTML = `<div class="panel notice"><strong>Static snapshot.</strong> This page shows one saved test run. For the interactive version — upload your own CSV, or try the passing / failing examples — run <code>python3 lab_benchmark.py --serve</code> in your terminal and open the <code>http://127.0.0.1:8000/</code> link it prints (not this file).</div>`;
+renderDashboard({"mode": "custom", "timestamp_utc": "2026-06-25T11:23:26Z", "input_file": "sample_input_fail.csv", "seed": 20260623, "results": {"mode": "custom", "total_items": 6, "expected_allow": 3, "expected_block": 3, "correct_decisions": 3, "accuracy": 0.5, "false_permits_count": 1, "false_denials_count": 2, "fpr": 0.3333333333333333, "fdr": 0.6666666666666666, "token_kind_breakdown": {"valid": {"count": 3, "correct": 2, "wrong": 1}, "forged": {"count": 2, "correct": 1, "wrong": 1}, "expired": {"count": 1, "correct": 0, "wrong": 1}}, "items": [{"id": "1", "op": "WIRE_TRANSFER", "token_kind": "valid", "expected": "allow", "actual": "allow", "correct": true, "gamma": 0.0}, {"id": "2", "op": "WIRE_TRANSFER", "token_kind": "forged", "expected": "block", "actual": "block", "correct": true, "gamma": 0.0}, {"id": "3", "op": "WIRE_TRANSFER", "token_kind": "valid", "expected": "block", "actual": "block", "correct": true, "gamma": 0.3}, {"id": "4", "op": "WIRE_TRANSFER", "token_kind": "valid", "expected": "block", "actual": "allow", "correct": false, "gamma": 0.0}, {"id": "5", "op": "WIRE_TRANSFER", "token_kind": "forged", "expected": "allow", "actual": "block", "correct": false, "gamma": 0.0}, {"id": "6", "op": "WIRE_TRANSFER", "token_kind": "expired", "expected": "allow", "actual": "block", "correct": false, "gamma": 0.0}], "invariant_checks": {"execution_sovereignty": true, "non_bypassability": true, "non_compensatory_soundness": true, "class_level_veto_persistence": true, "toctou_state_consistency": true, "runtime_sovereignty_composition": true}, "final_ledger_root_hash": "97c8c5b394a3957f340490ee45c9f0f6b5ed64faffb65033d915a97a863bb1d8"}, "audit_verdict": "REVIEW_REQUIRED"}, "===============================================================================\n                 CUSTOM DATA VERIFICATION REPORT\n===============================================================================\nInput file:                       sample_input_fail.csv\nTotal proposals:                  6\nExpected ALLOW:                   3\nExpected BLOCK:                   3\nCorrect decisions:                3 / 6  (50.00%)\nFalse permits (should block):     1\nFalse denials (should allow):     2\n-------------------------------------------------------------------------------\nTOKEN-KIND BREAKDOWN:\n -> valid            | Count: 3     | Correct: 2     | Wrong: 1\n -> forged           | Count: 2     | Correct: 1     | Wrong: 1\n -> expired          | Count: 1     | Correct: 0     | Wrong: 1\n-------------------------------------------------------------------------------\nPER-PROPOSAL RESULTS:\n [OK ] id=1      op=WIRE_TRANSFER  token=valid          expected=allow  -> got=allow\n [OK ] id=2      op=WIRE_TRANSFER  token=forged         expected=block  -> got=block\n [OK ] id=3      op=WIRE_TRANSFER  token=valid          expected=block  -> got=block\n [XX ] id=4      op=WIRE_TRANSFER  token=valid          expected=block  -> got=allow\n [XX ] id=5      op=WIRE_TRANSFER  token=forged         expected=allow  -> got=block\n [XX ] id=6      op=WIRE_TRANSFER  token=expired        expected=allow  -> got=block\n-------------------------------------------------------------------------------\nInvariant checks:                 execution_sovereignty=PASS, non_bypassability=PASS, non_compensatory_soundness=PASS, class_level_veto_persistence=PASS, toctou_state_consistency=PASS, runtime_sovereignty_composition=PASS\nCryptographic audit anchor:       97c8c5b394a3957f340490ee45c9f0f6b5ed64faffb65033d915a97a863bb1d8\nAudit verdict:                    REVIEW_REQUIRED\n===============================================================================");
+</script>
+</body>
+</html>
