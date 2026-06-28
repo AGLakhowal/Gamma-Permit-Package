@@ -1,249 +1,378 @@
-# LAB v1.0 — Runtime Enforcement Verification Harness
+# 🛡️ LAB v1.0 – Runtime AI Safety Verification Framework
 
-A self-contained Python harness that simulates a **runtime reference monitor** for AI-agent
-actions and measures how reliably it issues **Permit-to-Act** for legitimate requests while
-holding **SAFE_STATE** on adversarial ones. It implements the paper-aligned **LAB v1.0** checks
-for the **L-DREA** design (Lakhowal Deterministic Runtime Enforcement Architecture) and produces
-terminal reports, a signed JSON proof receipt, and self-contained HTML dashboards.
+> **A runtime verification system that checks every AI decision before it is allowed to execute.**
 
-> **Scope / honesty note.** This is a *software simulator* of the architecture's structural
-> claims, plus a real cryptographic enforcement core. It does **not** run external harnesses
-> (AgentDojo / AgentHarm) or hardware-in-the-loop FPGA/SGX tests, and it uses **no real customer,
-> financial, or sanctions data**. See [Provenance](#provenance--what-is-real-vs-simulated).
+This project demonstrates how an AI system can be continuously monitored at runtime to prevent unsafe, malicious, or unauthorized actions.
+
+Instead of trusting an AI model blindly, this framework places a **verification layer** between the AI and the final action.
+
+If the request is considered safe, it is **approved**.
+
+If any security rule is violated, the system immediately blocks the request and moves into a **SAFE_STATE**.
 
 ---
 
-## Two entry points
+# 🎯 Why was this project built?
 
-| Script | What it produces |
-|--------|------------------|
-| [maincode.py](maincode.py) | The **four-section verification run** (Runtime Enforcement, stress scenarios, quantitative metrics, benchmark reproduction) → terminal report + [maincodedashboard.html](maincodedashboard.html) |
-| [lab_benchmark.py](lab_benchmark.py) | The underlying **LAB v1.0 engine**: full 1.2M-item suite, custom-CSV mode, dashboard generator, and a local upload-and-test web server → [ertuple_audit_manifest.json](ertuple_audit_manifest.json) + [dashboard.html](dashboard.html) |
+Modern AI systems can make mistakes or even be manipulated through attacks such as:
+
+- Prompt Injection
+- Fake Authorization
+- Expired Access Tokens
+- Context Manipulation
+- Replay Attacks
+- Privilege Escalation
+
+This project demonstrates how those attacks can be detected **before** the AI performs a sensitive action.
+
+Think of it as:
+
+> **An airport security checkpoint for AI systems.**
+
+Every request is inspected before being allowed to continue.
+
+---
+
+# 🚀 Project Workflow
+
+```text
+Incoming Request
+        │
+        ▼
+ Runtime Verification Engine
+        │
+        ├──────────────┐
+        │              │
+     SAFE             UNSAFE
+        │              │
+        ▼              ▼
+ PERMIT ACTION     SAFE_STATE
+```
+
+---
+
+# 📂 Project Structure
+
+```text
+.
+├── maincode.py                ← Main program (Run this file)
+├── maincodedashboard.html     ← Interactive dashboard generated after execution
+├── testdata.csv               ← Sample dataset used for testing
+├── lab_benchmark.py           ← Benchmark engine
+├── dashboard.html             ← Benchmark dashboard
+├── ertuple_audit_manifest.json
+├── test_baseline_metrics.py
+├── test_corpus_enforcement.py
+└── README.md
+```
+
+---
+
+# 📌 Main Files
+
+## ✅ maincode.py
+
+This is the **main entry point** of the project.
+
+Running this file performs the complete verification process.
+
+It:
+
+- Loads the test dataset
+- Runs Runtime Enforcement
+- Executes attack simulations
+- Calculates security metrics
+- Generates reports
+- Creates the HTML dashboard
+
+> **If you only want to run the project, this is the only file you need to execute.**
+
+---
+
+## 📊 maincodedashboard.html
+
+This dashboard is automatically generated after running `maincode.py`.
+
+It provides a visual representation of:
+
+- Runtime verification results
+- Security metrics
+- Attack simulations
+- Interactive graphs
+- Performance analysis
+
+Instead of reading logs in the terminal, simply open this HTML file in any web browser.
+
+---
+
+## 📁 testdata.csv
+
+This is the sample dataset used to test the framework.
+
+It contains example requests representing both:
+
+- Legitimate actions
+- Malicious or unsafe actions
+
+The verification engine processes every row and decides whether it should be:
+
+- **PERMIT**
+- **SAFE_STATE**
+
+You can replace this dataset with your own CSV to evaluate different scenarios.
+
+---
+
+# ⚙️ How the System Works
+
+For every incoming request, the system verifies:
+
+- ✅ Authorization
+- ✅ Token Validity
+- ✅ Security Rules
+- ✅ Runtime Conditions
+- ✅ Risk Thresholds
+
+If every rule passes:
+
+```text
+PERMIT
+```
+
+Otherwise:
+
+```text
+SAFE_STATE
+```
+
+---
+
+# 🛠️ Requirements
+
+Before running the project, make sure you have:
+
+- Python 3.9 or later
+
+No external Python packages are required.
+
+Everything runs using Python's built-in standard library.
+
+---
+
+# ▶️ How to Run
+
+## Step 1 — Clone the Repository
 
 ```bash
-python3 maincode.py            # run all four sections, write the dashboard
-python3 maincode.py --open     # also open the dashboard in a browser
-python3 maincode.py --fresh    # regenerate Section 4 by running lab_benchmark.py LIVE
+git clone <repository-url>
 ```
 
-Requires **Python 3** only (standard library — no dependencies).
-
 ---
 
-## The enforcement model
-
-Runtime Enforcement sits in front of a sensitive action (e.g. a `WIRE_TRANSFER`) and emits one
-of two **transport-agnostic** outcomes for every request:
-
-- **`PERMIT`** — Permit-to-Act granted.
-- **`SAFE_STATE`** — Execution Authorization denied; the system holds safe (fail-closed).
-
-It is **non-compensatory**: a strong score on one axis cannot buy back a failure on another.
-
-### Γ — Predicate Failure Count
-
-**`Γ` = the number of constitutional predicates that failed** (a severity counter — *not* a
-probability, a score, or "Gamma the architecture"). `Γ = 0` means every predicate passed.
-
-> **`Γ = 0` is NECESSARY but NOT SUFFICIENT for Permit-to-Act.** A request is permitted only when
-> **all** of the following hold:
-> - `Γ = 0`, and
-> - a valid, unexpired, correctly-scoped, non-revoked, non-replayed capability token
->   (HMAC-SHA256 signed), and
-> - a live liveness watchdog, and
-> - no active persistent class-level veto (Theorem 6 persistence), and
-> - the request is not a Permit-to-Adapt blocked by κ(op) coupling under risk.
->
-> Anything else → **SAFE_STATE**. (The stress scenarios deliberately show `Γ = 0` still resolving
-> to SAFE_STATE under a persistent class flag — that is by design, not a contradiction.)
-
----
-
-## What `maincode.py` reports — the four sections
-
-### Section 1 — Runtime Enforcement
-Runs the real cryptographic monitor over the full **1,217,906-proposal** corpus
-(857,906 nominal + 360,000 adversarial) and reports: **0 unauthorized permits**,
-**replay determinism** over every cycle, the per-family **mutation-control** leak counts, the
-**weak-baseline leak rate**, and an **adaptive-attacker** run (0 permits / 120,000 attempts).
-
-> **Two distinct baseline metrics — never merged:**
-> - **Weak-baseline leak rate** (≈ **85.0%**, e.g. 305,933 / 360,000): a *node-risk-only*
->   comparator that ignores every other check, measured on this run's adversarial corpus. This
->   is a **leak rate**, not an FPR.
-> - **Paper negative-control FPR** (**6.4%**): a separately-reported figure with a different
->   baseline definition, sample set, and denominator.
->
-> When both are present and differ by > 5 percentage points, the report emits a
-> **reconciliation warning** rather than implying they are comparable. See
-> [test_baseline_metrics.py](test_baseline_metrics.py).
-
-### Section 2 — Stress-test scenarios (Runtime Enforcement Outcome)
-Replays four documented scenarios from the *Lakhowal Stress-Test Analysis* through the
-non-compensatory formula and confirms each reproduces its documented outcome:
-
-| ID | Scenario | Outcome |
-|----|----------|---------|
-| P1 | Ghost Treasury Transfer ($28M deepfake-CFO wire) | Γ=6 → SAFE_STATE |
-| P2 | Sanctions Drift Cascade (feed lag / stale truth / class drift) | SAFE_STATE, **DOCUMENTED SCOPE LIMITATION**, SAFE_STATE |
-| P3 | Multi-Agent Liquidity Panic (aggregate velocity + class flag + κ(op)) | SAFE_STATE ×4 |
-| EDGE | Sovereign Cascade Edge Case (compound failure) | Γ=5 → SAFE_STATE |
-
-Legend: **GREEN = Permit-to-Act · RED = SAFE_STATE · YELLOW = Documented Scope Limitation**.
-The YELLOW case (P2 stale-truth oracle gap) is a *documented limitation* the gate honestly
-reproduces — it is not hidden.
-
-### Section 3 — Quantitative metrics (measured locally)
-- **Latency / throughput** — mean, P95, P99, max, ops/s, measured on this machine.
-- **Ablations** — false-permit rate when each control (non-compensatory gating, TOCTOU
-  revalidation, class-level veto, hardware interlock) is disabled in isolation.
-- **Replay determinism** — observed rate plus a one-sided 95% statistical bound.
-- **Goodhart resistance** — class-drift leak rate with the macro-veto off vs on, with a Wilson interval.
-
-### Section 4 — Benchmark reproduction (reference implementation)
-Maps the [lab_benchmark.py](lab_benchmark.py) LAB v1.0 results (over the 1,200,000-item corpus) to
-each L-DREA benchmark claim and shows the reference implementation reproducing them under the
-documented benchmark configuration — **not** an independent validation of the paper. By default it
-reads the cached manifest; `--fresh` runs the suite **live** this session.
-
----
-
-## The five adversarial classes (LAB-A1 … LAB-A5)
-
-| Class | Attack modeled | Control that catches it |
-|-------|----------------|-------------------------|
-| LAB-A1 | Signature detachment / missing token issuance | hardware interlock |
-| LAB-A2 | Token tampering — scope escalation, expiration, signature substitution | hardware interlock / TOCTOU |
-| LAB-A3 | Context tampering & structured-field smuggling | non-compensatory gating |
-| LAB-A4 | Expired-token use and revocation races (TOCTOU) | TOCTOU revalidation |
-| LAB-A5 | Class-level "Goodhart" drift — gaming aggregate metrics | class-level veto |
-
-Plus a large **NOMINAL** population of legitimate requests that *should* all be permitted.
-
-In `maincode.py`, each adversarial item's family is drawn from a **declared distribution** via a
-fixed seed (reproducible), so the per-family counts are **measured, not hand-set**.
-
----
-
-## How it works
-
-- **`LakhowalLLCEngine`** ([lab_benchmark.py](lab_benchmark.py)) is the reference-monitor
-  simulator. It issues and verifies HMAC capability tokens, tracks consumed/revoked tokens,
-  computes the non-compensatory `Γ`, enforces class-level veto persistence, and commits every
-  decision into a SHA-256 **hash-chained ledger** so the run is tamper-evident and replayable.
-- **`run_lab_suite`** generates a deterministic population (default 1.2M), runs each through
-  `evaluate_cycle`, and aggregates metrics: FPR/FDR, Wilson 95% upper bounds (with a
-  cluster/design-effect correction), a negative control, ablations, an adaptive-attacker run,
-  replay determinism, and structural invariant checks.
-- **`maincode.py`** wraps a real cryptographic enforcement core around a seeded adversarial corpus
-  and produces the four-section report + dashboard described above.
-
-Everything is **deterministic** — a fixed seed (`20260623`) means the same input always yields the
-same results and the same ledger root hash.
-
----
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| [maincode.py](maincode.py) | Four-section verification harness, dashboard generator, and corpus generate/run modes |
-| [maincodedashboard.html](maincodedashboard.html) | Generated dashboard for the `maincode.py` run |
-| [lab_corpus.jsonl](lab_corpus.jsonl) | A **real, saved** dataset — concrete proposals each with a live HMAC-SHA256 signature |
-| [test_baseline_metrics.py](test_baseline_metrics.py) | Unit tests for the weak-baseline vs negative-control metric separation |
-| [test_corpus_enforcement.py](test_corpus_enforcement.py) | Tests that run enforcement over a **saved corpus file** and re-verify signatures |
-| [lab_benchmark.py](lab_benchmark.py) | LAB v1.0 engine, full suite, custom-CSV mode, dashboard generator, web server |
-| [lab_benchmarkpart2.py](lab_benchmarkpart2.py) | Companion runner demonstrating a **failing** run from a deliberately mislabeled CSV |
-| [sample_input.csv](sample_input.csv) | Example custom proposals (all correctly labeled) |
-| [sample_input_fail.csv](sample_input_fail.csv) | Example with mislabeled rows → `REVIEW_REQUIRED` verdict |
-| [ertuple_audit_manifest.json](ertuple_audit_manifest.json) | Proof receipt from the full LAB run (`COMPLIANT_PASS`) |
-| [dashboard.html](dashboard.html) / [dashboard_part2.html](dashboard_part2.html) | Generated `lab_benchmark.py` visual reports |
-
----
-
-## Usage
+## Step 2 — Open the Project Folder
 
 ```bash
-# === maincode.py (four-section verification) ===
-python3 maincode.py                 # all four sections → maincodedashboard.html
-python3 maincode.py --open          # also open the dashboard
-python3 maincode.py --fresh         # Section 4 runs lab_benchmark.py LIVE (1.2M items)
-
-# === lab_benchmark.py (engine / suite) ===
-python3 lab_benchmark.py            # full LAB suite (1.2M) → manifest + dashboard
-python3 lab_benchmark.py --items 50000 --open
-python3 lab_benchmark.py --input sample_input.csv      # grade your own CSV
-python3 lab_benchmark.py --serve                       # browser upload-and-test at http://127.0.0.1:8000
-python3 lab_benchmarkpart2.py --open                   # demonstrate a FAILING run
-
-# === real saved test data: generate -> save -> run on the saved file ===
-python3 maincode.py --emit-data lab_corpus.jsonl --data-items 10000   # write real signed records
-python3 maincode.py --run-data  lab_corpus.jsonl                       # enforce the SAVED file
-
-# === tests ===
-python3 -m unittest test_baseline_metrics test_corpus_enforcement
+cd LAB-v1
 ```
-
-### Real saved test data
-
-`--emit-data` materializes the corpus to a **JSONL file on disk** — each line is a concrete
-proposal carrying a genuine HMAC-SHA256-signed capability token (you can open and inspect it).
-`--run-data` loads that file and runs Runtime Enforcement over it, **re-verifying every signature
-cryptographically** and grading each decision against the saved `expected` outcome. This makes the
-test data a real, persisted, auditable artifact rather than in-memory ephemera.
-[test_corpus_enforcement.py](test_corpus_enforcement.py) generates a fresh dataset, saves it, runs
-enforcement on the saved file, and asserts 0 unauthorized permits, 0 false denials, and that the
-stored signatures verify (and that forged ones do not).
-
-### Key options (`lab_benchmark.py`)
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--items` | `1200000` | Number of LAB proposals to generate |
-| `--seed` | `20260623` | Deterministic generator seed |
-| `--input` | — | CSV of custom proposals to test instead of generated data |
-| `--manifest` | `ertuple_audit_manifest.json` | Output JSON proof receipt |
-| `--dashboard` | `dashboard.html` | Output self-contained HTML dashboard |
-| `--serve` / `--host` / `--port` | `127.0.0.1:8000` | Start the local upload-and-test web server |
-| `--open` | off | Open the dashboard in your browser when finished |
-
-### Custom CSV format
-
-```
-id,op,node_risk,node_threshold,class_name,class_risk,class_threshold,token_kind,watchdog,expected
-1,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,valid,true,allow
-2,WIRE_TRANSFER,0.10,0.50,finance,0.01,0.10,forged,true,block
-```
-
-`token_kind` can be `valid`, `forged`, `expired`, `revoked`, `missing`, or `scope_mismatch`.
-`expected` is the ground-truth `allow` / `block` the engine's decision is graded against.
 
 ---
 
-## Output & verdicts
+## Step 3 — Run the Main Program
 
-Each run prints a terminal report and generates a self-contained HTML dashboard. The
-`audit_verdict` is:
+On Windows:
 
-- **`COMPLIANT_PASS`** — zero unauthorized permits, 100% replay determinism, adaptive attacker
-  contained, and all invariants hold.
-- **`REVIEW_REQUIRED`** — decisions disagreed with the expected labels (see the part-2 example).
+```bash
+python maincode.py
+```
 
-The `final_ledger_root_hash` is the tamper-evident root of the decision ledger; with a fixed seed
-and input it is reproducible across runs.
+On macOS/Linux:
+
+```bash
+python3 maincode.py
+```
 
 ---
 
-## Provenance — what is real vs simulated
+## Step 4 — Wait for Execution
 
-| Component | Status |
-|-----------|--------|
-| Gate logic / cryptography (HMAC-SHA256) | **Measured by the reference implementation** — executed on every evaluated item |
-| Section 1 / 3 metrics (leaks, latency, ablations, Goodhart) | **Measured** from the live run |
-| Section 1 adversarial corpus | **Simulated** — drawn from a declared distribution; fixed by the documented seed and fully reproducible |
-| Section 2 predicate verdicts | **Transcribed** from the documented Stress-Test Analysis; the enforcement **decision** is computed live |
-| Section 4 lab suite | **Real `lab_benchmark.py` output** (cached, or live via `--fresh`) — never hand-typed |
+The program will automatically:
 
-No real customer, financial, or sanctions data is used anywhere in this harness. The local
-software latency (sub-millisecond) is far below the paper's hardware-in-the-loop reference figure,
-by design.
+- Load the test dataset
+- Run Runtime Enforcement
+- Execute attack simulations
+- Calculate security metrics
+- Generate reports
+- Create the dashboard
+
+---
+
+## Step 5 — Open the Dashboard
+
+After execution completes, open:
+
+```text
+maincodedashboard.html
+```
+
+using your favorite web browser.
+
+The dashboard contains:
+
+- Runtime verification results
+- Interactive charts
+- Security metrics
+- Attack analysis
+- Overall verification summary
+
+---
+
+# 📊 Dashboard Features
+
+The generated dashboard includes:
+
+- Runtime Enforcement Results
+- Attack Detection Summary
+- Security Metrics
+- Performance Statistics
+- Benchmark Comparison
+- Verification Outcome
+- Interactive Graphs
+- Audit Summary
+
+---
+
+# 🔬 Technical Features
+
+- Runtime Reference Monitor
+- Non-Compensatory Decision Logic
+- Permit-to-Act Verification
+- SAFE_STATE Enforcement
+- HMAC Token Validation
+- Replay Attack Detection
+- TOCTOU Protection
+- Class-Level Security Veto
+- Tamper-Evident Audit Ledger
+- Benchmark Verification
+
+---
+
+# 📈 Execution Flow
+
+```text
+Incoming Request
+        │
+        ▼
+Runtime Verification
+        │
+        ▼
+Checks Passed?
+        │
+   ┌────┴────┐
+   │         │
+ YES        NO
+   │         │
+   ▼         ▼
+PERMIT   SAFE_STATE
+        │
+        ▼
+Dashboard Generated
+```
+
+---
+
+# 🎯 Expected Output
+
+After running the project, you will obtain:
+
+- ✅ Terminal Verification Report
+- ✅ Interactive HTML Dashboard
+- ✅ Security Metrics
+- ✅ Verification Summary
+- ✅ Audit Logs
+
+---
+
+# 👥 Who Can Use This Project?
+
+This project is designed for:
+
+- AI Security Researchers
+- Software Engineers
+- Cybersecurity Professionals
+- Students
+- Academic Researchers
+- Anyone interested in AI Safety
+
+No prior know
+
+ledge of AI security is required to understand the overall workflow.
+
+---
+
+# 💡 Project Goal
+
+The goal of this project is to demonstrate how a runtime verification framework can improve the safety and trustworthiness of AI systems by validating every action before execution.
+
+Rather than assuming an AI model is always correct, the framework continuously evaluates every request, verifies its authenticity, and blocks unsafe operations before they occur.
+
+This approach helps create AI systems that are **more secure, reliable, transparent, and accountable**.
+
+---
+
+# 📄 License
+
+This project is provided for **research, educational, and demonstration purposes**.
+
+---
+
+# 📊 Dashboard Preview
+
+The Runtime Verification Dashboard provides a complete overview of the system's security evaluation, attack detection, performance metrics, and benchmark verification. Each section highlights a different aspect of the runtime enforcement process.
+
+---
+
+## 🛡️ Section 1 – Runtime Enforcement Overview
+
+This section summarizes the overall verification results, including the total number of evaluated requests, adversarial samples, unauthorized permits, replay determinism, and baseline comparisons. It also visualizes how the runtime enforcement engine successfully blocks malicious requests while maintaining deterministic execution.
+
+![Section 1]<img width="1464" height="605" alt="Screenshot 2026-06-28 at 1 17 43 PM" src="https://github.com/user-attachments/assets/c5978b89-a441-4389-ba4b-e061ebb89392" />
+
+---
+
+## ⚠️ Section 2 – Stress Test Scenarios
+
+This section reproduces multiple real-world attack scenarios such as deepfake financial fraud, sanctions drift, multi-agent liquidity attacks, and compound failure cases. Each scenario is evaluated by the runtime enforcement engine and classified as **PERMIT**, **SAFE_STATE**, or **Documented Scope Limitation**.
+
+![Section 2]
+<img width="1470" height="635" alt="Screenshot 2026-06-28 at 1 18 48 PM" src="https://github.com/user-attachments/assets/2e8993a1-ea43-45e7-9dd7-ed8a9bd51ad5" />
+
+---
+
+## ⚡ Section 3 – Performance & Security Metrics
+
+This section presents runtime performance measurements, including latency, throughput, replay determinism, and security ablation studies. It demonstrates the efficiency of the enforcement engine while highlighting the contribution of each security control to the overall protection mechanism.
+
+![Section 3]
+
+<img width="1470" height="655" alt="Screenshot 2026-06-28 at 1 19 07 PM" src="https://github.com/user-attachments/assets/9dcd6382-47f6-49d0-828c-32fe4216bcb9" />
+
+---
+
+## 📈 Section 4 – Benchmark Reproduction
+
+This section compares the implementation results with the benchmark claims defined in the LAB v1.0 reference framework. It verifies security invariants, replay consistency, adaptive attack resistance, and overall compliance status through reproducible benchmark evaluation.
+
+![Section 4](<img width="1470" height="372" alt="Screenshot 2026-06-28 at 1 19 30 PM" src="https://github.com/user-attachments/assets/b756c2c9-13f2-4f6b-a620-fee9309a6613" />
+
+---
+
+## 📄 Final Runtime Report
+
+The dashboard concludes with a comprehensive execution report that combines all verification stages into a single summary. It provides detailed logs, benchmark outcomes, performance statistics, security decisions, and the final audit verdict generated during execution.
+
+![Final Report]
+
+<img width="1470" height="737" alt="Screenshot 2026-06-28 at 1 20 01 PM" src="https://github.com/user-attachments/assets/83935dc2-78fc-4206-8816-c67694d7a433" />
+
+
+## ⭐ If you find this project useful, consider giving it a star on GitHub!
