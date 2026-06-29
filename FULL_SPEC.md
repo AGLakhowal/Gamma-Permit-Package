@@ -473,24 +473,7 @@ Sovereignty Mesh · Autonomous Federation · Cross-Jurisdiction Runtime Governan
 
 
 ## Appendices
-
-
-### Appendix: Claims Register & Defensibility (Normative for outward statements)
-
-
-Thirteen claims across five tiers, ranked by 24-month survival probability against the verified Q1–Q2 2026 landscape (AARM/CSAI, SentinelAgent, AgentVerify, Policy Cards, Faramesh, Cruz, McFadden, Microsoft Authorization Fabric).
-
-
-|Tier                          |Use            |Representative claims                                                                                                                                                                                                         |
-|------------------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|**1 — Unassailable (≥95%)**   |everywhere     |patent priority 2025-11-10 (US 2026/0127298 A1); explicit FRAND before submission; non-compensatory conjunctive aggregation (Γ = maxᵢ dᵢ) as a *structural invariant*                                                         |
-|**2 — Strong (80–94%)**       |with footnote  |substrate-neutral Tier-H/T/S classes; Authority Horizon (H); TAU-Node ≤ 2s bounded veto                                                                                                                                       |
-|**3 — Defensible (with care)**|paper as backup|pre-registered hash-committed outcome-irrespective protocol; ≥10⁶ action-proposal evaluation; FFIEC/FDA/NERC alignment                                                                                                        |
-|**4 — Contested (don’t lead)**|narrow first   |TLA+ mechanization (narrow to “first to define these six invariants”); Anderson reference-monitor extension (→ “most explicit and formally complete extension”); externalization monitor (→ “first to name + five properties”)|
-|**5 — Do not claim (<60%)**   |never          |“first runtime AI governance framework”; bare “first formally verified”; “founder of the field”                                                                                                                               |
-
-
-**Composite position (use verbatim, all venues):** the only runtime authorization framework combining (a) non-compensatory conjunctive aggregation as a structural invariant, (b) hardware-rooted custodial authority distinct from epistemic authority, (c) patent-backed FRAND-ready primitives with 10 Nov 2025 priority, (d) substrate-neutral Tier-H/T/S specification.
+                                                                                                                            |
 
 
 ### Appendix: Assumption Registry
