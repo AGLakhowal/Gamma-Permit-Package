@@ -469,7 +469,58 @@ Claims register (C1–C8) → conformance profile (**LCP-6**, requirements R1–
 Sovereignty Mesh · Autonomous Federation · Cross-Jurisdiction Runtime Governance · Sovereign Runtime Control. Explicitly outside the enforced boundary of the present release.
 
 
-system, and not the IEEE-paper results. They MUST NOT be cited as established.
+-----
+
+
+## Appendices
+
+
+### Appendix: Claims Register & Defensibility (Normative for outward statements)
+
+
+Thirteen claims across five tiers, ranked by 24-month survival probability against the verified Q1–Q2 2026 landscape (AARM/CSAI, SentinelAgent, AgentVerify, Policy Cards, Faramesh, Cruz, McFadden, Microsoft Authorization Fabric).
+
+
+|Tier                          |Use            |Representative claims                                                                                                                                                                                                         |
+|------------------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|**1 — Unassailable (≥95%)**   |everywhere     |patent priority 2025-11-10 (US 2026/0127298 A1); explicit FRAND before submission; non-compensatory conjunctive aggregation (Γ = maxᵢ dᵢ) as a *structural invariant*                                                         |
+|**2 — Strong (80–94%)**       |with footnote  |substrate-neutral Tier-H/T/S classes; Authority Horizon (H); TAU-Node ≤ 2s bounded veto                                                                                                                                       |
+|**3 — Defensible (with care)**|paper as backup|pre-registered hash-committed outcome-irrespective protocol; ≥10⁶ action-proposal evaluation; FFIEC/FDA/NERC alignment                                                                                                        |
+|**4 — Contested (don’t lead)**|narrow first   |TLA+ mechanization (narrow to “first to define these six invariants”); Anderson reference-monitor extension (→ “most explicit and formally complete extension”); externalization monitor (→ “first to name + five properties”)|
+|**5 — Do not claim (<60%)**   |never          |“first runtime AI governance framework”; bare “first formally verified”; “founder of the field”                                                                                                                               |
+
+
+**Composite position (use verbatim, all venues):** the only runtime authorization framework combining (a) non-compensatory conjunctive aggregation as a structural invariant, (b) hardware-rooted custodial authority distinct from epistemic authority, (c) patent-backed FRAND-ready primitives with 10 Nov 2025 priority, (d) substrate-neutral Tier-H/T/S specification.
+
+
+### Appendix: Assumption Registry
+
+
+A1 cryptographic soundness (EUF-CMA) → C; A2 hash collision resistance → C/F; A3 hardware isolation → P + §10 Thms 4,8; A4 bounded clock skew + bounded Δ_rev → F/C; A5 complete mediation → F/P; A6 predicate completeness → M/E; A7 bounded threat model (LAB scope) → E only; A8 plant-model fidelity (LAS) → T only.
+
+
+### Appendix: Mathematical Proofs
+
+
+LLC forward/reverse proofs; Proposition 1, Corollary 1, Corollary 2; first-failure attribution M4.
+
+
+### Appendix: TLA+ Specifications · TLC Runs
+
+
+TLA+ source (Concurrence_Core module); Invariant-1 verified at **2,489,446 total / 40,192 distinct states, zero violations** (confirmed, Paper A Appendix A). Theorem family T0–T9 (§1.11); mechanization spans TLA+/TLC (bounded) + inductive-invariant argument (unbounded). Home for IEEE Appendix E.3 verified values.
+
+
+### Appendix: Replay Artifacts
+
+
+Deterministic replay traces and verification logs.
+
+
+### Appendix A: Reference Benchmark & Empirical Evaluation (NON-NORMATIVE / ILLUSTRATIVE)
+
+
+> **Quarantine notice.** Figures below are Illustrative reference values demonstrating feasibility — not measured results of any shipped system, and not the IEEE-paper results. They MUST NOT be cited as established.
 
 
 - UER 0 / 1,200,000; adversarial false permits 0 / 360,000; 95% upper bound `p < 8.3×10⁻⁶`.
