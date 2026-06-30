@@ -29,13 +29,20 @@
 > These diagrams are intended to be rendered directly by GitHub Markdown.
 
 ---
+## 📂 Report Link to the Codebase for real Test Cases
 
-## 📂 Report Link to the Codebase for Test Cases
+The complete source code used for implementing and validating the test cases is available in the following GitHub repository:
+
+**GitHub Repository:**  
+https://github.com/AGLakhowal/Gamma-Permit-Package/tree/main/realdatatestcode
+
+## 📂 Report Link to the Codebase for Synthetic controlled Environment Test Cases
 
 The complete source code used for implementing and validating the test cases is available in the following GitHub repository:
 
 **GitHub Repository:**  
 https://github.com/AGLakhowal/Gamma-Permit-Package/tree/main/code
+
 ----
 # Master Diagram Set — Gamma G-0 Constitutional Stack
 
