@@ -1264,8 +1264,8 @@ def build_reproducibility_bundle(tlc: dict, ertuple_root: str) -> dict:
     The dashboard is intentionally excluded - it is a derived rendering, not an
     input. Writes REPRODUCIBILITY_FILENAME and returns {path, bundle}."""
     artifact_names = [
-        "maincode.py", "lab_benchmark.py", LAB_MANIFEST_FILENAME,
-        "lab_corpus.jsonl", ERTUPLE_REPLAY_FILENAME,
+        "maincode.py", "lab_benchmark.py", "concurbench.py", LAB_MANIFEST_FILENAME,
+        "lab_corpus.jsonl", ERTUPLE_REPLAY_FILENAME, "concurbench_report.json",
         TLA_SPEC_FILENAME, TLA_CFG_FILENAME,
     ]
     artifacts = []
@@ -1481,8 +1481,14 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
     <table id="reproTable"><thead><tr><th>Artifact</th><th>SHA-256</th><th>Bytes</th></tr></thead><tbody></tbody></table>
     <pre class="terminal" id="reproCmds" style="margin-top:14px;"></pre>
   </div>
+  <div class="panel" id="cbPanel" style="display:none">
+    <h2>Section 6 - ConcurBench v1.0 conformance <span class="pill" id="cbPill"></span></h2>
+    <div class="hint">Full ConcurBench / Execution-Integrity conformance packet (all four levels, verdict computed from real results). Distributed consistency is a <strong>simulated</strong> fleet; hardware / third-party audit are disclosed as not-run. File: <code id="cbFile"></code>.</div>
+    <div id="cbMeta" class="hint"></div>
+    <div class="cards" id="cbLevels"></div>
+  </div>
   <div class="panel">
-    <h2>Section 1 + 2 + 3 + 4 + 5 report</h2>
+    <h2>Section 1 + 2 + 3 + 4 + 5 + 6 report</h2>
     <pre class="terminal" id="report"></pre>
   </div>
 </main>
@@ -1711,6 +1717,35 @@ if (repro) {
   document.getElementById("reproCmds").textContent = repro.reproduce.join("\n");
 }
 
+// ----- Section 6 ConcurBench v1.0 conformance -----
+const cb = DATA.concurbench;
+if (cb) {
+  document.getElementById("cbPanel").style.display = "block";
+  document.getElementById("cbFile").textContent = cb.file;
+  const compliant = cb.overall_verdict === "COMPLIANT_PASS";
+  const cp = document.getElementById("cbPill");
+  cp.textContent = cb.overall_verdict;
+  cp.style.color = compliant ? css("--pass") : css("--warn");
+  cp.style.borderColor = compliant ? css("--pass") : css("--warn");
+  document.getElementById("cbMeta").textContent =
+    "UER " + cb.l1.UER.toExponential(2) + "  ·  FCR " + cb.l1.FCR.toFixed(5) +
+    "  ·  DR " + cb.l1.DR.toFixed(5) + "  ·  CP 95% UB < " + cb.l1.cp_ub.toExponential(2) +
+    "  ·  replay " + fmtNum(cb.replay.attempts) + " @ " + cb.replay.rate.toFixed(5) +
+    "  ·  fleet " + cb.fleet_nodes + " nodes (simulated)  ·  ASB " + cb.asb_families + " families";
+  const names = {level_1_authorization_correctness:"L1 Authorization",
+                 level_2_adversarial_robustness:"L2 Adversarial",
+                 level_3_distributed_consistency:"L3 Distributed (sim)",
+                 level_4_replay_auditability:"L4 Replay+Audit"};
+  document.getElementById("cbLevels").innerHTML = Object.keys(names).map((k) => {
+    const s = cb.levels[k];
+    const good = s === "PASS", bad = s === "FAIL";
+    const badge = good ? "permit" : (bad ? "miss" : "gap");
+    return `<div class="card"><div class="label">${names[k]}</div>` +
+      `<div class="value${good ? " good" : ""}${bad ? " bad" : ""}" style="font-size:20px">${s}</div>` +
+      `<div class="foot"><span class="badge ${badge}">${s}</span></div></div>`;
+  }).join("");
+}
+
 document.getElementById("report").textContent = DATA.report_text;
 document.getElementById("footer").textContent =
   "Lakhowal LAB v1.0 local simulator  ·  generated " + DATA.timestamp_utc +
@@ -1896,6 +1931,27 @@ def main() -> None:
           file=sys.stderr)
     ertuple = build_ertuple_replay_manifest()
     ert_manifest = ertuple["manifest"]
+
+    # ----- Section 6 ConcurBench v1.0 conformance packet (runs by default) --- #
+    # Generated BEFORE the reproducibility bundle so the bundle hashes the fresh
+    # concurbench_report.json. Skip with --no-concurbench for a fast run.
+    concurbench = None
+    if "--no-concurbench" not in sys.argv:
+        print("[RUN ] Section 6 ConcurBench v1.0 conformance packet "
+              "(full suite - this takes ~2 min) ...", file=sys.stderr)
+        try:
+            import concurbench as cb
+            ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            concurbench = cb.build_concurbench_report(cb.DEFAULT_TOTAL_ITEMS, SEED, ts)
+            with open(_repo_path(cb.REPORT_FILENAME), "w", encoding="utf-8") as fh:
+                json.dump(concurbench, fh, indent=2, sort_keys=True)
+                fh.write("\n")
+        except Exception as exc:  # keep the main run resilient
+            print(f"[WARN] ConcurBench packet failed: {exc}", file=sys.stderr)
+            concurbench = None
+    else:
+        print("[SKIP] Section 6 ConcurBench (--no-concurbench)", file=sys.stderr)
+
     print("[RUN ] Section 5 full lab reproducibility bundle ...", file=sys.stderr)
     repro = build_reproducibility_bundle(tlc, ert_manifest["root_hash"])
     bundle = repro["bundle"]
@@ -1917,6 +1973,17 @@ def main() -> None:
         f"artifacts hashed · seed {bundle['seed']} · python {bundle['python_version']} "
         f"-> {REPRODUCIBILITY_FILENAME}",
     ]
+    if concurbench:
+        cl = concurbench["conformance_levels"]
+        evidence_lines.append(
+            f"  ConcurBench v1.0 packet : {concurbench['overall_verdict']} "
+            f"(L1 {cl['level_1_authorization_correctness']} · "
+            f"L2 {cl['level_2_adversarial_robustness']} · "
+            f"L3 {cl['level_3_distributed_consistency']} · "
+            f"L4 {cl['level_4_replay_auditability']}) -> concurbench_report.json"
+        )
+    elif "--no-concurbench" not in sys.argv:
+        evidence_lines.append("  ConcurBench v1.0 packet : FAILED (see warning above)")
     report_text = report_text + "\n" + "\n".join(evidence_lines)
 
     print(file=sys.stderr)  # spacer after progress noise
@@ -1965,6 +2032,26 @@ def main() -> None:
             "artifacts": bundle["artifacts"],
             "reproduce": bundle["reproduce"],
         },
+        "concurbench": ({
+            "file": "concurbench_report.json",
+            "overall_verdict": concurbench["overall_verdict"],
+            "levels": concurbench["conformance_levels"],
+            "l1": {
+                "UER": concurbench["authorization_correctness"]["UER"],
+                "FPR": concurbench["authorization_correctness"]["FPR"],
+                "FCR": concurbench["authorization_correctness"]["FCR"],
+                "DR": concurbench["authorization_correctness"]["DR"],
+                "cp_ub": concurbench["authorization_correctness"]["upper_bound_95"],
+            },
+            "replay": {
+                "attempts": concurbench["replay_and_auditability"]["replay_attempts"],
+                "rate": concurbench["replay_and_auditability"]["replay_consistency_rate"],
+            },
+            "fleet_nodes": concurbench["distributed_consistency"]["node_count"],
+            "fleet_simulated": True,
+            "asb_families": len(concurbench["asb"]["scenario_families"]),
+            "note": concurbench["verdict_note"],
+        } if concurbench else None),
         "report_text": report_text,
     }
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "maincodedashboard.html")
