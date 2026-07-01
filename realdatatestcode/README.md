@@ -31,6 +31,7 @@ itself against the **LAB v1.0** benchmark methodology.
 11. [The webpage / dashboard](#11-the-webpage--dashboard)
 12. [Independent verification: TLC, replay manifest, reproducibility bundle](#12-independent-verification-tlc-replay-manifest-reproducibility-bundle)
 13. [Honesty notes & scope](#13-honesty-notes--scope)
+14. [ConcurBench conformance, stress test & FCR (one command)](#14-concurbench-conformance-stress-test--fcr-one-command)
 
 ---
 
@@ -123,12 +124,22 @@ carddataset/
 ├── gamma_report_page.py                     # STEP 3 — renders the JSON reports into an HTML dashboard
 ├── gamma_report.html                        #          self-contained animated dashboard [generated]
 ├── gamma_terminal_full.txt                  #          captured console output (embedded verbatim in the page)
-└── *_full.json                              #          a second report set used by the dashboard
+├── *_full.json                              #          a second report set used by the dashboard
+│
+├── run_all.py            ◀── ONE COMMAND    # runs base benchmark + all layers below + dashboard
+├── concurbench_full.py                      # ConcurBench "Document 1" full conformance packet (all levels)
+├── concurbench_full_report.json             #          §18 top-level conformance object [generated]
+├── stress_test.py                           # 4 financial-services stress scenarios (P1–P4) vs Γ engine
+├── stress_test_report.json                  #          per-condition pass/fail + verdicts [generated]
+├── fcr_test.py                              # dedicated Fail-Closed Rate test over real corpus + uncertainty
+└── fcr_test_report.json                     #          FCR + per-family Wilson bounds [generated]
 ```
 
 **The main file is [gamma_test_runner.py](gamma_test_runner.py)** — it is the reference
 externalization monitor and the benchmark harness in one. `gamma_map_raw.py` prepares its
-input; `gamma_report_page.py` visualizes its output.
+input; `gamma_report_page.py` visualizes its output. **[run_all.py](run_all.py)** is the single
+entry point that chains the base benchmark, the ConcurBench conformance packet, the stress
+test, the Fail-Closed Rate test, and the unified dashboard (see §14).
 
 ## 5. The data: https://drive.google.com/drive/folders/1_Al3Tq0wQo9fMH29YECGeWkkhBqfBj5x?usp=sharing
 - from Kaggle to golden trace
@@ -261,9 +272,30 @@ the compensatory rule on the data as‑is, the other is a counterfactual transfo
 
 Requirements: Python 3.9+ and `pandas`.
 
+### The one command (recommended) — runs everything, nothing skipped
+
 ```bash
 pip install pandas
 
+# runs the base LAB v1.0 benchmark + ConcurBench conformance + stress test
+# + Fail-Closed Rate test, then builds and opens the unified dashboard.
+python3 run_all.py
+```
+
+This is the entry point for anyone landing on the repo: by default it runs the **entire**
+pipeline end-to-end (base benchmark included, with its full console output) and produces
+`gamma_report.html` with every section. Flags:
+`--reuse` (fast path — skip the heavy base benchmark and reuse existing artifacts),
+`--no-open` (don't open a browser), `--input FILE` (base benchmark input CSV).
+Full details of the added layers are in [§14](#14-concurbench-conformance-stress-test--fcr-one-command).
+
+> Note: `run_all.py` expects the mapped golden-trace CSV
+> (`GAMMA_G0_CREDITCARD_FULL_mapped.csv`) to exist. On a fresh clone, generate it first with
+> the mapping step below (STEP 1), then run `python3 run_all.py`.
+
+### Or run each stage manually
+
+```bash
 # STEP 1 — map the raw Kaggle dataset into the golden-trace schema
 python gamma_map_raw.py --raw creditcard.csv --out GAMMA_G0_CREDITCARD_FULL_mapped.csv
 
@@ -274,6 +306,11 @@ python gamma_test_runner.py \
   --output  gamma_validation_results.csv \
   --summary gamma_summary.json \
   --lab-report gamma_lab_v1_report.json
+
+# STEP 3 — the added conformance layers (each writes its own JSON report)
+python concurbench_full.py     # ConcurBench "Document 1" full conformance packet
+python stress_test.py          # 4 financial-services stress scenarios (P1–P4)
+python fcr_test.py             # dedicated Fail-Closed Rate test
 ```
 
 The runner builds [gamma_report.html](gamma_report.html) from the exact results it just
@@ -315,6 +352,126 @@ python gamma_report_page.py \
   --summary    gamma_summary.json \
   --out        gamma_report.html        # add --no-open to suppress the browser
 ```
+
+-----------------------------------------------------------------------
+
+## Generator vs Independent Verifier
+
+The benchmark intentionally separates **generation** from
+**verification**.
+
+  -----------------------------------------------------------------------
+  Component                      Responsibility
+  ------------------------------ ----------------------------------------
+  `gamma_test_runner.py`         Executes the benchmark, derives
+                                 authorization decisions, computes
+                                 metrics, generates reports, replay
+                                 manifest, and reproducibility bundle.
+
+  `gamma_replay_verify.py`       Independently verifies the replay
+                                 manifest using only the emitted JSONL
+                                 file. It requires neither the original
+                                 dataset nor the benchmark
+                                 implementation.
+  -----------------------------------------------------------------------
+
+This separation enables third-party auditors to validate execution
+integrity without trusting the benchmark runner itself.
+
+------------------------------------------------------------------------
+
+## Replay Manifest Integrity Guarantees
+
+The replay verifier establishes four independent guarantees:
+
+-   **GENESIS anchoring** -- the first decision is correctly anchored.
+-   **Replay determinism** -- every record links to the previous SHA-256
+    hash.
+-   **Ledger integrity** -- each Evidence Quad ledger hash matches the
+    recorded hash chain.
+-   **Decision consistency** -- Π, Γ_G, Γ_class and PERMIT/SAFE_STATE
+    remain internally consistent.
+
+Any violation causes the verifier to fail.
+
+------------------------------------------------------------------------
+
+## Manifest Authenticity
+
+After validating every decision, the verifier recomputes the SHA-256
+digest of the complete replay manifest.
+
+When an expected digest is supplied, the verifier confirms the manifest
+has not been modified after generation.
+
+``` bash
+python gamma_replay_verify.py \
+    gamma_replay_manifest.jsonl \
+    --expect-sha256 <expected_sha256>
+```
+
+------------------------------------------------------------------------
+
+## Replay Integrity
+
+Every authorization decision extends a SHA-256 hash chain.
+
+Changing any historical decision changes every downstream hash, making
+post-generation modification immediately detectable.
+
+This provides tamper-evident execution history without requiring the
+original dataset.
+
+------------------------------------------------------------------------
+
+## Independent Third-Party Audit
+
+The replay verifier has no dependency on:
+
+-   pandas
+-   the benchmark runner
+-   the mapped dataset
+-   benchmark source code
+
+Any independent reviewer can validate the replay manifest using only the
+emitted JSONL file.
+
+------------------------------------------------------------------------
+
+## Exit Codes
+
+The verifier exits with:
+
+-   **Exit Code 0** --- every replay integrity check passed.
+-   **Exit Code 1** --- one or more replay integrity violations were
+    detected.
+
+------------------------------------------------------------------------
+
+## Internal Verification Checklist
+
+The verifier independently checks:
+
+-   Hash-chain adjacency
+-   GENESIS anchor
+-   Evidence Quad ledger binding
+-   Decision consistency
+-   Π consistency
+-   Γ_G consistency
+-   Γ_class consistency
+-   Manifest SHA-256 integrity
+
+------------------------------------------------------------------------
+
+## Reproducibility Statement
+
+Unlike the benchmark runner, the replay verifier does not regenerate
+decisions from the dataset.
+
+Instead, it validates that the emitted execution ledger is
+cryptographically and logically self-consistent, allowing deterministic
+third-party auditing from the replay manifest alone.
+
 
 ## 10. Results we actually got
 
@@ -563,3 +720,86 @@ end‑to‑end hash re‑computation.
 - **Replay verifies adjacency, not full re‑derivation** for the bundled golden trace — see
   [§12.4](#124-caveat--what-replay-verifies-here). Traces produced by `gamma_map_raw.py` are
   fully re‑derivable.
+
+---
+
+## 14. ConcurBench conformance, stress test & FCR (one command)
+
+Three layers were added on top of the base benchmark, all wired into a single entry point and
+surfaced on the same dashboard. They run over the **real ULB corpus** (284,807 rows / 492 fraud
+/ 13 predicates) — not the placeholder figures from the requirements doc.
+
+### One command runs everything
+
+```bash
+# run EVERYTHING end-to-end — nothing skipped (this is the default)
+# includes the heavy base benchmark: reads the 451 MB mapped CSV, rebuilds the manifest
+python3 run_all.py
+
+# fast path: skip the base benchmark and reuse existing artifacts, run layers 2-5
+python3 run_all.py --reuse
+
+# don't auto-open the browser
+python3 run_all.py --no-open
+```
+
+By default nothing is skipped: a fresh clone runs the full base LAB v1.0 benchmark (with all
+its console output) and then every layer, so anyone who runs it sees the complete pipeline.
+Use `--reuse` only if you want the fast path on already-generated artifacts.
+
+`run_all.py` chains: **(1)** base LAB v1.0 benchmark → **(2)** [concurbench_full.py](concurbench_full.py)
+→ **(3)** [stress_test.py](stress_test.py) → **(4)** [fcr_test.py](fcr_test.py) →
+**(5)** unified `gamma_report.html` (base sections **+** ConcurBench **+** stress **+** FCR).
+Each layer also runs standalone (`python3 concurbench_full.py`, etc.).
+
+### 14.1 ConcurBench full conformance packet — `concurbench_full.py`
+
+Populates **every field** of the "Document 1 — Benchmark Verification Requirements" §18
+top-level object and emits `concurbench_full_report.json`.
+
+| Level | What is computed on the real corpus | Result |
+|---|---|---|
+| **L1 Authorization correctness** | confusion matrix, UER, FPR, FDR, **FCR**, DR + Wilson 95% | **PASS** — FP 0, UER 0, FPR 0 |
+| **L2 Adversarial robustness** | 8 synthetic attack families + adaptive attacker + contamination/canary + ablation | **PASS** — 0 false permits, adaptive 0/11,808 |
+| **L3 Distributed consistency** | simulated 5-node fleet: consistency, revocation-latency p50/p95/p99, partition, quorum, desync | **PASS** — fleet 1.0, partition fails closed |
+| **L4 Replay + auditability** | explicit replay attempts/passes/failures/rate + Evidence Quad + independent verifier subprocess | **PASS** — rate 1.0, verifier PASS, hash-chain PASS |
+
+Also fully populated: report envelope, dataset/repro, HITL governance, ASB (5 families, temporally
+ordered event streams), assumptions/limitations, independent-validation status. **Overall verdict:
+`COMPLIANT_PASS`** (scope: internal + *simulated*-fleet; third-party audit / hardware-in-the-loop
+are honestly disclosed as `not_run` / `not_available`).
+
+### 14.2 Financial-services stress test — `stress_test.py`
+
+Executes the four scenarios from *Lakhowal Stress-Test Analysis (15 May 2026)* as real,
+deterministic predicate evaluations against the non-compensatory Γ engine (a single deficit
+denies), with per-condition tables and honest out-of-scope markers. Emits `stress_test_report.json`.
+
+| Scenario | Confidence | Effectively tackled | Verdict | Fail-closed |
+|---|---|---|---|---|
+| P1 — Ghost Treasury Transfer ($28M deepfake CFO wire) | HIGH | 92–95% | STRONG FIT | ✓ (Γ=6) |
+| P2 — Sanctions Drift Cascade (3 sub-cases + oracle gap) | MEDIUM | 60–70% | PARTIAL FIT | ✓ (A/C) |
+| P3 — Multi-Agent Liquidity Panic (federated + class veto) | HIGH | 75–85% | STRONG FIT | ✓ |
+| P4 — Sovereign Cascade (compound simultaneous failure) | MEDIUM-HIGH | 70–80% | DEFENSIBLE | ✓ |
+
+Weighted effectively-tackled ≈ **78.4%**; all in-scope denials fail closed. The oracle problem
+(stale truth behind a fresh feed) and upstream data poisoning are reported as **out of scope**, as
+in the source document.
+
+### 14.3 Fail-Closed Rate (FCR) test — `fcr_test.py`
+
+Measures `FCR = P(SAFE_STATE | should-deny OR uncertain)` over the 492 real fraud rows plus five
+injected uncertainty families (invalid token, stale telemetry, TOCTOU, missing predicate, ambiguous
+signature). Adverse event = a **fail-open** (permit under uncertainty). Emits `fcr_test_report.json`.
+
+| Population | n | Fail-open | FCR |
+|---|---|---|---|
+| should_deny_real | 492 | 0 | 1.0 |
+| invalid_token / stale_telemetry / stale_context_toctou / missing_predicate / ambiguous_signature | 4,000 each | 0 | 1.0 |
+| **Overall** | **20,492** | **0** | **1.0** (Wilson 95% fail-open bound reported) |
+
+### 14.4 Dashboard
+
+All three layers render as additional sections at the bottom of `gamma_report.html`
+(server-rendered by `build_extra_sections()` in [gamma_report_page.py](gamma_report_page.py)),
+so the base benchmark, ConcurBench conformance, stress scenarios, and FCR all live on one page.
