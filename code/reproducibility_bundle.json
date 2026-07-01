@@ -1,16 +1,22 @@
 {
   "artifacts": [
     {
-      "bytes": 93760,
+      "bytes": 98802,
       "file": "maincode.py",
       "present": true,
-      "sha256": "03183ea50a0b93b4193d8c90663fcd6e843f30ba4f39cb64932dd43c192cc65b"
+      "sha256": "9b3866187e6312a9c1b40ced597d52a9e3ed2eebfc354dd55a4d8de8e5fa640f"
     },
     {
       "bytes": 66615,
       "file": "lab_benchmark.py",
       "present": true,
       "sha256": "464a509b69498b81d80117aa39e040e37a04bc27cf24243ab5c8127287a61fbb"
+    },
+    {
+      "bytes": 37535,
+      "file": "concurbench.py",
+      "present": true,
+      "sha256": "a56c6319a39f80e47927e351e22abd45a140dd1946dadc206a7c21b6e1704475"
     },
     {
       "bytes": 128874,
@@ -31,6 +37,12 @@
       "sha256": "0d689504fbb7b00aa67a82bca0066290b79771372b4102e862553823639c621b"
     },
     {
+      "bytes": 16003,
+      "file": "concurbench_report.json",
+      "present": true,
+      "sha256": "94338d035467b68cc7957bfa91f29229e07120a5346cfab1616d4258ed72d86c"
+    },
+    {
       "bytes": 1685,
       "file": "LDREA.tla",
       "present": true,
@@ -49,7 +61,7 @@
     "signing_key_id": "586cce72a7f6e41e"
   },
   "ertuple_replay_root_hash": "1f49c107222c93ad004a536a7897b6e0f9f9b41149ce7eb7364ab34c3111ac06",
-  "git_commit": "08a22bc57b24c80ce0696b89d945eae22920623e",
+  "git_commit": "7d50a6717981c69e82d6bea0dde6a9a4923e86c5",
   "kind": "full_lab_reproducibility_bundle",
   "platform": "darwin",
   "python_version": "3.9.6",
