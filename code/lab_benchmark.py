@@ -17,6 +17,11 @@ DEFAULT_SEED = 20260623
 DEFAULT_TOTAL_ITEMS = 1_200_000
 DESIGN_EFFECT = 1.7
 
+# DEMO / REFERENCE crypto only. Shared-key HMAC-SHA256 standing in for the
+# paper's epoch-key signatures with a hardware root of trust (TEE / HSM). This
+# is demonstration-only and MUST NOT be treated as production enforcement.
+DEMO_SECRET_KEY = b"lakhowal_secret_key_2026_demo"
+
 
 class LakhowalLLCEngine:
     """Reference-monitor simulator for the paper-aligned LAB v1.0 checks."""
@@ -135,6 +140,9 @@ class LakhowalLLCEngine:
 
 
 def wilson_upper_bound(events: int, trials: int, design_effect: float = 1.0) -> float:
+    """Two-sided Wilson score upper bound (kept for continuity). For the rare/
+    zero-event false-permit claim FULL_SPEC specifies the exact Clopper-Pearson
+    bound - see clopper_pearson_upper()."""
     if trials == 0:
         return 0.0
     n_eff = trials / design_effect
@@ -143,6 +151,47 @@ def wilson_upper_bound(events: int, trials: int, design_effect: float = 1.0) -> 
     numerator = p_hat + z**2 / (2 * n_eff) + z * math.sqrt((p_hat * (1 - p_hat) + z**2 / (4 * n_eff)) / n_eff)
     denominator = 1 + z**2 / n_eff
     return numerator / denominator
+
+
+def clopper_pearson_upper(events: int, trials: int, confidence: float = 0.95,
+                          design_effect: float = 1.0) -> float:
+    """Exact one-sided Clopper-Pearson upper bound - the rare-event metric
+    FULL_SPEC mandates.
+
+    Zero-event case (the headline false-permit result) has the exact closed form
+    1 - alpha**(1/n_eff): for n = 360,000 at 95% confidence this is ~8.32e-6, and
+    cluster-corrected with DE = 1.7, ~1.41e-5 - matching the paper's <8.3e-6 /
+    <1.4e-5 references. The design effect shrinks the effective n for clustering.
+    For events > 0 we solve the exact Beta relation by bisection (no SciPy)."""
+    if trials == 0:
+        return 0.0
+    alpha = 1.0 - confidence
+    n_eff = trials / design_effect
+    if events == 0:
+        return 1.0 - alpha ** (1.0 / n_eff)
+    # Upper bound p_u solves I_{p_u}(events+1, n_eff-events) = alpha, i.e. the
+    # smallest p with P(Binom(n_eff, p) <= events) = alpha. Bisect on p.
+    from math import lgamma, log, exp
+
+    def binom_cdf_le(k: float, n: float, p: float) -> float:
+        if p <= 0.0:
+            return 1.0
+        if p >= 1.0:
+            return 0.0
+        total = 0.0
+        for i in range(0, int(k) + 1):
+            log_c = lgamma(n + 1) - lgamma(i + 1) - lgamma(n - i + 1)
+            total += exp(log_c + i * log(p) + (n - i) * log(1 - p))
+        return min(1.0, total)
+
+    lo, hi = events / trials, 1.0
+    for _ in range(100):
+        mid = (lo + hi) / 2.0
+        if binom_cdf_le(events, n_eff, mid) > alpha:
+            lo = mid
+        else:
+            hi = mid
+    return hi
 
 
 def make_item(engine: LakhowalLLCEngine, index: int, category: str) -> dict:
@@ -228,7 +277,7 @@ def stable_mod(value: str, modulus: int) -> int:
 
 
 def run_lab_suite(total_items: int, seed: int) -> dict:
-    engine = LakhowalLLCEngine(b"lakhowal_secret_key_2026_production", seed=seed)
+    engine = LakhowalLLCEngine(DEMO_SECRET_KEY, seed=seed)
     metrics = {
         category: {"trials": 0, "violations": 0, "mutations": {}}
         for category in ("NOMINAL", *LAB_CLASSES)
@@ -240,7 +289,14 @@ def run_lab_suite(total_items: int, seed: int) -> dict:
     class_veto_failures = 0
     total_adversarial = 0
 
+    # Replay sampling is STRATIFIED by category (not the first 1,000 items, which
+    # are nominal-only). We cap the sample per category so every category - not
+    # just NOMINAL - is represented, avoiding any stride/cycle aliasing.
+    replay_cap_per_cat = max(50, 2000 // (len(LAB_CLASSES) + 1))
+    ert_stride = max(1, total_items // 256)
     replay_sample = []
+    replay_sample_categories: dict = {}
+    ertuple_trace = []
     negative_control_false_permits = 0
     ablations = {
         "tier_t_tee_only": 0,
@@ -253,12 +309,30 @@ def run_lab_suite(total_items: int, seed: int) -> dict:
     for index in range(total_items):
         category = category_for_index(index, total_items)
         item = make_item(engine, index, category)
-        if index < 1_000:
+        if replay_sample_categories.get(category, 0) < replay_cap_per_cat:
             replay_sample.append(copy.deepcopy(item))
+            replay_sample_categories[category] = replay_sample_categories.get(category, 0) + 1
 
         permit, gamma, record = engine.evaluate_cycle(item["request"], item["token"], item["node_metrics"], item["class_metrics"])
         metrics[category]["trials"] += 1
         metrics[category]["mutations"][item["mutation"]] = metrics[category]["mutations"].get(item["mutation"], 0) + 1
+
+        if index % ert_stride == 0:
+            # Per-item ERTuple (FULL_SPEC {G, Lambda(G), y_hat, timestamp,
+            # context, signature-binding}) with the ledger hash after commit.
+            tok = item["token"] or {}
+            ertuple_trace.append({
+                "id": index,
+                "category": category,
+                "mutation": item["mutation"],
+                "G_gamma": gamma,
+                "lambda_class_veto": record["class_veto"],
+                "y_hat_permit": permit,
+                "timestamp": engine.now,
+                "context_op": item["request"].get("op"),
+                "token_binding": engine.token_id(tok) if tok else None,
+                "ledger_hash_after": engine.ledger_hash_chain.hex(),
+            })
 
         if category == "NOMINAL":
             if permit != 1:
@@ -286,6 +360,10 @@ def run_lab_suite(total_items: int, seed: int) -> dict:
     replay_rate = run_replay_determinism(replay_sample, seed)
     invariant_checks = run_invariant_checks(seed + 1)
     adaptive = run_adaptive_attacker(120_000, seed + 2)
+    isolated = run_isolated_attribution(seed + 3)
+    nc_leak_rate = negative_control_false_permits / total_adversarial if total_adversarial else 0.0
+    ert_root = hashlib.sha256(
+        json.dumps(ertuple_trace, sort_keys=True).encode()).hexdigest()
 
     return {
         "total_items": total_items,
@@ -294,16 +372,32 @@ def run_lab_suite(total_items: int, seed: int) -> dict:
         "false_denials_count": false_denials,
         "fpr": false_permits / total_adversarial if total_adversarial else 0.0,
         "fdr": false_denials / metrics["NOMINAL"]["trials"] if metrics["NOMINAL"]["trials"] else 0.0,
+        # Two-sided Wilson retained for continuity; the headline rare-event claim
+        # uses the exact one-sided Clopper-Pearson bound (FULL_SPEC).
         "wilson_95_upper_bound": wilson_upper_bound(false_permits, total_adversarial),
         "wilson_95_upper_bound_cluster_corrected": wilson_upper_bound(false_permits, total_adversarial, DESIGN_EFFECT),
+        "clopper_pearson_95_upper_bound": clopper_pearson_upper(false_permits, total_adversarial),
+        "clopper_pearson_95_upper_bound_cluster_corrected": clopper_pearson_upper(false_permits, total_adversarial, design_effect=DESIGN_EFFECT),
+        "rare_event_bound_method": "clopper_pearson_one_sided_exact",
         "revocation_violations": revocation_violations,
         "toctou_violations": toctou_violations,
         "class_veto_failures": class_veto_failures,
         "replay_determinism_rate": replay_rate,
+        "replay_sample_size": len(replay_sample),
+        "replay_sample_categories": replay_sample_categories,
+        # NOT the paper's 6.4% negative-control FPR - a much weaker local baseline.
         "negative_control": {
+            "metric_name": "local_weak_baseline_leak_rate",
             "false_permits": negative_control_false_permits,
-            "fpr": negative_control_false_permits / total_adversarial if total_adversarial else 0.0,
+            "fpr": nc_leak_rate,
+            "leak_rate_percent": nc_leak_rate * 100.0,
+            "paper_negative_control_fpr_percent": 6.4,
+            "note": "Local weak-baseline (weighted_sum_no_substrate_no_class_veto) "
+                    "leak rate - a different, much weaker baseline than the paper's "
+                    "6.4% negative-control FPR; not directly comparable (different "
+                    "definition, sample set and denominator).",
         },
+        "per_category_isolated_attribution": isolated,
         "ablations": {
             mode: {
                 "false_permits": count,
@@ -315,6 +409,14 @@ def run_lab_suite(total_items: int, seed: int) -> dict:
         "adaptive_attacker": adaptive,
         "invariant_checks": invariant_checks,
         "per_category": metrics,
+        "ertuple_trace_sample": {
+            "count": len(ertuple_trace),
+            "spec_clause": "ERTuple = {G, Lambda(G), y_hat, timestamp, context, signature-binding}",
+            "method_version": "LAB-v1.0",
+            "canonical_hash": ert_root,
+            "final_ledger_root_hash": engine.ledger_hash_chain.hex(),
+            "records": ertuple_trace,
+        },
         "final_ledger_root_hash": engine.ledger_hash_chain.hex(),
     }
 
@@ -327,7 +429,7 @@ def run_replay_determinism(items: list[dict], seed: int) -> float:
 
 
 def replay_items(items: list[dict], seed: int) -> list[dict]:
-    engine = LakhowalLLCEngine(b"lakhowal_secret_key_2026_production", seed=seed)
+    engine = LakhowalLLCEngine(DEMO_SECRET_KEY, seed=seed)
     outcomes = []
     for item in copy.deepcopy(items):
         if item["mutation"] == "revocation_race":
@@ -337,8 +439,38 @@ def replay_items(items: list[dict], seed: int) -> list[dict]:
     return outcomes
 
 
+def run_isolated_attribution(seed: int, per_category_n: int = 2000) -> dict:
+    """Clean per-category attribution. The main suite runs one shared engine, so
+    once a LAB-A5 finance drift sets the persistent class flag it can deny later
+    finance items regardless of their own token/context/TOCTOU state - good for
+    safety, but it muddies WHICH control caught each later item. Here each
+    adversarial category is re-run on its OWN fresh engine instance, so every
+    denial is attributable to that category's own control with no cross-category
+    persistent-flag contamination. This complements (does not replace) the
+    stateful integrated run above."""
+    out = {}
+    for offset, category in enumerate(LAB_CLASSES):
+        engine = LakhowalLLCEngine(DEMO_SECRET_KEY, seed=seed + offset)
+        false_permits = 0
+        for j in range(per_category_n):
+            item = make_item(engine, j, category)
+            if item["mutation"] == "revocation_race":
+                engine.revoke_token(item["token"])
+            permit, _, _ = engine.evaluate_cycle(
+                item["request"], item["token"], item["node_metrics"], item["class_metrics"])
+            if permit == 1:
+                false_permits += 1
+        out[category] = {
+            "trials": per_category_n,
+            "false_permits": false_permits,
+            "fpr": false_permits / per_category_n if per_category_n else 0.0,
+            "clopper_pearson_95_upper": clopper_pearson_upper(false_permits, per_category_n),
+        }
+    return out
+
+
 def run_invariant_checks(seed: int) -> dict:
-    engine = LakhowalLLCEngine(b"lakhowal_secret_key_2026_production", seed=seed)
+    engine = LakhowalLLCEngine(DEMO_SECRET_KEY, seed=seed)
     valid = engine.generate_token("INV_VALID", "WIRE_TRANSFER", 60.0)
     permit, gamma, record = engine.evaluate_cycle(
         {"op": "WIRE_TRANSFER", "watchdog_liveness": True},
@@ -419,7 +551,7 @@ def run_invariant_checks(seed: int) -> dict:
 
 
 def run_adaptive_attacker(attempts: int, seed: int) -> dict:
-    engine = LakhowalLLCEngine(b"lakhowal_secret_key_2026_production", seed=seed)
+    engine = LakhowalLLCEngine(DEMO_SECRET_KEY, seed=seed)
     false_permits = 0
     induced_denials = 0
     for index in range(attempts):
@@ -465,13 +597,15 @@ def build_manifest(results: dict, seed: int) -> dict:
             "AgentDojo": "not_run_missing_public_harness_in_workspace",
             "AgentHarm": "not_run_missing_public_harness_in_workspace",
             "hardware_in_the_loop": "not_run_missing_fpga_sgx_hardware_in_workspace",
-            "tla_plus_tlc": "paper_reports_tlc_logs; local tla2tools artifact not present",
+            "tla_plus_tlc": "spec present (LDREA.tla / LDREA.cfg via maincode.py); "
+                            "TLC model-checks it when tla2tools is installed, otherwise "
+                            "reported as SPEC_EMITTED_TLC_NOT_RUN",
         },
         "audit_verdict": "COMPLIANT_PASS" if audit_pass else "FAIL",
     }
 
 
-SECRET_KEY = b"lakhowal_secret_key_2026_production"
+SECRET_KEY = DEMO_SECRET_KEY  # demonstration-only shared-key HMAC (see DEMO_SECRET_KEY)
 TOKEN_KINDS = ("valid", "forged", "expired", "revoked", "missing", "scope_mismatch")
 
 
@@ -699,6 +833,8 @@ def format_report(manifest: dict) -> str:
     lines.append(f"Empirical FPR:                    {results['fpr']:.8%}")
     lines.append(f"Wilson 95% UB:                    < {results['wilson_95_upper_bound']:.8%}")
     lines.append(f"Cluster-corrected Wilson 95% UB:  < {results['wilson_95_upper_bound_cluster_corrected']:.8%}")
+    lines.append(f"Clopper-Pearson 95% UB (exact):   < {results['clopper_pearson_95_upper_bound']:.3e}")
+    lines.append(f"  cluster-corrected (DE={DESIGN_EFFECT}):     < {results['clopper_pearson_95_upper_bound_cluster_corrected']:.3e}")
     lines.append(f"False denial rate:                {results['fdr']:.8%}")
     lines.append(f"Replay determinism rate:          {results['replay_determinism_rate']:.8%}")
     lines.append(f"Revocation violations:            {results['revocation_violations']}")
@@ -710,7 +846,9 @@ def format_report(manifest: dict) -> str:
         label = "False Rejections" if category == "NOMINAL" else "Safety Violations"
         lines.append(f" -> {category:<10} | Test Cycles: {data['trials']:<8,} | {label}: {data['violations']}")
     lines.append("-" * 79)
-    lines.append(f"Negative-control FPR:             {results['negative_control']['fpr']:.6%}")
+    lines.append(f"Local weak-baseline leak rate:    {results['negative_control']['fpr']:.6%} "
+                 f"(NOT the paper's {results['negative_control']['paper_negative_control_fpr_percent']}% "
+                 f"negative-control FPR - different baseline)")
     lines.append(f"Adaptive attacker FPR:            {results['adaptive_attacker']['fpr']:.8%}")
     lines.append("Invariant checks:                 " + ", ".join(
         f"{name}=PASS" if passed else f"{name}=FAIL"
@@ -738,7 +876,9 @@ _STATIC_BANNER_JS = (
 
 
 def build_dashboard_html(manifest: dict, report_text: str) -> str:
-    """Render a self-contained HTML dashboard with the manifest data inlined."""
+    """Render an HTML dashboard with the manifest DATA inlined. The data is
+    self-contained; the charts load Chart.js from a CDN, so rendering needs
+    internet unless chart.umd.min.js is vendored locally."""
     bootstrap = _STATIC_BANNER_JS + "\nrenderDashboard(__MANIFEST_JSON__, __REPORT_TEXT__);"
     html = _DASHBOARD_TEMPLATE.replace("__BOOTSTRAP__", bootstrap)
     html = html.replace("__MANIFEST_JSON__", json.dumps(manifest))
@@ -1259,7 +1399,7 @@ def main() -> None:
     parser.add_argument("--items", type=int, default=DEFAULT_TOTAL_ITEMS, help="Total LAB proposals to generate.")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED, help="Deterministic generator seed.")
     parser.add_argument("--manifest", default="ertuple_audit_manifest.json", help="Output JSON proof receipt.")
-    parser.add_argument("--dashboard", default="dashboard.html", help="Output self-contained HTML dashboard.")
+    parser.add_argument("--dashboard", default="dashboard.html", help="Output HTML dashboard (data self-contained; charts use CDN Chart.js unless vendored).")
     parser.add_argument("--open", action="store_true", help="Open the HTML dashboard in the default browser when done.")
     parser.add_argument("--input", help="CSV of custom action proposals to test instead of generated LAB data.")
     parser.add_argument("--serve", action="store_true", help="Start a local web server to upload a CSV and run tests in the browser.")
