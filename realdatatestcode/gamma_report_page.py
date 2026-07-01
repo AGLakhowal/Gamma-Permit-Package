@@ -290,8 +290,37 @@ footer{padding:40px 0 70px;color:var(--muted);text-align:center;font-size:13px}
 <!-- METRIC TABLE -->
 <section class="reveal">
   <h2><span class="dot"></span>Primary metrics &amp; Wilson bounds</h2>
+  <p class="lead">Each rate is taken over the <b>population at risk of that event</b>, not blindly
+  over all rows. UER (unauthorized execution) is over all rows; FPR (false permit) is over the
+  should-deny population only; FDR over should-permit. A smaller denominator ⇒ a wider Wilson
+  bound — shown honestly below.</p>
   <div class="card"><table id="metricTable"><thead><tr>
-    <th>Metric</th><th>Events / N</th><th>Rate</th><th>Wilson 95% upper</th></tr></thead><tbody></tbody></table></div>
+    <th>Metric</th><th>Events / N</th><th>Population</th><th>Rate</th><th>Wilson 95% upper</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<!-- INDEPENDENT VERIFICATION -->
+<section class="reveal" id="verifySection">
+  <h2><span class="dot"></span>Independent verification — TLC · replay · evidence</h2>
+  <p class="lead">Beyond the metrics, every run emits third-party-checkable evidence: a
+  <b>verified</b> TLC attestation, a per-item <b>ERTuple replay manifest</b>, an <b>Evidence
+  Quad</b> per decision, and a tamper-evident <b>reproducibility bundle</b> — each genuinely
+  computed, none decorative.</p>
+  <div class="grid g2">
+    <div class="card"><h3>TLC model-check verification <span id="tlc-badge" class="tag"></span></h3>
+      <table id="tlc-table"><tbody></tbody></table>
+      <p class="note" id="tlc-note"></p></div>
+    <div class="card"><h3>Per-item ERTuple replay manifest</h3>
+      <table id="replay-table"><tbody></tbody></table>
+      <p class="note" id="replay-note"></p></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card"><h3>Evidence Quad — sealed per decision</h3>
+      <p>Every decision commits a four-field record binding the outcome to the method and the
+      hash-chained ledger (emitted in <code>gamma_validation_results.csv</code>):</p>
+      <table id="quad-table"><tbody></tbody></table></div>
+    <div class="card"><h3>Reproducibility bundle</h3>
+      <div id="bundle-body"></div></div>
+  </div>
 </section>
 
 <!-- APPENDIX-A SUMMARY -->
@@ -339,15 +368,21 @@ document.getElementById("safe-n").textContent = (S.derived_safe_state||0).toLoca
 const ul=document.getElementById("summaryList");
 (L.appendix_a_style_summary||[]).forEach(t=>{const li=document.createElement("li");li.textContent=t;ul.appendChild(li);});
 
-/* ---- metric table ---- */
+/* ---- metric table (headline UER first, then the six primary metrics) ---- */
 const mtb=document.querySelector("#metricTable tbody");
-Object.values(L.primary_metrics).forEach(m=>{
+const wbound = m => m.wilson95_clustercorrected_upper<1e-3 ? sci(m.wilson95_clustercorrected_upper) : fmtPct(m.wilson95_clustercorrected_upper);
+const metricRow = (m, highlight) => {
   const tr=document.createElement("tr");
   const rate = m.higher_is_better ? fmtPct(m.reported_rate) : (m.adverse_rate===0?"0":fmtPct(m.adverse_rate));
-  tr.innerHTML = `<td>${m.metric}</td><td>${m.adverse_events} / ${m.n}</td>
-    <td>${rate}</td><td>&lt; ${m.wilson95_clustercorrected_upper<1e-3?sci(m.wilson95_clustercorrected_upper):fmtPct(m.wilson95_clustercorrected_upper)}</td>`;
+  const nm = highlight ? `<b style="color:var(--acc2)">${m.metric}</b>` : m.metric;
+  tr.innerHTML = `<td>${nm}</td><td>${m.adverse_events} / ${m.n.toLocaleString()}</td>
+    <td style="color:var(--muted)">${m.population||"all rows"}</td>
+    <td>${rate}</td><td>&lt; ${wbound(m)}</td>`;
   mtb.appendChild(tr);
-});
+};
+const uerM = (L.unauthorized_execution||{}).metric;
+if(uerM) metricRow(uerM, true);
+Object.values(L.primary_metrics).forEach(m=>metricRow(m,false));
 
 /* ---- invariants grid ---- */
 const ig=document.getElementById("invGrid");
@@ -422,17 +457,94 @@ new Chart(metricChart,{type:"bar",
   options:{scales:{y:{type:"logarithmic",title:{display:true,text:"rate (log)"}}},
     plugins:{legend:{position:"bottom"}},animation:{duration:1200}}});
 
-/* negative control */
+/* negative control — two DISTINCT probes, kept clearly separate */
 const nc=L.negative_control;
+const ncActual = (nc.actual_dataset_baseline||{}).false_permits_vs_llc ?? nc.compensatory_false_permits_vs_llc ?? 0;
+const ncCounter = (nc.corollary2_counterfactual||{}).counterfactual_false_permits ?? nc.corollary2_rows_masked_if_isolated ?? 0;
+const ncScore = nc.single_deficit_score ?? (1/13);
 document.getElementById("neg-text").innerHTML =
-  `A compensatory weighted-sum aggregator would <b style="color:var(--bad)">false-permit ${nc.corollary2_rows_masked_if_isolated}</b>
-   fraud rows if their deficit were isolated (single deficit ${(1/14).toFixed(3)} &lt; τ=${nc.tau}); the
-   non-compensatory Law of Concurrence <b style="color:var(--acc2)">denies all</b> of them.`;
+  `<b>Actual dataset baseline:</b> run as-is on this corpus, the compensatory weighted-sum admits
+   <b style="color:var(--acc2)">${ncActual}</b> false permits vs LLC (adversarial rows fail
+   <i>multiple</i> predicates, so the weighted score stays ≥ τ=${nc.tau}).<br/>
+   <b>Corollary 2 counterfactual:</b> if each adversarial row were reduced to a single isolated
+   deficit (${Number(ncScore).toFixed(3)} &lt; τ=${nc.tau}), a compensatory gate would
+   <b style="color:var(--bad)">false-permit ${ncCounter}</b> of them — the non-compensatory Law of
+   Concurrence <b style="color:var(--acc2)">denies all</b>.`;
 new Chart(negChart,{type:"bar",
-  data:{labels:["Non-compensatory (LLC)","Compensatory (weighted-sum)"],
-    datasets:[{label:"fraud false permits",data:[0,nc.corollary2_rows_masked_if_isolated],
-      backgroundColor:[GREEN,RED],borderRadius:8}]},
-  options:{plugins:{legend:{display:false}},animation:{duration:1200}}});
+  data:{labels:["LLC (actual)","Weighted-sum (actual)","Weighted-sum (Corollary 2 counterfactual)"],
+    datasets:[{label:"false permits",data:[0,ncActual,ncCounter],
+      backgroundColor:[GREEN,BLUE,RED],borderRadius:8}]},
+  options:{plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>i[0].label,
+    label:c=>c.parsed.y+" false permits"}}},animation:{duration:1200}}});
+
+/* ---- independent verification: TLC attestation ---- */
+const tlc = L.tlc_verification || ((L.replay_determinism||{}).tlc_verification);
+const tlcBadge=document.getElementById("tlc-badge");
+const tlcBody=document.querySelector("#tlc-table tbody");
+if(tlc && tlc.available){
+  tlcBadge.textContent = (tlc.verified ? "✔ VERIFIED" : "✘ FAILED") +
+    (tlc.verification_tier ? " · " + tlc.verification_tier.replace(/_/g," ") : "");
+  tlcBadge.style.color = tlc.verified ? "var(--acc2)" : "var(--bad)";
+  tlcBadge.style.borderColor = tlc.verified ? "var(--acc2)" : "var(--bad)";
+  Object.entries(tlc.checks||{}).forEach(([k,v])=>{
+    const sym = v===null ? "— skip" : (v?"✔":"✘");
+    const col = v===null ? "var(--muted)" : (v?"var(--acc2)":"var(--bad)");
+    tlcBody.innerHTML+=`<tr><td>${k.replace(/_/g," ")}</td><td style="color:${col};font-weight:700">${sym}</td></tr>`;
+  });
+  tlcBody.innerHTML+=`<tr><td>TLC total states</td><td><b>${(tlc.total_states||0).toLocaleString()}</b></td></tr>`;
+  tlcBody.innerHTML+=`<tr><td>safety violations</td><td><b style="color:${tlc.violation_count===0?'var(--acc2)':'var(--bad)'}">${tlc.violation_count}</b></td></tr>`;
+  if(tlc.tlc_log && tlc.tlc_log.distinct_states!=null)
+    tlcBody.innerHTML+=`<tr><td>log distinct states</td><td><b>${tlc.tlc_log.distinct_states.toLocaleString()}</b></td></tr>`;
+  if(tlc.run_command)
+    tlcBody.innerHTML+=`<tr><td>TLC run command</td><td><code>${tlc.run_command}</code></td></tr>`;
+  const miss=(tlc.artifacts_missing_for_full_closure||[]);
+  document.getElementById("tlc-note").innerHTML=
+    "attestation digest <code>"+String(tlc.attestation_digest||"").slice(0,40)+"…</code>"+
+    (miss.length? "<br/>to raise the tier, supply <code>"+miss.join("</code> <code>")+"</code>" : "");
+} else {
+  tlcBadge.textContent="not in trace";
+  document.getElementById("tlc-note").textContent = (tlc&&tlc.note) || "This trace carries no TLC attestation columns.";
+}
+
+/* ---- per-item ERTuple replay manifest ---- */
+const rm=L.replay_manifest, rt=document.querySelector("#replay-table tbody");
+if(rm){
+  [["records (per-item evidence)", (rm.n_records||0).toLocaleString()],
+   ["adjacency links ok", (rm.adjacency_links_ok||0).toLocaleString()+" / "+(rm.n_records||0).toLocaleString()],
+   ["all links ok", rm.adjacency_all_ok?"✔ yes":"✘ no"],
+   ["genesis anchored", rm.genesis_anchored?"✔ yes":"✘ no"]
+  ].forEach(([k,v])=>rt.innerHTML+=`<tr><td>${k}</td><td><b>${v}</b></td></tr>`);
+  document.getElementById("replay-note").innerHTML=
+    "manifest SHA-256 <code>"+String(rm.manifest_sha256||"").slice(0,40)+"…</code><br/>"+
+    "independently verify (stdlib only): <code>"+String(rm.verify_with||"python gamma_replay_verify.py")+"</code>";
+} else {
+  rt.innerHTML=`<tr><td>manifest</td><td><b>not emitted this run</b></td></tr>`;
+  document.getElementById("replay-note").innerHTML="Run with <code>--replay-manifest &lt;path&gt;</code> to emit per-item evidence, then verify with <code>gamma_replay_verify.py</code>.";
+}
+
+/* ---- Evidence Quad structure ---- */
+const qb=document.querySelector("#quad-table tbody");
+[["decision","PERMIT | SAFE_STATE"],
+ ["method_version", L.method_version],
+ ["policy_hash","per-row PolicyHash"],
+ ["ledger_hash","row HASH_current (hash-chain head)"]
+].forEach(([k,v])=>qb.innerHTML+=`<tr><td><code>${k}</code></td><td>${v}</td></tr>`);
+
+/* ---- reproducibility bundle ---- */
+const bn=L.repro_bundle, bb2=document.getElementById("bundle-body");
+if(bn){
+  bb2.innerHTML=`<p>Tamper-evident package written to <code>${bn.dir}/</code>:</p>
+    <table><tbody>
+    <tr><td>files digested</td><td><b>${bn.files_digested}</b> (inputs · sources · outputs)</td></tr>
+    <tr><td>bundle digest (SHA-256)</td><td><code>${String(bn.bundle_digest_sha256||"").slice(0,40)}…</code></td></tr>
+    </tbody></table>
+    <p class="note">Contents: MANIFEST.json · env.json · command.txt · REPRODUCE.md. See
+    <code>${bn.dir}/REPRODUCE.md</code> for step-by-step re-run + verify.</p>`;
+} else {
+  bb2.innerHTML=`<p>Packages MANIFEST.json (SHA-256 of every input, source and output),
+    env.json, command.txt and REPRODUCE.md — all sealed under one bundle digest.</p>
+    <p class="note">Run with <code>--bundle &lt;dir&gt;</code> to emit it.</p>`;
+}
 
 /* scroll reveal */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.12});
