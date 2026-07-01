@@ -1,0 +1,72 @@
+{
+  "artifacts": [
+    {
+      "bytes": 93760,
+      "file": "maincode.py",
+      "present": true,
+      "sha256": "03183ea50a0b93b4193d8c90663fcd6e843f30ba4f39cb64932dd43c192cc65b"
+    },
+    {
+      "bytes": 66615,
+      "file": "lab_benchmark.py",
+      "present": true,
+      "sha256": "464a509b69498b81d80117aa39e040e37a04bc27cf24243ab5c8127287a61fbb"
+    },
+    {
+      "bytes": 128874,
+      "file": "ertuple_audit_manifest.json",
+      "present": true,
+      "sha256": "d7bec86da54d3daabec501093fbbb2d640bde49262a3d64d08f0a512b58a3a9b"
+    },
+    {
+      "bytes": 4407186,
+      "file": "lab_corpus.jsonl",
+      "present": true,
+      "sha256": "2ba35a737fe6fed5965537b73f4042c02fe390e7c75bbd96663757eb374db46f"
+    },
+    {
+      "bytes": 411772,
+      "file": "ertuple_replay_manifest.json",
+      "present": true,
+      "sha256": "0d689504fbb7b00aa67a82bca0066290b79771372b4102e862553823639c621b"
+    },
+    {
+      "bytes": 1685,
+      "file": "LDREA.tla",
+      "present": true,
+      "sha256": "83cba78fa6a6e98bbcbc9e6a3817af3e667904785abaef1eb5fb593ea3789ec2"
+    },
+    {
+      "bytes": 154,
+      "file": "LDREA.cfg",
+      "present": true,
+      "sha256": "0a90986c8c4567d876ea31fc0a4987ec26cfa0ed96dce9630305537dde13c7e1"
+    }
+  ],
+  "environment": {
+    "expected_scope": "WIRE_TRANSFER",
+    "now_epoch": 1800000000.0,
+    "signing_key_id": "586cce72a7f6e41e"
+  },
+  "ertuple_replay_root_hash": "1f49c107222c93ad004a536a7897b6e0f9f9b41149ce7eb7364ab34c3111ac06",
+  "git_commit": "08a22bc57b24c80ce0696b89d945eae22920623e",
+  "kind": "full_lab_reproducibility_bundle",
+  "platform": "darwin",
+  "python_version": "3.9.6",
+  "reproduce": [
+    "python3 lab_benchmark.py            # 1.2M-item LAB suite -> ertuple_audit_manifest.json",
+    "python3 maincode.py --emit-data lab_corpus.jsonl --data-items 10000",
+    "python3 maincode.py                 # evidence quad + replay manifest + bundle + dashboard",
+    "# optional: TLA2TOOLS_JAR=/path/tla2tools.jar python3 maincode.py   # to model-check LDREA.tla"
+  ],
+  "seed": 20260623,
+  "tlc": {
+    "invariants": [
+      "TypeOK",
+      "NoUnauthorizedPermit",
+      "NonCompensatory"
+    ],
+    "spec_file": "LDREA.tla",
+    "status": "SPEC_EMITTED_TLC_NOT_RUN"
+  }
+}
