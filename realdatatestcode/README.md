@@ -361,3 +361,84 @@ Verbatim terminal output — The unedited console output from the runner for thi
 - **The mapper is a faithful reconstruction** of the synthetic golden‑trace construction that
   produced the bundled 1,000‑row sample (its first rows reproduce the sample), driven by the
   real fraud label.
+
+
+---
+
+# 13. Independent Replay Manifest Verification
+
+LAB v1.0 supports **independent third-party auditing** through a replay manifest.
+
+Unlike the benchmark runner, the replay verifier does **not** require:
+
+- the original dataset
+- `gamma_test_runner.py`
+- pandas
+- any benchmark implementation
+
+Instead, it validates the generated `gamma_replay_manifest.jsonl` directly.
+
+## Repository additions
+
+```text
+gamma_replay_manifest.jsonl      # Generated replay manifest
+gamma_replay_verify.py           # Independent replay verifier
+```
+
+## Verification performed
+
+The verifier independently checks:
+
+1. **Hash-chain adjacency**
+   - Every `hash_prev` equals the previous record's `hash_current`
+   - First record is GENESIS anchored
+
+2. **Evidence Quad binding**
+   - `evidence_quad.ledger_hash == hash_current`
+
+3. **Decision consistency**
+   - `decision`
+   - `Π`
+   - `Γ_G`
+   - `Γ_class`
+
+   must all agree.
+
+4. **Manifest authenticity**
+
+The verifier recomputes the SHA-256 digest of the entire JSONL file so any modification after generation is immediately detectable.
+
+## Replay Integrity
+
+Each authorization decision is permanently linked into a SHA-256 hash chain.
+
+Changing any historical decision changes every downstream hash, making tampering immediately visible.
+
+## Generator vs Independent Verifier
+
+| Component | Responsibility |
+|------------|----------------|
+| gamma_test_runner.py | Executes benchmark, generates reports and replay manifest |
+| gamma_replay_verify.py | Independently validates replay manifest without dataset or runner |
+
+## Running the verifier
+
+```bash
+python gamma_replay_verify.py gamma_replay_manifest.jsonl
+```
+
+or verify against an expected digest
+
+```bash
+python gamma_replay_verify.py gamma_replay_manifest.jsonl --expect-sha256 <expected_sha256>
+```
+
+A PASS result confirms:
+
+- GENESIS anchoring
+- Replay determinism
+- Evidence Quad ledger integrity
+- Decision consistency
+- Manifest authenticity
+
+This enables any independent auditor to validate execution integrity from the replay manifest alone without requiring the benchmark implementation.
