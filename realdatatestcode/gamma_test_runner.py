@@ -44,6 +44,7 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 import time
@@ -273,6 +274,48 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Generate the HTML dashboard but do not auto-open it in a browser.",
     )
+    p.add_argument(
+        "--replay-manifest",
+        default="gamma_replay_manifest.jsonl",
+        help="Path for the per-item ERTuple replay manifest (JSONL). One evidence "
+        "record per decision, independently re-verifiable by gamma_replay_verify.py.",
+    )
+    p.add_argument(
+        "--no-replay-manifest",
+        action="store_true",
+        help="Do not emit the per-item replay manifest.",
+    )
+    p.add_argument(
+        "--tla-spec",
+        default=None,
+        help="Path to the TLA+ specification (.tla). If given, its SHA-256 is "
+        "recomputed and cryptographically bound against the trace's TLCSpecHash.",
+    )
+    p.add_argument(
+        "--tla-cfg",
+        default=None,
+        help="Path to the TLC config (.cfg). If given, its SHA-256 is recomputed "
+        "and bound against the trace's TLCCfgHash.",
+    )
+    p.add_argument(
+        "--tlc-log",
+        default=None,
+        help="Path to the TLC/tlc2 console log. If given, its reported 'distinct "
+        "states found' + violation status are cross-checked against the trace's "
+        "TLCTotalStates / TLCViolationCount (LAB v1.0 artifact verification).",
+    )
+    p.add_argument(
+        "--tlc-run-command",
+        default=None,
+        help="The exact command used to run TLC (recorded verbatim in the report "
+        "so the model-checking step is reproducible).",
+    )
+    p.add_argument(
+        "--bundle",
+        default=None,
+        help="If set, write a full lab reproducibility bundle to this directory "
+        "(inputs/outputs/source digests, env, command, MANIFEST, REPRODUCE.md).",
+    )
     return p.parse_args()
 
 
@@ -403,6 +446,381 @@ def discover_input() -> Path:
         print(f"[info] Multiple CSVs found; using {candidates[0].name} "
               f"(override with --input).")
     return candidates[0]
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _parse_tlc_log(text: str) -> Dict:
+    """Best-effort parse of a TLC / tlc2 console log.
+
+    Extracts the 'distinct states found' count and whether the run reported a
+    clean completion vs an invariant/property violation. Robust to thousands
+    separators and to the common TLA+ Toolbox / command-line phrasings.
+    """
+    distinct = None
+    m = re.search(r"([\d,]+)\s+distinct states found", text)
+    if m:
+        distinct = int(m.group(1).replace(",", ""))
+    generated = None
+    mg = re.search(r"([\d,]+)\s+states generated", text)
+    if mg:
+        generated = int(mg.group(1).replace(",", ""))
+    no_error = bool(
+        re.search(r"Model checking completed\.\s*No error has been found", text)
+        or re.search(r"No error has been found", text)
+    )
+    has_error = bool(
+        re.search(r"^Error:", text, re.M)
+        or "is violated" in text
+        or "Invariant .* is violated" in text
+    )
+    return {
+        "distinct_states": distinct,
+        "states_generated": generated,
+        "no_error_reported": no_error,
+        "error_reported": has_error,
+    }
+
+
+def verify_tlc(
+    df: pd.DataFrame,
+    spec_path: str | None,
+    cfg_path: str | None,
+    log_path: str | None = None,
+    run_command: str | None = None,
+) -> Dict:
+    """Independently VERIFY (not merely display) the trace's TLC attestation.
+
+    The golden trace carries a TLC model-checking attestation per row
+    (TLCSpecHash, TLCCfgHash, TLCTotalStates, TLCViolationCount). We cannot
+    re-run TLC here without the .tla/.cfg sources + tla2tools.jar, but we
+    escalate through verification TIERS as artifacts are supplied:
+
+      tier 0  attestation-consistency   V1–V5 (internal soundness only)
+      tier 1  source-bound              + V6/V7 (sha256 of .tla/.cfg == attested)
+      tier 2  log-cross-checked         + V8/V9 (TLC console log agrees)
+      tier 3  fully-reproduced          re-run TLC from source (out of scope here)
+
+    Verification predicates:
+      V1 spec-hash consistency : one TLCSpecHash across every row (no tampering)
+      V2 cfg-hash consistency  : one TLCCfgHash across every row
+      V3 states constant       : one TLCTotalStates across every row
+      V4 non-trivial exploration: TLCTotalStates > 0
+      V5 zero safety violations: sum(TLCViolationCount) == 0
+      V6 spec binding (optional): sha256(--tla-spec) == TLCSpecHash
+      V7 cfg binding  (optional): sha256(--tla-cfg)  == TLCCfgHash
+      V8 log states match (opt): log 'distinct states found' == TLCTotalStates
+      V9 log no-violation (opt): log reports clean completion, no error
+    """
+    cols = ["TLCSpecHash", "TLCCfgHash", "TLCTotalStates", "TLCViolationCount"]
+    if not all(c in df.columns for c in cols):
+        return {
+            "available": False,
+            "verified": False,
+            "note": "Trace carries no TLC attestation columns; nothing to verify.",
+        }
+
+    spec_hashes = sorted(df["TLCSpecHash"].astype(str).unique().tolist())
+    cfg_hashes = sorted(df["TLCCfgHash"].astype(str).unique().tolist())
+    states = pd.to_numeric(df["TLCTotalStates"], errors="coerce")
+    viol = pd.to_numeric(df["TLCViolationCount"], errors="coerce").fillna(0)
+
+    v1 = len(spec_hashes) == 1
+    v2 = len(cfg_hashes) == 1
+    v3 = states.nunique(dropna=True) == 1
+    total_states = int(states.iloc[0]) if v3 else int(states.max())
+    total_viol = int(viol.sum())
+    v4 = total_states > 0
+    v5 = total_viol == 0
+
+    spec_hash = spec_hashes[0] if v1 else None
+    cfg_hash = cfg_hashes[0] if v2 else None
+
+    v6 = None
+    spec_recomputed = None
+    if spec_path:
+        spec_recomputed = _sha256_file(Path(spec_path))
+        v6 = (spec_recomputed == spec_hash)
+    v7 = None
+    cfg_recomputed = None
+    if cfg_path:
+        cfg_recomputed = _sha256_file(Path(cfg_path))
+        v7 = (cfg_recomputed == cfg_hash)
+
+    # V8/V9: cross-check against a supplied TLC console log.
+    v8 = None
+    v9 = None
+    log_parsed = None
+    if log_path:
+        log_text = Path(log_path).read_text(encoding="utf-8", errors="replace")
+        log_parsed = _parse_tlc_log(log_text)
+        if log_parsed["distinct_states"] is not None:
+            v8 = (log_parsed["distinct_states"] == total_states)
+        v9 = bool(log_parsed["no_error_reported"] and not log_parsed["error_reported"])
+
+    # Single attestation digest binding (spec, cfg, states, violations).
+    attestation = hashlib.sha256(
+        f"{spec_hash}|{cfg_hash}|{total_states}|{total_viol}".encode("utf-8")
+    ).hexdigest()
+
+    checks = {
+        "V1_spec_hash_consistent": v1,
+        "V2_cfg_hash_consistent": v2,
+        "V3_states_constant": v3,
+        "V4_nontrivial_state_space": v4,
+        "V5_zero_safety_violations": v5,
+        "V6_spec_source_binding": v6,
+        "V7_cfg_source_binding": v7,
+        "V8_log_states_match": v8,
+        "V9_log_no_violation": v9,
+    }
+    # A None check (optional evidence not supplied) does not fail the gate.
+    verified = all(c for c in checks.values() if c is not None)
+
+    # Escalating verification tier based on which artifacts were supplied/passed.
+    source_bound = (v6 is True) or (v7 is True)
+    log_checked = (v8 is True) or (v9 is True)
+    if log_checked and source_bound:
+        tier = "tier2_log_cross_checked_and_source_bound"
+    elif log_checked:
+        tier = "tier2_log_cross_checked"
+    elif source_bound:
+        tier = "tier1_source_bound"
+    else:
+        tier = "tier0_attestation_consistency_only"
+
+    missing = []
+    if not spec_path:
+        missing.append("--tla-spec")
+    if not cfg_path:
+        missing.append("--tla-cfg")
+    if not log_path:
+        missing.append("--tlc-log")
+
+    return {
+        "available": True,
+        "verified": bool(verified),
+        "verification_tier": tier,
+        "checks": checks,
+        "spec_hash": spec_hash,
+        "cfg_hash": cfg_hash,
+        "spec_source_sha256": spec_recomputed,
+        "cfg_source_sha256": cfg_recomputed,
+        "total_states": total_states,
+        "violation_count": total_viol,
+        "attestation_digest": attestation,
+        "tlc_log": log_parsed,
+        "run_command": run_command,
+        "artifacts_missing_for_full_closure": missing,
+        "note": (
+            f"TLC {tier}. Internal consistency + zero violations verified"
+            + ("; source-bound (sha256 of .tla/.cfg == attested)" if source_bound else "")
+            + ("; console log cross-checked" if log_checked else "")
+            + (
+                f". Supply {', '.join(missing)} to raise the tier"
+                if missing
+                else ". Full re-run of TLC from source (tier 3) is out of this harness's scope"
+            )
+            + "."
+        ),
+    }
+
+
+def write_replay_manifest(df: pd.DataFrame, path: Path) -> Dict:
+    """Emit a per-item ERTuple replay manifest (JSONL) + return its summary.
+
+    Each decision becomes one self-describing evidence record — the "per-item
+    evidence" — that a third party can feed to gamma_replay_verify.py to
+    independently re-check the hash-chain adjacency and the evidence quad,
+    without needing pandas or the original runner. The first line is a header
+    record; every subsequent line is one decision's evidence tuple.
+    """
+    has_ert = "ERTuple_ID" in df.columns
+    has_policy = "PolicyHash" in df.columns
+    hp = df["HASH_prev"].astype(str).tolist()
+    hc = df["HASH_current"].astype(str).tolist()
+    dec = df["DerivedDecision"].tolist()
+    linked = df["DerivedChainLinked"].tolist()
+    unauth = df["DerivedUnauthorized"].tolist()
+    gg = df["DerivedGammaG"].tolist()
+    gc = df["DerivedGammaClass"].tolist()
+    pi = df["DerivedPi"].tolist()
+    pid = df["ProposalID"].astype(str).tolist()
+    ert = df["ERTuple_ID"].astype(str).tolist() if has_ert else [""] * len(df)
+    pol = df["PolicyHash"].astype(str).tolist() if has_policy else [""] * len(df)
+
+    n = len(df)
+    manifest_hash = hashlib.sha256()
+    genesis_ok = str(hp[0]).upper() in {"GENESIS", "0", "NONE", ""}
+    adjacency_ok = 0
+    with open(path, "w", encoding="utf-8") as fh:
+        header = {
+            "record": "header",
+            "kind": "gamma_g0_ertuple_replay_manifest",
+            "method_version": METHOD_VERSION,
+            "n_records": n,
+            "genesis_anchor": str(hp[0]),
+            "chain_algorithm": "adjacency: rec[i].hash_prev == rec[i-1].hash_current, genesis-anchored",
+        }
+        line = json.dumps(header, separators=(",", ":"))
+        manifest_hash.update((line + "\n").encode("utf-8"))
+        fh.write(line + "\n")
+        for i in range(n):
+            adj = (str(hp[i]).upper() in {"GENESIS", "0", "NONE", ""}) if i == 0 else (str(hp[i]) == str(hc[i - 1]))
+            adjacency_ok += 1 if adj else 0
+            rec = {
+                "record": "decision",
+                "seq": i,
+                "proposal_id": pid[i],
+                "ertuple_id": ert[i],
+                "policy_hash": pol[i],
+                "hash_prev": hp[i],
+                "hash_current": hc[i],
+                "adjacency_ok": bool(adj),
+                "decision": dec[i],
+                "gamma_g": int(gg[i]),
+                "gamma_class": int(gc[i]),
+                "pi": int(pi[i]),
+                "chain_linked": bool(linked[i]),
+                "unauthorized": bool(unauth[i]),
+                "evidence_quad": {
+                    "decision": dec[i],
+                    "method_version": METHOD_VERSION,
+                    "policy_hash": pol[i],
+                    "ledger_hash": hc[i],
+                },
+            }
+            line = json.dumps(rec, separators=(",", ":"))
+            manifest_hash.update((line + "\n").encode("utf-8"))
+            fh.write(line + "\n")
+
+    return {
+        "path": str(path),
+        "n_records": n,
+        "genesis_anchored": bool(genesis_ok),
+        "adjacency_links_ok": adjacency_ok,
+        "adjacency_all_ok": adjacency_ok == n,
+        "manifest_sha256": manifest_hash.hexdigest(),
+        "verify_with": f"python gamma_replay_verify.py {path}",
+    }
+
+
+def write_repro_bundle(
+    bundle_dir: Path,
+    *,
+    input_path: Path,
+    outputs: List[Path],
+    sources: List[Path],
+    command: List[str],
+    tlc_verification: Dict,
+    replay_summary: Dict,
+) -> Dict:
+    """Package a self-contained lab reproducibility bundle.
+
+    Writes a MANIFEST.json digesting every input, source and output file, an
+    env.json capturing the interpreter/library/platform, the exact command
+    line, and a REPRODUCE.md with step-by-step instructions. Nothing here is
+    copied blindly: every referenced file is SHA-256'd so the bundle is a
+    tamper-evident record of exactly what produced these results.
+    """
+    import platform
+
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+
+    def digests(paths: List[Path]) -> List[Dict]:
+        out = []
+        for p in paths:
+            if p and p.exists():
+                out.append(
+                    {"file": str(p), "sha256": _sha256_file(p), "bytes": p.stat().st_size}
+                )
+        return out
+
+    env = {
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "pandas_version": pd.__version__,
+        "method_version": METHOD_VERSION,
+    }
+    manifest = {
+        "bundle": "GAMMA G-0 / L-DREA LAB v1.0 reproducibility bundle",
+        "method_version": METHOD_VERSION,
+        "command": command,
+        "input": digests([input_path]),
+        "sources": digests(sources),
+        "outputs": digests(outputs),
+        "tlc_verification": tlc_verification,
+        "replay_manifest": replay_summary,
+        "env": env,
+    }
+    # Bind the whole manifest with a single digest over its canonical form.
+    manifest_bytes = json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    manifest["bundle_digest_sha256"] = hashlib.sha256(manifest_bytes).hexdigest()
+
+    (bundle_dir / "MANIFEST.json").write_text(
+        json.dumps(manifest, indent=2, default=str), encoding="utf-8"
+    )
+    (bundle_dir / "env.json").write_text(json.dumps(env, indent=2), encoding="utf-8")
+    (bundle_dir / "command.txt").write_text(" ".join(command) + "\n", encoding="utf-8")
+
+    reproduce = f"""# Reproducing this GAMMA G-0 / L-DREA LAB v1.0 run
+
+Method version: `{METHOD_VERSION}`
+Bundle digest (SHA-256): `{manifest["bundle_digest_sha256"]}`
+
+## 1. Environment
+- Python: `{env["python_version"].splitlines()[0]}`
+- pandas: `{env["pandas_version"]}`
+- Platform: `{env["platform"]}`
+
+Install: `pip install pandas`
+
+## 2. Verify the inputs are byte-identical
+Check each SHA-256 in `MANIFEST.json` against your local copies, e.g.:
+
+```
+shasum -a 256 {input_path.name}
+```
+
+It must match the `input[].sha256` in `MANIFEST.json`.
+
+## 3. Re-run the benchmark (regenerates every output)
+```
+{" ".join(command)}
+```
+
+## 4. Independently verify the per-item replay manifest
+No pandas required — pure stdlib:
+```
+python gamma_replay_verify.py {replay_summary.get("path", "gamma_replay_manifest.jsonl")}
+```
+Expect: `n_records={replay_summary.get("n_records")}`, all adjacency links OK,
+genesis-anchored, and manifest SHA-256 =
+`{replay_summary.get("manifest_sha256")}`.
+
+## 5. TLC attestation
+TLC verified: `{tlc_verification.get("verified")}`;
+attestation digest `{tlc_verification.get("attestation_digest")}`.
+To cryptographically bind to source, re-run with
+`--tla-spec <spec.tla> --tla-cfg <cfg.cfg>`; those SHA-256s must equal
+`spec_hash`/`cfg_hash` in `MANIFEST.json`.
+
+## 6. Compare outputs
+Re-hash the regenerated outputs and compare to `outputs[].sha256` in
+`MANIFEST.json`. Deterministic fields (decisions, gamma, hash-chain, evidence
+quads) reproduce exactly; MEASURED latency fields are host-dependent and will
+differ.
+"""
+    (bundle_dir / "REPRODUCE.md").write_text(reproduce, encoding="utf-8")
+
+    return manifest
 
 
 def main() -> None:
@@ -607,10 +1025,23 @@ def main() -> None:
     )
 
     # ----------------------------------------------------------------- #
-    # 9. Six primary LAB v1.0 metrics with Wilson intervals.            #
+    # 9. LAB v1.0 metrics with Wilson intervals.                        #
+    #    CRITICAL denominator hygiene: a rate must be taken over the     #
+    #    population at risk of THAT event, not blindly over all rows.    #
+    #      * FPR (false permit)  -> denominator = should-DENY population #
+    #        (ground truth denies): a permit can only be "false" there.  #
+    #      * FDR (false denial)   -> denominator = should-PERMIT pop.    #
+    #      * UER (unauthorized)   -> denominator = ALL rows (any row can #
+    #        externalize), reported as the headline over-total rate.     #
+    #    Using total-N for FPR would understate its Wilson bound: the    #
+    #    0/492 bound is MUCH wider than the 0/284,807 bound.             #
     # ----------------------------------------------------------------- #
     fpr_events = int(df["FalsePermit"].sum())
     fdr_events = int(df["FalseDenial"].sum())
+    unauthorized_events = int(df["DerivedUnauthorized"].sum())
+    # Populations at risk (ground-truth based).
+    should_deny_n = int((~truth_permit).sum())      # e.g. 492 fraud rows
+    should_permit_n = int(truth_permit.sum())       # e.g. 284,315 nominal rows
     replay_div_events = int(df["DerivedReplayDivergence"].sum())
     toctou_events = int(df["DerivedOrderingInversion"].sum())
     # Revocation compliance: rows requiring revocation freshness that lack it.
@@ -619,13 +1050,20 @@ def main() -> None:
     classveto_events = int(((df["DerivedGammaClass"] == 1) & (~df["DerivedSafeState"])).sum())
     classveto_n = int((df["DerivedGammaClass"] == 1).sum())
 
+    # Headline unauthorized-execution rate over ALL rows (this is what the old
+    # code mislabeled as "FPR 0/N"). Kept distinct from FPR on purpose.
+    uer_metric = metric_block(
+        "Unauthorized Execution Rate (UER)", unauthorized_events, total,
+        higher_is_better=False, design_effect=args.design_effect,
+    )
+
     lab_metrics = {
         "false_permit_rate": metric_block(
-            "False Permit Rate (FPR)", fpr_events, total,
+            "False Permit Rate (FPR)", fpr_events, max(should_deny_n, 1),
             higher_is_better=False, design_effect=args.design_effect,
         ),
         "false_denial_rate": metric_block(
-            "False Denial Rate (FDR)", fdr_events, total,
+            "False Denial Rate (FDR)", fdr_events, max(should_permit_n, 1),
             higher_is_better=False, design_effect=args.design_effect,
         ),
         "replay_determinism_rate": metric_block(
@@ -645,6 +1083,15 @@ def main() -> None:
             higher_is_better=True, design_effect=args.design_effect,
         ),
     }
+    # Annotate each metric with the population it is taken over, so the report
+    # and dashboard can state the denominator explicitly.
+    lab_metrics["false_permit_rate"]["population"] = "should-deny (ground truth = deny)"
+    lab_metrics["false_denial_rate"]["population"] = "should-permit (ground truth = permit)"
+    lab_metrics["replay_determinism_rate"]["population"] = "all rows"
+    lab_metrics["revocation_compliance"]["population"] = "all rows"
+    lab_metrics["toctou_violation_rate"]["population"] = "all actuated/at-risk rows"
+    lab_metrics["class_veto_effectiveness"]["population"] = "class-1 (veto-triggering) rows"
+    uer_metric["population"] = "all rows"
 
     # ----------------------------------------------------------------- #
     # 10. Evidence Quad per decision (README): method · policy · ledger. #
@@ -761,8 +1208,12 @@ def main() -> None:
     match_safe_rate = float(df["MatchesSAFE_STATE"].mean())
 
     chain_links_ok = int(df["DerivedChainLinked"].sum())
-    tlc_total_states = int(df["TLCTotalStates"].iloc[0]) if "TLCTotalStates" in df else None
-    tlc_violations = int(df["TLCViolationCount"].sum()) if "TLCViolationCount" in df else None
+    tlc_verification = verify_tlc(
+        df, args.tla_spec, args.tla_cfg,
+        log_path=args.tlc_log, run_command=args.tlc_run_command,
+    )
+    tlc_total_states = tlc_verification.get("total_states")
+    tlc_violations = tlc_verification.get("violation_count")
 
     summary = {
         "input_file": str(input_path),
@@ -802,22 +1253,47 @@ def main() -> None:
         "all_invariants_hold": all(v == 0 for v in invariants.values()),
         "unauthorized_execution": {
             "definition": "Eq.7: Execute & (!Valid(Token) | max(GammaG,GammaClass)>0 | ISB=0 | evidence invalid)",
-            "count": int(df["DerivedUnauthorized"].sum()),
+            "count": unauthorized_events,
+            "metric": uer_metric,          # UER over ALL rows (headline)
+            "denominator": total,
+            "note": "UER is taken over ALL rows (any row can externalize); this is distinct "
+            "from FPR, which is taken only over the should-deny population.",
         },
         "negative_control": {
-            "description": "Compensatory weighted-sum aggregator (Corollary 2) vs non-compensatory LLC (max).",
+            "description": "Two DISTINCT probes of the compensatory weighted-sum aggregator "
+            "vs the non-compensatory Law of Concurrence (max). They are not contradictory: one "
+            "runs the compensatory rule on the data as-is, the other is a counterfactual transform.",
             "tau": tau,
+            "single_deficit_score": round(1.0 / n_predicates, 3),
+            "n_predicates": n_predicates,
+            # Probe 1 — ACTUAL run of the compensatory rule on this mapped corpus.
+            "actual_dataset_baseline": {
+                "what": "Run the compensatory weighted-sum rule AS-IS on every mapped row.",
+                "compensatory_total_permits": neg_control_total_compensatory_permits,
+                "false_permits_vs_llc": neg_control_false_permits,
+                "note": (
+                    f"Under tau={tau} on THIS mapped corpus the weighted-sum admits "
+                    f"{neg_control_false_permits} false permits vs LLC, because every adversarial "
+                    "row here fails MULTIPLE hard predicates, so its weighted score stays >= tau."
+                ),
+            },
+            # Probe 2 — COUNTERFACTUAL transform (not the actual dataset).
+            "corollary2_counterfactual": {
+                "what": "Counterfactual: reduce each adversarial row to a SINGLE isolated deficit.",
+                "single_deficit_masked": single_deficit_masked,
+                "counterfactual_false_permits": corollary2_masked_rows,
+                "note": (
+                    f"If each adversarial row were reduced to an isolated single deficit "
+                    f"({1.0 / n_predicates:.3f} < tau={tau}), a compensatory gate would MASK the "
+                    f"failure -> {corollary2_masked_rows} COUNTERFACTUAL false permits; the "
+                    "non-compensatory max-aggregator (LLC) still denies all of them."
+                ),
+            },
+            # Flat keys retained for backward compatibility with the dashboard.
             "compensatory_total_permits": neg_control_total_compensatory_permits,
             "compensatory_false_permits_vs_llc": neg_control_false_permits,
             "corollary2_single_deficit_masked": single_deficit_masked,
             "corollary2_rows_masked_if_isolated": corollary2_masked_rows,
-            "interpretation": (
-                "As observed, every adversarial row fails multiple hard predicates, so the "
-                "weighted-sum aggregator happens to deny them too. The constructive Corollary 2 "
-                f"probe shows that an isolated single deficit scores {1.0 / n_predicates:.3f} < tau="
-                f"{tau}, which the weighted-sum would MASK (false permit) while the non-compensatory "
-                "max-aggregator (Law of Concurrence) still denies."
-            ),
         },
         "measured_latency": measured_latency,
         "replay_determinism": {
@@ -827,6 +1303,7 @@ def main() -> None:
             "tlc_total_states": tlc_total_states,
             "tlc_violation_count": tlc_violations,
         },
+        "tlc_verification": tlc_verification,
         "decision_agreement": {
             "match_status_rate": round(match_status_rate, 8),
             "match_safe_state_rate": round(match_safe_rate, 8),
@@ -853,16 +1330,20 @@ def main() -> None:
     invariants_ok = sum(1 for v in invariants.values() if v == 0)
     adv_safe = int((adversarial & df["DerivedSafeState"]).sum())
     adv_false_permit = int((adversarial & df["FalsePermit"]).sum())
-    uer_bound = lab_metrics["false_permit_rate"]["wilson95_clustercorrected_upper"]
+    uer_bound = uer_metric["wilson95_clustercorrected_upper"]                     # over ALL rows
+    fpr_bound = lab_metrics["false_permit_rate"]["wilson95_clustercorrected_upper"]  # over should-deny
     rdr = lab_metrics["replay_determinism_rate"]
     da = lab_report["decision_agreement"]
     ml = measured_latency
     appendix_a_summary = [
-        f"UER {fpr_events} / {total}; adversarial false permits {adv_false_permit} / {n_adv}; "
-        f"Wilson 95% upper bound p < {uer_bound:.2e}.",
+        f"UER {unauthorized_events} / {total} (all rows), Wilson 95% upper bound p < {uer_bound:.2e}; "
+        f"FPR {fpr_events} / {should_deny_n} (should-deny population only), Wilson 95% upper bound "
+        f"p < {fpr_bound:.2e}; FDR {fdr_events} / {should_permit_n} (should-permit population). "
+        f"The FPR bound is wider than the UER bound because its denominator is far smaller.",
         f"Replay determinism {rdr['reported_rate']:.4%}; revocation compliance "
         f"{lab_metrics['revocation_compliance']['reported_rate']:.4%}; TOCTOU violations "
-        f"{toctou_events} observed; Wilson 95% upper bound p < {uer_bound:.2e}.",
+        f"{toctou_events} observed; RDR Wilson 95% upper bound p < "
+        f"{rdr['wilson95_clustercorrected_upper']:.2e}.",
         f"Latency mean {ml['mean_ms']:.4f} ms, P95 {ml['p95_ms']:.4f} ms, P99 {ml['p99_ms']:.4f} ms, "
         f"max {ml['max_ms']:.4f} ms; throughput ~{ml['throughput_ops_per_s']:,.0f} ops/s; "
         f"O(n) predicate scaling.",
@@ -965,8 +1446,55 @@ def main() -> None:
         "EvidenceQuad",
     ]
     df[cols_to_export].to_csv(output_path, index=False)
+
+    # ----------------------------------------------------------------- #
+    # Per-item ERTuple replay manifest (per-decision evidence).           #
+    # ----------------------------------------------------------------- #
+    replay_summary: Dict = {}
+    if not args.no_replay_manifest:
+        replay_summary = write_replay_manifest(df, Path(args.replay_manifest))
+        lab_report["replay_manifest"] = replay_summary
+
     summary_path.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
     lab_path.write_text(json.dumps(lab_report, indent=2, default=str), encoding="utf-8")
+
+    # ----------------------------------------------------------------- #
+    # Full lab reproducibility bundle (opt-in via --bundle DIR).          #
+    # ----------------------------------------------------------------- #
+    bundle_manifest = None
+    if args.bundle:
+        source_files = [
+            Path(__file__),
+            Path(__file__).with_name("gamma_map_raw.py"),
+            Path(__file__).with_name("gamma_report_page.py"),
+            Path(__file__).with_name("gamma_replay_verify.py"),
+        ]
+        output_files = [output_path, summary_path, lab_path]
+        if replay_summary:
+            output_files.append(Path(args.replay_manifest))
+        if not args.no_html:
+            output_files.append(Path(args.html))
+        bundle_manifest = write_repro_bundle(
+            Path(args.bundle),
+            input_path=input_path,
+            outputs=output_files,
+            sources=source_files,
+            command=[sys.executable, *sys.argv],
+            tlc_verification=tlc_verification,
+            replay_summary=replay_summary,
+        )
+        # Surface a compact bundle summary to the in-memory report so the HTML
+        # dashboard can show it. (Not written into lab_report.json on disk: the
+        # bundle digest hashes that very file, which would be circular.)
+        lab_report["repro_bundle"] = {
+            "dir": str(args.bundle),
+            "files_digested": (
+                len(bundle_manifest["input"])
+                + len(bundle_manifest["sources"])
+                + len(bundle_manifest["outputs"])
+            ),
+            "bundle_digest_sha256": bundle_manifest["bundle_digest_sha256"],
+        }
 
     # ----------------------------------------------------------------- #
     # Console report.
@@ -982,14 +1510,20 @@ def main() -> None:
     print(f"Match vs Status  : {match_status_rate:.4%}")
     print(f"Match vs SAFE_STATE: {match_safe_rate:.4%}")
 
-    print("\n-- Six primary LAB v1.0 metrics (Wilson 95% upper bounds) --")
-    print(f"{'metric':<34}{'events/N':>12}{'rate':>12}{'W95 upper':>14}")
+    print("\n-- Headline: Unauthorized Execution Rate (UER, over ALL rows) --")
+    print(f"  UER              : {unauthorized_events}/{total}  "
+          f"(rate {fmt_rate(uer_metric['adverse_rate'])}, "
+          f"W95 upper {fmt_rate(uer_metric['wilson95_clustercorrected_upper'])})")
+
+    print("\n-- Primary LAB v1.0 metrics (Wilson 95% upper bounds; note denominators) --")
+    print(f"{'metric':<34}{'events/N':>14}{'rate':>12}{'W95 upper':>14}")
     for m in lab_metrics.values():
         ev = f"{m['adverse_events']}/{m['n']}"
         print(
-            f"{m['metric']:<34}{ev:>12}{fmt_rate(m['reported_rate']):>12}"
+            f"{m['metric']:<34}{ev:>14}{fmt_rate(m['reported_rate']):>12}"
             f"{fmt_rate(m['wilson95_clustercorrected_upper']):>14}"
         )
+        print(f"{'  ↳ population: ' + m.get('population', 'all rows'):<34}")
 
     print("\n-- Six runtime invariants (violations; 0 = holds) --")
     for k, v in invariants.items():
@@ -998,16 +1532,22 @@ def main() -> None:
     print(f"  ALL INVARIANTS HOLD: {lab_report['all_invariants_hold']}")
 
     print("\n-- Unauthorized execution (Eq. 7) --")
-    print(f"  count: {lab_report['unauthorized_execution']['count']}")
+    print(f"  UER count        : {unauthorized_events}/{total} (all rows)")
+    print(f"  FPR (should-deny): {fpr_events}/{should_deny_n}")
+    print(f"  FDR (should-permit): {fdr_events}/{should_permit_n}")
 
-    print("\n-- Negative control (compensatory vs non-compensatory) --")
-    print(f"  weighted-sum total permits      : {neg_control_total_compensatory_permits}")
-    print(f"  weighted-sum FALSE permits vs LLC: {neg_control_false_permits}")
+    print("\n-- Negative control (two DISTINCT probes) --")
+    print("  [1] ACTUAL dataset weighted-sum baseline (rule run as-is on this corpus):")
+    print(f"        weighted-sum total permits       : {neg_control_total_compensatory_permits}")
+    print(f"        weighted-sum FALSE permits vs LLC: {neg_control_false_permits}  "
+          f"(0 here: adversarial rows fail MULTIPLE predicates, score stays >= tau={tau})")
+    print("  [2] Corollary 2 COUNTERFACTUAL (each adversarial row reduced to a single deficit):")
     print(
-        f"  Corollary 2: an isolated single deficit ({1.0 / n_predicates:.3f}) < tau ({tau}) "
-        f"-> masked by weighted-sum: {single_deficit_masked} "
-        f"({corollary2_masked_rows} deficit rows would be false-permitted)"
+        f"        isolated single deficit {1.0 / n_predicates:.3f} < tau {tau} "
+        f"-> masked by weighted-sum: {single_deficit_masked}"
     )
+    print(f"        => {corollary2_masked_rows} COUNTERFACTUAL false permits; "
+          f"non-compensatory LLC still denies all.")
 
     ml = measured_latency
     print("\n-- MEASURED per-decision latency (this host: eval+hash+sign"
@@ -1030,8 +1570,45 @@ def main() -> None:
 
     print("\n-- Replay determinism / hash chain --")
     print(f"  hash-chain links ok : {chain_links_ok}/{total}")
-    print(f"  TLC total states    : {tlc_total_states}")
-    print(f"  TLC violations      : {tlc_violations}")
+    if replay_summary:
+        print(f"  ERTuple manifest    : {replay_summary['path']} "
+              f"({replay_summary['n_records']} records)")
+        print(f"    adjacency links ok: {replay_summary['adjacency_links_ok']}/"
+              f"{replay_summary['n_records']} "
+              f"(all_ok={replay_summary['adjacency_all_ok']}, "
+              f"genesis={replay_summary['genesis_anchored']})")
+        print(f"    manifest SHA-256  : {replay_summary['manifest_sha256']}")
+        print(f"    verify            : {replay_summary['verify_with']}")
+
+    print("\n-- TLC model-check verification --")
+    if tlc_verification.get("available"):
+        print(f"  VERIFIED            : {tlc_verification['verified']}")
+        print(f"  verification tier   : {tlc_verification['verification_tier']}")
+        for k, v in tlc_verification["checks"].items():
+            if v is None:
+                print(f"    [skip] {k}: artifact not supplied")
+            else:
+                print(f"    [{'OK ' if v else 'FAIL'}] {k}")
+        print(f"  total states        : {tlc_verification['total_states']}")
+        print(f"  violations          : {tlc_verification['violation_count']}")
+        print(f"  attestation digest  : {tlc_verification['attestation_digest']}")
+        if tlc_verification.get("tlc_log"):
+            lg = tlc_verification["tlc_log"]
+            print(f"  log distinct states : {lg.get('distinct_states')} "
+                  f"(no_error={lg.get('no_error_reported')}, error={lg.get('error_reported')})")
+        if tlc_verification.get("run_command"):
+            print(f"  TLC run command     : {tlc_verification['run_command']}")
+        miss = tlc_verification.get("artifacts_missing_for_full_closure") or []
+        if miss:
+            print(f"  to raise the tier   : supply {', '.join(miss)}")
+    else:
+        print(f"  {tlc_verification.get('note')}")
+
+    if bundle_manifest is not None:
+        print("\n-- Reproducibility bundle --")
+        print(f"  written to          : {args.bundle}/")
+        print(f"  bundle digest       : {bundle_manifest['bundle_digest_sha256']}")
+        print(f"  see                 : {args.bundle}/REPRODUCE.md")
 
     print("\n-- Decision agreement vs benchmark labels --")
     da = lab_report["decision_agreement"]
