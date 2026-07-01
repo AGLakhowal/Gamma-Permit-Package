@@ -1,0 +1,127 @@
+{
+  "bundle": "GAMMA G-0 / L-DREA LAB v1.0 reproducibility bundle",
+  "method_version": "gamma_test_runner/LAB-v1.0/2.0",
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "gamma_test_runner.py",
+    "--input",
+    "GAMMA_G0_CREDITCARD_FULL_mapped.csv",
+    "--output",
+    "gamma_validation_results.csv",
+    "--summary",
+    "gamma_summary.json",
+    "--lab-report",
+    "gamma_lab_v1_report.json",
+    "--replay-manifest",
+    "gamma_replay_manifest.jsonl",
+    "--bundle",
+    "gamma_bundle",
+    "--html",
+    "gamma_report.html",
+    "--no-open"
+  ],
+  "input": [
+    {
+      "file": "GAMMA_G0_CREDITCARD_FULL_mapped.csv",
+      "sha256": "0a1e766e3b2f73bd89d577567418f1d00f364d4000d4811c62651b6ba1b86206",
+      "bytes": 451326326
+    }
+  ],
+  "sources": [
+    {
+      "file": "/Users/sukhmangill/Documents/GitHub/carddataset/gamma_test_runner.py",
+      "sha256": "20056c40b5805bf1107130f4fcd46460a831694b4c2ff0badfc93b10434485ab",
+      "bytes": 72127
+    },
+    {
+      "file": "/Users/sukhmangill/Documents/GitHub/carddataset/gamma_map_raw.py",
+      "sha256": "dd29f96587555a13f086b2cd65521cbdc96f2ff6865e3127eb6102fc0ed9bc02",
+      "bytes": 9021
+    },
+    {
+      "file": "/Users/sukhmangill/Documents/GitHub/carddataset/gamma_report_page.py",
+      "sha256": "1cbd9242bed49cba60da133dfcdeb738a32a64bb438500f7db78a58b3cef5901",
+      "bytes": 30964
+    },
+    {
+      "file": "/Users/sukhmangill/Documents/GitHub/carddataset/gamma_replay_verify.py",
+      "sha256": "d1ec4b5e11348c518e0c426aa44037e9896622b72d668c8b861814d789bc70be",
+      "bytes": 5000
+    }
+  ],
+  "outputs": [
+    {
+      "file": "gamma_validation_results.csv",
+      "sha256": "f45ebb23b52be3cc982b6b691edc137f46ba662a3e5521f276148c5366f5eae4",
+      "bytes": 133854351
+    },
+    {
+      "file": "gamma_summary.json",
+      "sha256": "de6b4167b1df1b24312102f1f628f16dcec9c998a7265f4f11ffc84b16f966a9",
+      "bytes": 3414
+    },
+    {
+      "file": "gamma_lab_v1_report.json",
+      "sha256": "ac459610372da1b7409a2a8bb44c6c98469156cedc4226d404f66464d5342ec9",
+      "bytes": 11596
+    },
+    {
+      "file": "gamma_replay_manifest.jsonl",
+      "sha256": "1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931da",
+      "bytes": 200966760
+    },
+    {
+      "file": "gamma_report.html",
+      "sha256": "ae7965d50e3381c3a8dc98dd8255caa1c1adf47a28636a337e5355530d2e9645",
+      "bytes": 38066
+    }
+  ],
+  "tlc_verification": {
+    "available": true,
+    "verified": true,
+    "verification_tier": "tier0_attestation_consistency_only",
+    "checks": {
+      "V1_spec_hash_consistent": true,
+      "V2_cfg_hash_consistent": true,
+      "V3_states_constant": true,
+      "V4_nontrivial_state_space": true,
+      "V5_zero_safety_violations": true,
+      "V6_spec_source_binding": null,
+      "V7_cfg_source_binding": null,
+      "V8_log_states_match": null,
+      "V9_log_no_violation": null
+    },
+    "spec_hash": "1c1e1b60ae15b071370d80eb885d0c84230d325e4638824745f013c2adf7eb08",
+    "cfg_hash": "4123ba374abfe270000846c6c7dfd521752bc624b013f748ee603f987b5793de",
+    "spec_source_sha256": null,
+    "cfg_source_sha256": null,
+    "total_states": 2489446,
+    "violation_count": 0,
+    "attestation_digest": "8cb1369625e05e6ad00004be477ce50f6c0792f0c9913a234e2ddf0767207686",
+    "tlc_log": null,
+    "run_command": null,
+    "artifacts_missing_for_full_closure": [
+      "--tla-spec",
+      "--tla-cfg",
+      "--tlc-log"
+    ],
+    "note": "TLC tier0_attestation_consistency_only. Internal consistency + zero violations verified. Supply --tla-spec, --tla-cfg, --tlc-log to raise the tier."
+  },
+  "replay_manifest": {
+    "path": "gamma_replay_manifest.jsonl",
+    "n_records": 284807,
+    "genesis_anchored": true,
+    "adjacency_links_ok": 284807,
+    "adjacency_all_ok": true,
+    "manifest_sha256": "1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931da",
+    "verify_with": "python gamma_replay_verify.py gamma_replay_manifest.jsonl"
+  },
+  "env": {
+    "python_version": "3.9.6 (default, Apr 17 2026, 18:15:52) \n[Clang 21.0.0 (clang-2100.1.1.101)]",
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "pandas_version": "2.3.3",
+    "method_version": "gamma_test_runner/LAB-v1.0/2.0"
+  },
+  "bundle_digest_sha256": "8bd413fc3c07aa26df17d7c3b242acd3aa3442903d9df209475a115efc8b54eb"
+}

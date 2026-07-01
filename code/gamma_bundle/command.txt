@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/python3 gamma_test_runner.py --input GAMMA_G0_CREDITCARD_FULL_mapped.csv --output gamma_validation_results.csv --summary gamma_summary.json --lab-report gamma_lab_v1_report.json --replay-manifest gamma_replay_manifest.jsonl --bundle gamma_bundle --html gamma_report.html --no-open
