@@ -597,3 +597,103 @@ Patent disclosure (prior-art transparency only) `[A9 Appendix D]`: U.S. Applicat
 
 
 ## ⭐ If you find this project useful, consider giving it a star on GitHub!
+
+
+---
+
+# Additional Documentation (Merged from Secondary README)
+
+## Two Entry Points
+
+| Script | Purpose |
+|--------|---------|
+| `maincode.py` | Executes the complete five-section runtime verification workflow and generates the primary dashboard. |
+| `lab_benchmark.py` | Runs the LAB v1.0 benchmark engine, evaluates custom datasets, generates benchmark dashboards, and produces audit manifests. |
+
+## Runtime Enforcement Model
+
+The runtime monitor evaluates every request before execution.
+
+- **PERMIT** — the request satisfies every runtime verification requirement.
+- **SAFE_STATE** — execution is denied and the system fails closed.
+
+The framework is intentionally **non-compensatory**: passing one security check can never compensate for failing another.
+
+## Meaning of Γ (Gamma)
+
+Γ represents the aggregate runtime safety decision.
+
+- Γ = 0 → every required runtime predicate passed.
+- Γ > 0 → at least one required predicate failed, therefore the request enters SAFE_STATE.
+
+## Dashboard Sections
+
+The generated dashboard contains five major sections:
+
+1. Runtime Enforcement
+2. Stress-Test Scenarios
+3. Quantitative Performance Metrics
+4. Benchmark Reproduction
+5. Evidence Bundle
+
+## Evidence Bundle
+
+The project can generate:
+
+- Evidence Quad
+- TLA+ specification
+- ERTuple Replay Manifest
+- Reproducibility Bundle
+
+These artifacts provide reproducibility, replay verification, and audit evidence.
+
+## LAB Adversarial Classes
+
+| Class | Description |
+|------|-------------|
+| LAB-A1 | Direct bypass / signature detachment |
+| LAB-A2 | Token manipulation |
+| LAB-A3 | Context tampering |
+| LAB-A4 | Replay / TOCTOU attacks |
+| LAB-A5 | Goodhart / class-drift optimization |
+
+## Generated Artifacts
+
+Additional generated artifacts may include:
+
+- `LDREA.tla`
+- `LDREA.cfg`
+- `lab_corpus.jsonl`
+- `ertuple_replay_manifest.json`
+- `reproducibility_bundle.json`
+
+## Command Line Options
+
+Examples:
+
+```bash
+python3 maincode.py
+python3 maincode.py --open
+python3 maincode.py --fresh
+python3 lab_benchmark.py
+python3 lab_benchmark.py --input sample_input.csv
+```
+
+## Output Verdicts
+
+- **COMPLIANT_PASS** — All runtime invariants satisfied.
+- **REVIEW_REQUIRED** — One or more expected outcomes differ from runtime verification results.
+
+## Provenance
+
+The README distinguishes between:
+
+- measured runtime metrics,
+- simulated adversarial datasets,
+- generated evidence artifacts,
+- benchmark reproduction,
+- software reference implementation.
+
+## Offline Reproducibility
+
+JSON evidence bundles are fully reproducible offline. HTML dashboards may require Chart.js unless the library is vendored locally.

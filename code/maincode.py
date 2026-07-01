@@ -41,7 +41,12 @@ import webbrowser
 # --------------------------------------------------------------------------- #
 # Configuration
 # --------------------------------------------------------------------------- #
-SECRET_KEY = b"lakhowal_secret_key_2026_production"
+# DEMO / REFERENCE crypto only. The paper / FULL_SPEC assume epoch-key
+# signatures with a hardware root of trust (TEE / HSM); this file deliberately
+# uses plain HMAC-SHA256 with a hardcoded key so the logic is inspectable and
+# reproducible offline. This is NOT production crypto and must not be treated as
+# such - it stands in for the hardware-backed signing the spec describes.
+SECRET_KEY = b"lakhowal_secret_key_2026_demo"
 NOW = 1_800_000_000.0
 EXPECTED_SCOPE = "WIRE_TRANSFER"
 ADAPTIVE_ATTEMPTS = 120_000
@@ -966,6 +971,353 @@ def format_corpus_report(path: str, m: dict) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Evidence bundle - four independently-checkable artifacts:
+#   1. Evidence Quad                 - four computed PASS/FAIL evidence pillars
+#   2. TLA+ / TLC verification        - a real machine-checkable safety spec
+#   3. ERTuple replay manifest        - per-item, hash-chained, replayed evidence
+#   4. Full lab reproducibility bundle - SHA-256 of every artifact + how to redo it
+#
+# Everything here is COMPUTED from the real engine. Nothing is hand-set, and
+# anything that cannot be produced on this machine (e.g. TLC without tla2tools)
+# is reported honestly rather than faked - matching the rest of this project.
+# --------------------------------------------------------------------------- #
+ERTUPLE_REPLAY_FILENAME = "ertuple_replay_manifest.json"
+REPRODUCIBILITY_FILENAME = "reproducibility_bundle.json"
+TLA_SPEC_FILENAME = "LDREA.tla"
+TLA_CFG_FILENAME = "LDREA.cfg"
+
+
+def _sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _repo_path(name: str) -> str:
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
+
+
+# ----- 1. Evidence Quad ---------------------------------------------------- #
+def build_evidence_quad(unauthorized: int, adversarial: int, replay_rate: float,
+                        adaptive_permits: int, adaptive_attempts: int) -> dict:
+    """Four independent evidence pillars, each a computed PASS / FAIL:
+    containment, replay determinism, runtime invariants, tamper-evident ledger.
+    The invariant + ledger facts come from the LAB manifest on disk."""
+    _, manifest = load_lab_manifest()
+    results = (manifest or {}).get("results", {}) if manifest else {}
+    inv = results.get("invariant_checks", {})
+    inv_pass = sum(1 for v in inv.values() if v)
+    inv_total = len(inv)
+    ledger_root = results.get("final_ledger_root_hash")
+    ub = wilson_upper(unauthorized, adversarial)
+    quadrants = [
+        {
+            "title": "Adversarial containment",
+            "status": "PASS" if unauthorized == 0 else "FAIL",
+            "value": f"{unauthorized} / {adversarial:,}",
+            "detail": f"unauthorized permits · Wilson 95% UB < {ub:.2e}",
+        },
+        {
+            "title": "Replay determinism",
+            "status": "PASS" if replay_rate == 1.0 else "FAIL",
+            "value": f"{replay_rate * 100:.4f}%",
+            "detail": f"identical decisions across two passes · adaptive "
+                      f"{adaptive_permits}/{adaptive_attempts:,} permits",
+        },
+        {
+            "title": "Runtime invariants",
+            "status": ("PASS" if inv_pass == inv_total else "FAIL") if inv_total else "N/A",
+            "value": f"{inv_pass} / {inv_total}" if inv_total else "manifest missing",
+            "detail": "structural theorem invariants hold" if inv_total
+                      else "run lab_benchmark.py to populate",
+        },
+        {
+            "title": "Tamper-evident ledger",
+            "status": "PASS" if ledger_root else "N/A",
+            "value": (ledger_root[:16] + "…") if ledger_root else "manifest missing",
+            "detail": "SHA-256 hash-chained decision-ledger root" if ledger_root
+                      else "run lab_benchmark.py to populate",
+        },
+    ]
+    return {
+        "quadrants": quadrants,
+        "all_pass": all(q["status"] == "PASS" for q in quadrants),
+        "ledger_root": ledger_root,
+    }
+
+
+# ----- 2. TLA+ / TLC verification ------------------------------------------ #
+# A real, checkable TLA+ model of the non-compensatory reference monitor. The
+# safety invariants say a Permit-to-Act is reachable ONLY when every enforcement
+# control holds - i.e. no control can be traded off against another.
+_LDREA_TLA = r"""---------------------------- MODULE LDREA ----------------------------
+(***************************************************************************)
+(* Machine-checked model of the L-DREA non-compensatory reference monitor. *)
+(* A Permit-to-Act decision must be reachable ONLY when every enforcement   *)
+(* control holds; if any control fails the decision must be SAFE_STATE.     *)
+(* This is the formal companion to faithful_gate() in maincode.py.          *)
+(***************************************************************************)
+EXTENDS Naturals, TLC
+
+CONSTANTS Controls          \* the set of enforcement control names
+
+VARIABLES passed,           \* [Controls -> BOOLEAN] : which controls currently hold
+          decision          \* "PENDING" | "PERMIT" | "SAFE_STATE"
+
+vars == <<passed, decision>>
+
+AllHold == \A c \in Controls : passed[c] = TRUE
+
+TypeOK ==
+    /\ passed \in [Controls -> BOOLEAN]
+    /\ decision \in {"PENDING", "PERMIT", "SAFE_STATE"}
+
+Init ==
+    /\ passed \in [Controls -> BOOLEAN]   \* explore every combination of controls
+    /\ decision = "PENDING"
+
+Decide ==
+    /\ decision = "PENDING"
+    /\ decision' = IF AllHold THEN "PERMIT" ELSE "SAFE_STATE"
+    /\ UNCHANGED passed
+
+Done ==
+    /\ decision # "PENDING"
+    /\ UNCHANGED vars
+
+Next == Decide \/ Done
+
+Spec == Init /\ [][Next]_vars
+
+\* Safety: a PERMIT is only ever reached when every control holds.
+NoUnauthorizedPermit == (decision = "PERMIT") => AllHold
+
+\* Non-compensatory: any single failing control forbids a PERMIT.
+NonCompensatory == (\E c \in Controls : passed[c] = FALSE) => (decision # "PERMIT")
+=============================================================================
+"""
+
+_LDREA_CFG = """\
+SPECIFICATION Spec
+CONSTANTS Controls = {node, class, context, token, watchdog}
+INVARIANT TypeOK
+INVARIANT NoUnauthorizedPermit
+INVARIANT NonCompensatory
+"""
+
+_TLC_INVARIANTS = ["TypeOK", "NoUnauthorizedPermit", "NonCompensatory"]
+
+
+def _find_tlc():
+    """Locate a way to run TLC, or return None. Honours TLA2TOOLS_JAR, a `tlc`
+    CLI on PATH, or a tla2tools.jar sitting beside maincode.py."""
+    from shutil import which
+    jar = os.environ.get("TLA2TOOLS_JAR")
+    if jar and os.path.exists(jar) and which("java"):
+        return ["java", "-cp", jar, "tlc2.TLC"]
+    if which("tlc"):
+        return ["tlc"]
+    local = _repo_path("tla2tools.jar")
+    if os.path.exists(local) and which("java"):
+        return ["java", "-cp", local, "tlc2.TLC"]
+    return None
+
+
+def run_tlc_verification() -> dict:
+    """Emit the TLA+ spec + config and model-check it with TLC when available.
+    If tla2tools is not installed the spec is still written and the status says
+    so honestly - it is ready to check, not silently skipped."""
+    spec_path = _repo_path(TLA_SPEC_FILENAME)
+    cfg_path = _repo_path(TLA_CFG_FILENAME)
+    with open(spec_path, "w", encoding="utf-8") as fh:
+        fh.write(_LDREA_TLA)
+    with open(cfg_path, "w", encoding="utf-8") as fh:
+        fh.write(_LDREA_CFG)
+    result = {
+        "spec_file": TLA_SPEC_FILENAME,
+        "cfg_file": TLA_CFG_FILENAME,
+        "invariants": list(_TLC_INVARIANTS),
+        "tlc_available": False,
+        "states_generated": None,
+        "output_excerpt": "",
+    }
+    cmd = _find_tlc()
+    if cmd is None:
+        result["status"] = "SPEC_EMITTED_TLC_NOT_RUN"
+        result["note"] = ("TLA+ spec written and ready to check. Install tla2tools "
+                          "(set TLA2TOOLS_JAR, drop tla2tools.jar beside maincode.py, "
+                          "or install the `tlc` CLI) and re-run to model-check it.")
+        return result
+    result["tlc_available"] = True
+    import subprocess
+    try:
+        proc = subprocess.run(
+            cmd + [TLA_SPEC_FILENAME, "-config", TLA_CFG_FILENAME],
+            capture_output=True, text=True, timeout=300,
+            cwd=os.path.dirname(spec_path),
+        )
+        out = ((proc.stdout or "") + (proc.stderr or "")).strip()
+        verified = "No error has been found" in out
+        import re
+        m = re.search(r"([0-9]+) states generated", out)
+        result["states_generated"] = int(m.group(1)) if m else None
+        result["output_excerpt"] = out[-1400:]
+        if verified:
+            result["status"] = "VERIFIED_NO_COUNTEREXAMPLE"
+            result["note"] = "TLC model-checked the spec locally - no counterexample."
+        else:
+            result["status"] = "COUNTEREXAMPLE_OR_ERROR"
+            result["note"] = "TLC reported an error - see output excerpt."
+    except Exception as exc:  # java/tlc missing at runtime, timeout, etc.
+        result["status"] = "TLC_RUN_FAILED"
+        result["note"] = f"TLC invocation failed: {exc}"
+    return result
+
+
+# ----- 3. ERTuple replay manifest (per-item evidence) ---------------------- #
+def build_ertuple_replay_manifest(sample_n: int = 512) -> dict:
+    """Per-item evidence. For a deterministic sample spanning nominal proposals
+    and every adversarial family, record the ERTuple - the Enforcement-Record
+    Tuple (E ntity, R ights, T oken, Gamma predicate-failure count, decision) -
+    replay the gate twice to prove per-item determinism, and hash-chain the
+    records into a tamper-evident ledger with a root hash.
+
+    Writes ERTUPLE_REPLAY_FILENAME and returns {path, manifest}."""
+    n_nom = max(1, sample_n // 2)
+    stride_nom = max(1, NOMINAL_COUNT // n_nom)
+    indices = list(range(0, NOMINAL_COUNT, stride_nom))[:n_nom]
+    n_adv = max(1, sample_n - len(indices))
+    stride_adv = max(1, ADVERSARIAL_COUNT // n_adv)
+    indices += [NOMINAL_COUNT + k
+                for k in range(0, ADVERSARIAL_COUNT, stride_adv)][:n_adv]
+
+    entries = []
+    prev_hash = "0" * 64
+    consumed_a: set = set()
+    consumed_b: set = set()
+    replay_matches = 0
+    families: dict = {}
+    for i in indices:
+        item = _build_item(i)
+        checks = _control_checks(item)
+        gamma = sum(1 for ok in checks.values() if not ok)
+        d1 = faithful_gate(_build_item(i), consumed_a)
+        d2 = faithful_gate(_build_item(i), consumed_b)
+        replay_match = d1 == d2
+        replay_matches += 1 if replay_match else 0
+        decision = "PERMIT" if d1 == 1 else "SAFE_STATE"
+        expected = "SAFE_STATE" if item["adversarial"] else "PERMIT"
+        tok = item["token"] or {}
+        record = {
+            "index": i,
+            "category": "adversarial" if item["adversarial"] else "nominal",
+            "family": item["mutation"],
+            "ertuple": {
+                "E_entity": tok.get("top_id"),
+                "R_rights": tok.get("scope"),
+                "T_token": {
+                    "nonce": tok.get("nonce"),
+                    "expires_at": tok.get("expires_at"),
+                    "sig_prefix": (tok.get("signature") or "")[:16],
+                },
+                "gamma_failed_controls": gamma,
+                "failed_controls": [k for k, ok in checks.items() if not ok],
+            },
+            "decision": decision,
+            "expected": expected,
+            "decision_matches_expected": decision == expected,
+            "replay_pass1": decision,
+            "replay_pass2": "PERMIT" if d2 == 1 else "SAFE_STATE",
+            "replay_match": replay_match,
+            "prev_hash": prev_hash,
+        }
+        entry_hash = _sha256_hex((prev_hash + json.dumps(record, sort_keys=True)).encode())
+        record["entry_hash"] = entry_hash
+        prev_hash = entry_hash
+        entries.append(record)
+        families[item["mutation"]] = families.get(item["mutation"], 0) + 1
+
+    correct = sum(1 for e in entries if e["decision_matches_expected"])
+    n = len(entries)
+    manifest = {
+        "kind": "ertuple_replay_manifest",
+        "seed": SEED,
+        "sample_size": n,
+        "families_covered": families,
+        "replay_matches": replay_matches,
+        "replay_rate": replay_matches / n if n else 0.0,
+        "decisions_correct": correct,
+        "decision_accuracy": correct / n if n else 0.0,
+        "hash_algorithm": "sha256(prev_hash || canonical_json(record))",
+        "root_hash": prev_hash,
+        "entries": entries,
+    }
+    path = _repo_path(ERTUPLE_REPLAY_FILENAME)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    return {"path": path, "manifest": manifest}
+
+
+# ----- 4. Full lab reproducibility bundle ---------------------------------- #
+def build_reproducibility_bundle(tlc: dict, ertuple_root: str) -> dict:
+    """SHA-256 every input + generated evidence artifact into one bundle so a
+    third party can confirm byte-identical files and re-run to the same result.
+    The dashboard is intentionally excluded - it is a derived rendering, not an
+    input. Writes REPRODUCIBILITY_FILENAME and returns {path, bundle}."""
+    artifact_names = [
+        "maincode.py", "lab_benchmark.py", LAB_MANIFEST_FILENAME,
+        "lab_corpus.jsonl", ERTUPLE_REPLAY_FILENAME,
+        TLA_SPEC_FILENAME, TLA_CFG_FILENAME,
+    ]
+    artifacts = []
+    for name in artifact_names:
+        p = _repo_path(name)
+        if os.path.exists(p):
+            with open(p, "rb") as fh:
+                digest = _sha256_hex(fh.read())
+            artifacts.append({"file": name, "sha256": digest,
+                              "bytes": os.path.getsize(p), "present": True})
+        else:
+            artifacts.append({"file": name, "sha256": None, "bytes": 0,
+                              "present": False,
+                              "note": "not generated yet - see reproduce steps"})
+    commit = None
+    try:
+        import subprocess
+        commit = (subprocess.run(["git", "rev-parse", "HEAD"],
+                                 cwd=_repo_path("."), capture_output=True,
+                                 text=True, timeout=10).stdout.strip() or None)
+    except Exception:
+        commit = None
+    bundle = {
+        "kind": "full_lab_reproducibility_bundle",
+        "seed": SEED,
+        "python_version": sys.version.split()[0],
+        "platform": sys.platform,
+        "git_commit": commit,
+        "environment": {
+            "signing_key_id": _sha256_hex(SECRET_KEY)[:16],  # identifies the key, never reveals it
+            "now_epoch": NOW,
+            "expected_scope": EXPECTED_SCOPE,
+        },
+        "tlc": {"status": tlc.get("status"), "spec_file": tlc.get("spec_file"),
+                "invariants": tlc.get("invariants")},
+        "ertuple_replay_root_hash": ertuple_root,
+        "artifacts": artifacts,
+        "reproduce": [
+            "python3 lab_benchmark.py            # 1.2M-item LAB suite -> ertuple_audit_manifest.json",
+            "python3 maincode.py --emit-data lab_corpus.jsonl --data-items 10000",
+            "python3 maincode.py                 # evidence quad + replay manifest + bundle + dashboard",
+            "# optional: TLA2TOOLS_JAR=/path/tla2tools.jar python3 maincode.py   # to model-check LDREA.tla",
+        ],
+    }
+    path = _repo_path(REPRODUCIBILITY_FILENAME)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(bundle, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    return {"path": path, "bundle": bundle}
+
+
+# --------------------------------------------------------------------------- #
 # Dashboard (self-contained HTML, data inlined, Chart.js from CDN)
 # --------------------------------------------------------------------------- #
 _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
@@ -1041,6 +1393,8 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
   th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 12px; color: var(--accent); }
+  .badge.info { background: rgba(91,140,255,.15); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1057,6 +1411,11 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
 <main>
   <div id="baselineWarn"></div>
   <div class="cards" id="cards"></div>
+  <div class="panel">
+    <h2>Evidence Quad <span class="pill" id="quadPill"></span></h2>
+    <div class="hint">Four independent, computed evidence pillars for this run - containment, replay determinism, runtime invariants and the tamper-evident ledger. Each is a PASS/FAIL derived from the engine and the LAB manifest, not asserted.</div>
+    <div class="cards" id="quad"></div>
+  </div>
   <div class="grid2">
     <div class="panel">
       <h2>Mutation controls - weak-baseline leak by family</h2>
@@ -1103,7 +1462,27 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
     <table id="paperTable"><thead><tr><th>Benchmark claim</th><th>Measured value</th><th>Reference</th><th>Reproduced</th></tr></thead><tbody></tbody></table>
   </div>
   <div class="panel">
-    <h2>Section 1 + 2 + 3 + 4 report</h2>
+    <h2>Section 5 - TLA+ / TLC verification <span class="pill" id="tlcPill"></span></h2>
+    <div class="hint">Machine-checkable model of the non-compensatory reference monitor (<code id="tlcSpec"></code>). Safety invariants assert a Permit-to-Act is reachable <em>only</em> when every enforcement control holds. The spec is always written; it is model-checked here when tla2tools/TLC is available.</div>
+    <div id="tlcMeta" class="hint"></div>
+    <table id="tlcTable"><thead><tr><th>Invariant</th><th>What it proves</th></tr></thead><tbody></tbody></table>
+    <pre class="terminal" id="tlcOut" style="display:none; margin-top:14px;"></pre>
+  </div>
+  <div class="panel">
+    <h2>Section 5 - ERTuple replay manifest (per-item evidence) <span class="pill" id="ertPill"></span></h2>
+    <div class="hint">Per-item enforcement records - the <strong>E</strong>ntity · <strong>R</strong>ights · <strong>T</strong>oken tuple plus Γ (predicate-failure count) and decision - each replayed twice for determinism and hash-chained into a tamper-evident ledger. Sample shown below; full manifest in <code id="ertFile"></code>.</div>
+    <div id="ertMeta" class="hint"></div>
+    <table id="ertTable"><thead><tr><th>#</th><th>Family</th><th>ERTuple (E · R · Γ)</th><th>Decision</th><th>Replay</th><th>Entry hash</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="panel">
+    <h2>Section 5 - full lab reproducibility bundle <span class="pill" id="reproPill"></span></h2>
+    <div class="hint">SHA-256 of every input + generated evidence artifact, plus seed, environment and the exact commands to reproduce. The dashboard itself is excluded - it is a derived rendering, not an input. File: <code id="reproFile"></code>.</div>
+    <div id="reproMeta" class="hint"></div>
+    <table id="reproTable"><thead><tr><th>Artifact</th><th>SHA-256</th><th>Bytes</th></tr></thead><tbody></tbody></table>
+    <pre class="terminal" id="reproCmds" style="margin-top:14px;"></pre>
+  </div>
+  <div class="panel">
+    <h2>Section 1 + 2 + 3 + 4 + 5 report</h2>
     <pre class="terminal" id="report"></pre>
   </div>
 </main>
@@ -1248,6 +1627,88 @@ if (paper && paper.available) {
   paperPill.textContent = "manifest missing";
   document.getElementById("paperMeta").textContent =
     (paper && paper.note) || "Run lab_benchmark.py to generate the manifest.";
+}
+
+// ----- Evidence Quad -----
+const quad = DATA.evidence_quad;
+if (quad) {
+  const qp = document.getElementById("quadPill");
+  qp.textContent = quad.all_pass ? "all pass" : "review";
+  qp.style.color = quad.all_pass ? css("--pass") : css("--fail");
+  qp.style.borderColor = quad.all_pass ? css("--pass") : css("--fail");
+  document.getElementById("quad").innerHTML = quad.quadrants.map((q) => {
+    const good = q.status === "PASS", bad = q.status === "FAIL";
+    const badge = good ? "permit" : (bad ? "miss" : "gap");
+    return `<div class="card"><div class="label">${q.title}</div>` +
+      `<div class="value${good ? " good" : ""}${bad ? " bad" : ""}">${q.value}</div>` +
+      `<div class="foot"><span class="badge ${badge}">${q.status}</span> ${q.detail}</div></div>`;
+  }).join("");
+}
+
+// ----- Section 5 TLA+ / TLC verification -----
+const tlc = DATA.tlc;
+if (tlc) {
+  document.getElementById("tlcSpec").textContent = tlc.spec_file;
+  const verified = tlc.status === "VERIFIED_NO_COUNTEREXAMPLE";
+  const tp = document.getElementById("tlcPill");
+  tp.textContent = verified ? "verified" : (tlc.tlc_available ? "error" : "spec ready");
+  tp.style.color = verified ? css("--pass") : css("--warn");
+  tp.style.borderColor = verified ? css("--pass") : css("--warn");
+  document.getElementById("tlcMeta").textContent =
+    tlc.note + (tlc.states_generated ? "  ·  " + Number(tlc.states_generated).toLocaleString() + " states generated" : "");
+  const meaning = {
+    "TypeOK": "state variables stay well-typed",
+    "NoUnauthorizedPermit": "a PERMIT is reachable only when every control holds",
+    "NonCompensatory": "any single failing control forbids a PERMIT (no trade-offs)",
+  };
+  document.querySelector("#tlcTable tbody").innerHTML = (tlc.invariants || []).map((n) =>
+    `<tr><td><code>${n}</code></td><td>${meaning[n] || ""}</td></tr>`).join("");
+  if (tlc.output_excerpt) {
+    const o = document.getElementById("tlcOut");
+    o.style.display = "block";
+    o.textContent = tlc.output_excerpt;
+  }
+}
+
+// ----- Section 5 ERTuple replay manifest -----
+const ert = DATA.ertuple_replay;
+if (ert) {
+  document.getElementById("ertFile").textContent = ert.summary.file;
+  const ok = ert.summary.replay_rate === 1 && ert.summary.decision_accuracy === 1;
+  const ep = document.getElementById("ertPill");
+  ep.textContent = (ert.summary.replay_rate * 100).toFixed(2) + "% replay";
+  ep.style.color = ok ? css("--pass") : css("--fail");
+  ep.style.borderColor = ok ? css("--pass") : css("--fail");
+  document.getElementById("ertMeta").textContent =
+    fmtNum(ert.summary.sample_size) + " sampled per-item records  ·  replay " +
+    (ert.summary.replay_rate * 100).toFixed(2) + "%  ·  decision accuracy " +
+    (ert.summary.decision_accuracy * 100).toFixed(2) + "%  ·  root " +
+    ert.summary.root_hash.slice(0, 16) + "…";
+  document.querySelector("#ertTable tbody").innerHTML = ert.sample.map((e) =>
+    `<tr><td>${e.index}</td><td>${e.family}</td>` +
+    `<td>${e.ertuple.E_entity} · ${e.ertuple.R_rights} · Γ=${e.ertuple.gamma_failed_controls}</td>` +
+    `<td><span class="badge ${e.decision === "PERMIT" ? "permit" : "deny"}">${e.decision}</span></td>` +
+    `<td><span class="badge ${e.replay_match ? "permit" : "miss"}">${e.replay_match ? "match" : "DIFF"}</span></td>` +
+    `<td><code>${e.entry_hash.slice(0, 12)}…</code></td></tr>`).join("");
+}
+
+// ----- Section 5 full lab reproducibility bundle -----
+const repro = DATA.reproducibility;
+if (repro) {
+  document.getElementById("reproFile").textContent = repro.file;
+  const present = repro.artifacts.filter((a) => a.present).length;
+  const rp = document.getElementById("reproPill");
+  rp.textContent = present + "/" + repro.artifacts.length + " hashed";
+  rp.style.color = css("--accent");
+  rp.style.borderColor = css("--accent");
+  document.getElementById("reproMeta").textContent =
+    "seed " + repro.seed + "  ·  python " + repro.python_version + "  ·  " + repro.platform +
+    (repro.git_commit ? "  ·  commit " + repro.git_commit.slice(0, 10) : "");
+  document.querySelector("#reproTable tbody").innerHTML = repro.artifacts.map((a) =>
+    `<tr><td>${a.file}</td>` +
+    `<td><code>${a.sha256 ? a.sha256.slice(0, 24) + "…" : "—"}</code></td>` +
+    `<td>${a.present ? Number(a.bytes).toLocaleString() : "<span class='badge gap'>missing</span>"}</td></tr>`).join("");
+  document.getElementById("reproCmds").textContent = repro.reproduce.join("\n");
 }
 
 document.getElementById("report").textContent = DATA.report_text;
@@ -1423,6 +1884,41 @@ def main() -> None:
     paper = run_paper_alignment(fresh="--fresh" in sys.argv)
     report_text = report_text + "\n" + format_paper_alignment(paper)
 
+    # ----- Section 5 evidence bundle (quad / TLC / ERTuple replay / repro) --- #
+    print("[RUN ] Section 5 evidence quad ...", file=sys.stderr)
+    evidence_quad = build_evidence_quad(
+        unauthorized, ADVERSARIAL_COUNT, replay_rate,
+        adaptive_permits, ADAPTIVE_ATTEMPTS,
+    )
+    print("[RUN ] Section 5 TLA+ / TLC verification ...", file=sys.stderr)
+    tlc = run_tlc_verification()
+    print("[RUN ] Section 5 ERTuple replay manifest (per-item evidence) ...",
+          file=sys.stderr)
+    ertuple = build_ertuple_replay_manifest()
+    ert_manifest = ertuple["manifest"]
+    print("[RUN ] Section 5 full lab reproducibility bundle ...", file=sys.stderr)
+    repro = build_reproducibility_bundle(tlc, ert_manifest["root_hash"])
+    bundle = repro["bundle"]
+
+    quad_line = " · ".join(f"{q['title']} {q['status']}" for q in evidence_quad["quadrants"])
+    evidence_lines = [
+        "",
+        "Section 5 evidence bundle:",
+        f"  Evidence Quad           : {quad_line} "
+        f"({'ALL PASS' if evidence_quad['all_pass'] else 'REVIEW'})",
+        f"  TLA+/TLC verification   : {tlc['status']} "
+        f"({', '.join(tlc['invariants'])}) -> {tlc['spec_file']}",
+        f"  ERTuple replay manifest : {ert_manifest['sample_size']:,} per-item records · "
+        f"replay {ert_manifest['replay_rate']:.2%} · "
+        f"accuracy {ert_manifest['decision_accuracy']:.2%} · "
+        f"root {ert_manifest['root_hash'][:16]}… -> {ERTUPLE_REPLAY_FILENAME}",
+        f"  Reproducibility bundle  : "
+        f"{sum(1 for a in bundle['artifacts'] if a['present'])}/{len(bundle['artifacts'])} "
+        f"artifacts hashed · seed {bundle['seed']} · python {bundle['python_version']} "
+        f"-> {REPRODUCIBILITY_FILENAME}",
+    ]
+    report_text = report_text + "\n" + "\n".join(evidence_lines)
+
     print(file=sys.stderr)  # spacer after progress noise
     print(report_text)
 
@@ -1447,6 +1943,28 @@ def main() -> None:
         "ablation": ablation,
         "replay": replay,
         "paper": paper,
+        "evidence_quad": evidence_quad,
+        "tlc": tlc,
+        "ertuple_replay": {
+            "summary": {
+                "file": ERTUPLE_REPLAY_FILENAME,
+                "sample_size": ert_manifest["sample_size"],
+                "replay_rate": ert_manifest["replay_rate"],
+                "decision_accuracy": ert_manifest["decision_accuracy"],
+                "root_hash": ert_manifest["root_hash"],
+                "families_covered": ert_manifest["families_covered"],
+            },
+            "sample": ert_manifest["entries"][:12],
+        },
+        "reproducibility": {
+            "file": REPRODUCIBILITY_FILENAME,
+            "seed": bundle["seed"],
+            "python_version": bundle["python_version"],
+            "platform": bundle["platform"],
+            "git_commit": bundle["git_commit"],
+            "artifacts": bundle["artifacts"],
+            "reproduce": bundle["reproduce"],
+        },
         "report_text": report_text,
     }
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "maincodedashboard.html")
