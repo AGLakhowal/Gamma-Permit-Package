@@ -1,5 +1,5 @@
 {
-  "input_file": "GAMMA_G0_CREDITCARD_FULL_mapped.csv",
+  "input_file": "/Users/sukhmangill/Documents/GitHub/carddataset/GAMMA_G0_CREDITCARD_FULL_mapped.csv",
   "method_version": "gamma_test_runner/LAB-v1.0/2.0",
   "rows": 284807,
   "derived_permit": 284315,

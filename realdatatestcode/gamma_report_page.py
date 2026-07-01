@@ -42,19 +42,157 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def _esc(x) -> str:
+    return html.escape(str(x))
+
+
+def _badge(text: str) -> str:
+    t = str(text).upper()
+    color = "var(--acc2)"
+    if any(k in t for k in ("FAIL", "PARTIAL", "OUT_OF_SCOPE", "CONDITIONAL",
+                            "INTERNAL_PASS", "DEFENSIBLE", "NOT_RUN", "MEDIUM")):
+        color = "var(--warn)"
+    if t in ("FAIL",) or t.startswith("FAIL"):
+        color = "var(--bad)"
+    if t in ("PASS", "COMPLIANT_PASS", "STRONG FIT", "HIGH") or t == "TRUE":
+        color = "var(--acc2)"
+    return f'<span class="tag" style="color:{color};border-color:{color}">{_esc(text)}</span>'
+
+
+def build_extra_sections(extra: dict) -> str:
+    """Server-render the ConcurBench / stress / FCR sections as static HTML so we
+    don't have to thread new state through the existing client-side JS."""
+    parts: list[str] = []
+    cb = extra.get("concurbench")
+    stress = extra.get("stress")
+    fcr = extra.get("fcr")
+
+    # ---------------- ConcurBench conformance ----------------
+    if cb:
+        cl = cb.get("conformance_levels", {})
+        l1 = cb.get("authorization_correctness", {})
+        l3 = cb.get("distributed_consistency", {})
+        l4 = cb.get("replay_and_auditability", {})
+        l2 = cb.get("adversarial_robustness", {})
+        rows = "".join(
+            f"<tr><td>{_esc(k.replace('_',' '))}</td><td>{_badge(v)}</td></tr>"
+            for k, v in cl.items()
+        )
+        kpis = [
+            ("Overall verdict", cb.get("overall_verdict", "-")),
+            ("UER", l1.get("UER", "-")),
+            ("FCR", l1.get("FCR", "-")),
+            ("Adaptive attacker false permits", l2.get("adaptive_attacker_false_permits", "-")),
+            ("Fleet consistency", l3.get("fleet_consistency", "-")),
+            ("Replay consistency", l4.get("replay_consistency_rate", "-")),
+        ]
+        kpi_html = "".join(
+            f'<div class="kpi"><div class="n good">{_esc(v)}</div>'
+            f'<div class="l">{_esc(k)}</div></div>' for k, v in kpis
+        )
+        fam = l2.get("per_family", {})
+        fam_rows = "".join(
+            f"<tr><td>{_esc(k)}</td><td>{_esc(d.get('instances', d.get('attempts','-')))}</td>"
+            f"<td>{_esc(d.get('false_permits','-'))}</td>"
+            f"<td>&lt; {_esc(d.get('wilson95_upper','-'))}</td></tr>"
+            for k, d in fam.items()
+        )
+        parts.append(f"""
+<section class="reveal">
+  <h2><span class="dot"></span>ConcurBench full conformance packet <span class="tag">Document 1</span></h2>
+  <p class="lead">Every Document-1 field computed over the real ULB corpus
+  (284,807 rows / 492 fraud / 13 predicates). Verdict: {_badge(cb.get('overall_verdict','-'))}.</p>
+  <div class="kpis" style="grid-template-columns:repeat(3,1fr)">{kpi_html}</div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card"><h3>Conformance levels</h3>
+      <table><tbody>{rows}</tbody></table></div>
+    <div class="card"><h3>Adversarial families (Level 2)</h3>
+      <table><thead><tr><th>Family</th><th>Instances</th><th>False permits</th><th>Wilson 95%</th></tr></thead>
+      <tbody>{fam_rows}</tbody></table></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>Scope note</h3>
+    <p style="color:var(--muted)">{_esc(cb.get('verdict_scope',''))}</p></div>
+</section>""")
+
+    # ---------------- Stress test ----------------
+    if stress:
+        agg = stress.get("aggregate", {})
+        scen_cards = []
+        for s in stress.get("scenarios", []):
+            crows = "".join(
+                f"<tr><td>{_esc(c['failure_condition'])}</td>"
+                f"<td style='color:var(--muted)'>{_esc(c['l_drea'])}</td>"
+                f"<td style='color:var(--muted)'>{_esc(c['lakhowal'])}</td>"
+                f"<td>{_badge(c['result'])}</td></tr>"
+                for c in s.get("per_condition", [])
+            )
+            scen_cards.append(f"""
+    <div class="card" style="margin-bottom:18px">
+      <h3>{_esc(s['id'])} — {_esc(s['name'])} &nbsp; {_badge(s['confidence'])} {_badge(s['verdict'])}
+        <span class="tag">{_esc(s['effectively_tackled'])}</span></h3>
+      <p style="color:var(--muted)">Expected: {_esc(s['expected_outcome'])} ·
+        in-scope pass rate {_esc(s['in_scope_pass_rate'])} ·
+        fail-closed OK: {_badge(s.get('fail_closed_ok'))}</p>
+      <table><thead><tr><th>Failure condition</th><th>L-DREA (paper)</th>
+        <th>Lakhowal (product)</th><th>Result</th></tr></thead>
+        <tbody>{crows}</tbody></table>
+      <p style="color:var(--muted);margin-top:8px">{_esc(s.get('note',''))}</p>
+    </div>""")
+        parts.append(f"""
+<section class="reveal">
+  <h2><span class="dot"></span>Financial-services stress test <span class="tag">4 scenarios</span></h2>
+  <p class="lead">Weighted effectively-tackled ~{_esc(agg.get('weighted_effectively_tackled_pct','-'))}%
+  ({_esc(agg.get('range',''))}). All in-scope denials fail closed:
+  {_badge(agg.get('all_in_scope_denials_fail_closed'))}.</p>
+  {''.join(scen_cards)}
+</section>""")
+
+    # ---------------- FCR test ----------------
+    if fcr:
+        o = fcr.get("overall", {})
+        frows = "".join(
+            f"<tr><td>{_esc(f['family'])}</td><td>{_esc(f['n'])}</td>"
+            f"<td>{_esc(f['fail_open_events'])}</td><td>{_esc(f['fail_closed_rate'])}</td>"
+            f"<td>&lt; {_esc(f['wilson95_fail_open_upper'])}</td></tr>"
+            for f in fcr.get("by_family", [])
+        )
+        parts.append(f"""
+<section class="reveal">
+  <h2><span class="dot"></span>Fail-Closed Rate (FCR) test</h2>
+  <p class="lead">{_esc(fcr.get('definition',''))}</p>
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi"><div class="n good">{_esc(o.get('FCR','-'))}</div><div class="l">FCR</div></div>
+    <div class="kpi"><div class="n">{_esc(o.get('n','-'))}</div><div class="l">Population</div></div>
+    <div class="kpi"><div class="n {'good' if o.get('fail_open_events')==0 else 'bad'}">{_esc(o.get('fail_open_events','-'))}</div><div class="l">Fail-open events</div></div>
+    <div class="kpi"><div class="n good">{_badge(o.get('pass'))}</div><div class="l">Verdict</div></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>By uncertainty family</h3>
+    <table><thead><tr><th>Family</th><th>n</th><th>Fail-open</th><th>FCR</th><th>Wilson 95% fail-open</th></tr></thead>
+    <tbody>{frows}</tbody></table></div>
+</section>""")
+
+    return "\n".join(parts)
+
+
 def render(lab: dict, summary: dict, out: str | Path,
-           terminal_txt: str = "", open_browser: bool = True) -> Path:
+           terminal_txt: str = "", open_browser: bool = True,
+           extra: dict | None = None) -> Path:
     """Build the HTML dashboard from in-memory report dicts and (optionally) open it.
 
     Reusable entry point: the standalone CLI and gamma_test_runner.py both call
     this so there is a single source of truth for the page. Every value shown is
     derived from the `lab`/`summary` dicts passed in.
+
+    `extra` (optional) may carry {"concurbench": ..., "stress": ..., "fcr": ...}
+    dicts produced by concurbench_full.py / stress_test.py / fcr_test.py; when
+    present, additional server-rendered sections are appended to the dashboard.
     """
     payload = {"lab": lab, "summary": summary}
     data_json = json.dumps(payload)
     terminal_safe = html.escape(terminal_txt)
 
     page = TEMPLATE.replace("/*__DATA__*/{}", data_json).replace("<!--__TERMINAL__-->", terminal_safe)
+    page = page.replace("<!--__EXTRA_SECTIONS__-->", build_extra_sections(extra or {}))
     out_path = Path(out)
     out_path.write_text(page, encoding="utf-8")
     print(f"Wrote {out_path}  ({len(page):,} bytes)")
@@ -78,7 +216,15 @@ def main() -> None:
     terminal_txt = ""
     if Path(args.terminal).exists():
         terminal_txt = Path(args.terminal).read_text()
-    render(lab, summary, args.out, terminal_txt=terminal_txt, open_browser=not args.no_open)
+    extra = {}
+    for key, fname in (("concurbench", "concurbench_full_report.json"),
+                       ("stress", "stress_test_report.json"),
+                       ("fcr", "fcr_test_report.json")):
+        p = Path(fname)
+        if p.exists():
+            extra[key] = json.loads(p.read_text())
+    render(lab, summary, args.out, terminal_txt=terminal_txt,
+           open_browser=not args.no_open, extra=extra)
 
 
 TEMPLATE = r"""<!DOCTYPE html>
@@ -337,6 +483,8 @@ footer{padding:40px 0 70px;color:var(--muted);text-align:center;font-size:13px}
     <span style="color:#7f8fb0;font:12px ui-monospace">python3 gamma_test_runner.py</span></div>
     <pre><!--__TERMINAL__--></pre></div>
 </section>
+
+<!--__EXTRA_SECTIONS__-->
 
 <footer>
   Generated from real runner JSON · ground truth = ULB <code>Class</code> labels · hash chain genuinely
