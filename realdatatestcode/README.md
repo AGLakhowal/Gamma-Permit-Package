@@ -26,8 +26,11 @@ itself against the **LAB v1.0** benchmark methodology.
 8. [The benchmark rules](#8-the-benchmark-rules-lab-v10)
 9. [How to run it](#9-how-to-run-it)
 10. [Results we actually got](#10-results-we-actually-got)
+    - [Real-Dataset Golden-Trace Validation](#real-dataset-golden-trace-validation)
+    - [Metric Denominator Discipline](#metric-denominator-discipline)
 11. [The webpage / dashboard](#11-the-webpage--dashboard)
-12. [Honesty notes & scope](#12-honesty-notes--scope)
+12. [Independent verification: TLC, replay manifest, reproducibility bundle](#12-independent-verification-tlc-replay-manifest-reproducibility-bundle)
+13. [Honesty notes & scope](#13-honesty-notes--scope)
 
 ---
 
@@ -89,12 +92,15 @@ to a section of the paper:
 | §VIII‑G / IX‑G | Six metrics + Wilson 95% + cluster correction (`N_eff = N/DE`) | [gamma_test_runner.py:277‑322](gamma_test_runner.py#L277-L322) |
 | §VIII‑D | LAB‑A1…A5 scenario taxonomy | [gamma_test_runner.py:336‑353](gamma_test_runner.py#L336-L353) |
 | §IX‑G | Measured per‑decision latency + throughput | [gamma_test_runner.py:623‑714](gamma_test_runner.py#L623-L714) |
-| App. D | TLA⁺ state counts surfaced (if present in trace) | [gamma_test_runner.py:725‑726](gamma_test_runner.py#L725-L726) |
+| App. D | TLC attestation **verified** (consistency + zero violations + optional source binding) | [`verify_tlc()`](gamma_test_runner.py#L445) |
+| App. A / README | Per‑item **ERTuple replay manifest** + independent verifier | [`write_replay_manifest()`](gamma_test_runner.py#L539), [gamma_replay_verify.py](gamma_replay_verify.py) |
+| README | **Evidence Quad** per decision (method · policy · ledger hash) | [gamma_test_runner.py:974](gamma_test_runner.py#L974) |
+| — | Full lab **reproducibility bundle** (digests · env · command · MANIFEST) | [`write_repro_bundle()`](gamma_test_runner.py#L618) |
 
 **What is taken from the paper:** the *rules and definitions* (the aggregation law, the veto,
 Eq. 7, the invariants, the metric/CI methodology, the LAB scenario classes).
 **What is NOT taken from the paper:** the paper's *numbers*. Every value in our reports is
-computed by the runner on the real dataset — see [Honesty notes](#12-honesty-notes--scope).
+computed by the runner on the real dataset — see [Honesty notes](#13-honesty-notes--scope).
 
 ## 4. Repository map — which file is which
 
@@ -106,9 +112,13 @@ carddataset/
 ├── GAMMA_G0_CREDITCARD_FULL_mapped.csv      #          full mapped golden trace (284,807 rows) [generated]
 │
 ├── gamma_test_runner.py   ◀── MAIN FILE     # STEP 2 — re-derives decisions + runs LAB v1.0 benchmark
-├── gamma_validation_results.csv             #          row-level decision output [generated]
+├── gamma_validation_results.csv             #          row-level decision output (incl. EvidenceQuad) [generated]
 ├── gamma_summary.json                       #          summary report [generated]
-├── gamma_lab_v1_report.json                 #          full LAB v1.0 report (metrics, invariants, latency) [generated]
+├── gamma_lab_v1_report.json                 #          full LAB v1.0 report (metrics, invariants, latency, TLC) [generated]
+├── gamma_replay_manifest.jsonl              #          per-item ERTuple replay manifest [generated]
+│
+├── gamma_replay_verify.py                   # STEP 2b — stdlib-only independent replay-manifest verifier
+├── gamma_bundle/                            #          reproducibility bundle (MANIFEST.json, REPRODUCE.md, env) [generated]
 │
 ├── gamma_report_page.py                     # STEP 3 — renders the JSON reports into an HTML dashboard
 ├── gamma_report.html                        #          self-contained animated dashboard [generated]
@@ -142,7 +152,10 @@ Genuinely computed during mapping (not faked):
 - timestamps with `CommitTimestamp < ActuateTimestamp` (commit‑before‑actuate ordering).
 
 Structural constants (PolicyHash, SpecVersion, TLC hashes, substrate IDs) are copied from the
-bundled 1,000‑row template so the emitted file is schema‑identical to a real golden trace.
+bundled 1,000‑row template so the emitted file is schema‑identical to a real golden trace. The
+TLC attestation is **not blindly trusted** — the runner independently verifies it (consistency
+across all rows, non‑trivial state space, zero safety violations, and optional cryptographic
+binding to the actual `.tla`/`.cfg` source); see [§12](#12-independent-verification-tlc-replay-manifest-reproducibility-bundle).
 
 > **Key honesty point:** the authorization *outcome* is a function of the real fraud label and
 > the real per‑row crypto/ordering — the runner re‑derives PERMIT/SAFE_STATE itself and then
@@ -210,26 +223,39 @@ GENESIS‑anchored. Any broken link is a replay divergence.
 
 **Ground truth.** The real ULB `Class` label — `Class=1 ⇒` must deny; `Class=0 ⇒` may permit.
 
-**Six primary metrics** (each with naïve **and** cluster‑corrected Wilson 95% upper bounds,
-`N_eff = N / DE`, default `DE = 1.7`):
+**Headline UER + six primary metrics** (each with naïve **and** cluster‑corrected Wilson 95%
+upper bounds, `N_eff = N / DE`, default `DE = 1.7`). **Each rate is taken over the population at
+risk of that event — not blindly over all rows:**
 
-| Metric | Adverse event counted |
-|---|---|
-| False Permit Rate (FPR) | permit something ground truth denies |
-| False Denial Rate (FDR) | deny something ground truth permits |
-| Replay Determinism Rate (RDR) | broken hash‑chain link |
-| Revocation Compliance | authority‑required row lacking revocation freshness |
-| TOCTOU Violation Rate | ordering inversion on an actuated op |
-| Class‑Veto Effectiveness | class‑1 deficit not held in SAFE_STATE |
+| Metric | Adverse event counted | Denominator (population) |
+|---|---|---|
+| **Unauthorized Execution Rate (UER)** | any row that externalizes without authority (Eq. 7) | **all rows** |
+| False Permit Rate (FPR) | permit something ground truth denies | **should‑deny** rows only |
+| False Denial Rate (FDR) | deny something ground truth permits | **should‑permit** rows only |
+| Replay Determinism Rate (RDR) | broken hash‑chain link | all rows |
+| Revocation Compliance | authority‑required row lacking revocation freshness | all rows |
+| TOCTOU Violation Rate | ordering inversion on an actuated op | all at‑risk rows |
+| Class‑Veto Effectiveness | class‑1 deficit not held in SAFE_STATE | class‑1 rows only |
+
+> UER is the correct name for a "0 events over all N" rate; **FPR must use the should‑deny
+> denominator** (a permit can only be "false" where the truth is deny). The smaller denominator
+> produces a wider, more honest Wilson bound — the runner reports both.
 
 **Six runtime invariants** (violation count must be 0):
 I1 Execution Sovereignty · I2 Non‑Bypassability · I3 Non‑Compensatory Soundness ·
 I4 Class‑Level Veto · I5 TOCTOU State‑Consistency · I6 Runtime Sovereignty (composition).
 
-**Negative control (Corollary 2).** A compensatory weighted‑sum aggregator
-(`Γ_w = mean deficit`, permit if `Γ_w < τ`, τ=0.15) is run alongside the LLC `max` aggregator.
-The runner reports how many true‑deficit rows the weighted‑sum *would* false‑permit if the
-deficit were isolated — the structural argument for why non‑compensation matters.
+**Negative control (Corollary 2) — two DISTINCT probes.** These are *not* contradictory; one runs
+the compensatory rule on the data as‑is, the other is a counterfactual transform:
+
+1. **Actual dataset baseline** — run the compensatory weighted‑sum rule
+   (`Γ_w = mean deficit`, permit if `Γ_w < τ`, τ=0.15) **as‑is** on every mapped row. Result on
+   this corpus: **0** false permits vs LLC, because every adversarial row fails *multiple* hard
+   predicates, so its weighted score stays ≥ τ.
+2. **Corollary 2 counterfactual** — reduce each adversarial row to a **single isolated deficit**
+   (score `1/13 ≈ 0.077 < τ`). A compensatory gate would then *mask* the failure → **492
+   counterfactual false permits**, while the non‑compensatory LLC still denies all. This is the
+   structural argument for why non‑compensation matters.
 
 ## 9. How to run it
 
@@ -262,6 +288,24 @@ The runner auto‑discovers a `GAMMA_*.csv` if `--input` is omitted. Other usefu
 `--latency-limit-ms` (default 100), `--latency-sample` (cap timed rows; correctness always
 uses all rows), `--no-wal` (CPU‑only latency, skip the WAL fsync).
 
+**Independent‑verification flags** (see [§12](#12-independent-verification-tlc-replay-manifest-reproducibility-bundle)):
+`--replay-manifest <path>` (per‑item ERTuple manifest, default `gamma_replay_manifest.jsonl`),
+`--no-replay-manifest` (skip it), `--tla-spec <spec.tla>` / `--tla-cfg <cfg.cfg>`
+(cryptographically bind the TLC attestation to source → tier 1), `--tlc-log <log>` /
+`--tlc-run-command "<cmd>"` (cross‑check the TLC console log → tier 2), and `--bundle <dir>`
+(emit the full reproducibility bundle). Full one‑shot run:
+
+```bash
+python gamma_test_runner.py \
+  --input GAMMA_G0_CREDITCARD_FULL_mapped.csv \
+  --replay-manifest gamma_replay_manifest.jsonl \
+  --tla-spec spec.tla --tla-cfg spec.cfg \
+  --bundle gamma_bundle
+
+# STEP 2b — independently re-verify every decision (no pandas, no dataset)
+python gamma_replay_verify.py gamma_replay_manifest.jsonl
+```
+
 **Regenerate the dashboard on its own** (without re-running the benchmark) straight from the
 JSON reports — this also auto‑opens it:
 
@@ -271,6 +315,126 @@ python gamma_report_page.py \
   --summary    gamma_summary.json \
   --out        gamma_report.html        # add --no-open to suppress the browser
 ```
+
+-----------------------------------------------------------------------
+
+## Generator vs Independent Verifier
+
+The benchmark intentionally separates **generation** from
+**verification**.
+
+  -----------------------------------------------------------------------
+  Component                      Responsibility
+  ------------------------------ ----------------------------------------
+  `gamma_test_runner.py`         Executes the benchmark, derives
+                                 authorization decisions, computes
+                                 metrics, generates reports, replay
+                                 manifest, and reproducibility bundle.
+
+  `gamma_replay_verify.py`       Independently verifies the replay
+                                 manifest using only the emitted JSONL
+                                 file. It requires neither the original
+                                 dataset nor the benchmark
+                                 implementation.
+  -----------------------------------------------------------------------
+
+This separation enables third-party auditors to validate execution
+integrity without trusting the benchmark runner itself.
+
+------------------------------------------------------------------------
+
+## Replay Manifest Integrity Guarantees
+
+The replay verifier establishes four independent guarantees:
+
+-   **GENESIS anchoring** -- the first decision is correctly anchored.
+-   **Replay determinism** -- every record links to the previous SHA-256
+    hash.
+-   **Ledger integrity** -- each Evidence Quad ledger hash matches the
+    recorded hash chain.
+-   **Decision consistency** -- Π, Γ_G, Γ_class and PERMIT/SAFE_STATE
+    remain internally consistent.
+
+Any violation causes the verifier to fail.
+
+------------------------------------------------------------------------
+
+## Manifest Authenticity
+
+After validating every decision, the verifier recomputes the SHA-256
+digest of the complete replay manifest.
+
+When an expected digest is supplied, the verifier confirms the manifest
+has not been modified after generation.
+
+``` bash
+python gamma_replay_verify.py \
+    gamma_replay_manifest.jsonl \
+    --expect-sha256 <expected_sha256>
+```
+
+------------------------------------------------------------------------
+
+## Replay Integrity
+
+Every authorization decision extends a SHA-256 hash chain.
+
+Changing any historical decision changes every downstream hash, making
+post-generation modification immediately detectable.
+
+This provides tamper-evident execution history without requiring the
+original dataset.
+
+------------------------------------------------------------------------
+
+## Independent Third-Party Audit
+
+The replay verifier has no dependency on:
+
+-   pandas
+-   the benchmark runner
+-   the mapped dataset
+-   benchmark source code
+
+Any independent reviewer can validate the replay manifest using only the
+emitted JSONL file.
+
+------------------------------------------------------------------------
+
+## Exit Codes
+
+The verifier exits with:
+
+-   **Exit Code 0** --- every replay integrity check passed.
+-   **Exit Code 1** --- one or more replay integrity violations were
+    detected.
+
+------------------------------------------------------------------------
+
+## Internal Verification Checklist
+
+The verifier independently checks:
+
+-   Hash-chain adjacency
+-   GENESIS anchor
+-   Evidence Quad ledger binding
+-   Decision consistency
+-   Π consistency
+-   Γ_G consistency
+-   Γ_class consistency
+-   Manifest SHA-256 integrity
+
+------------------------------------------------------------------------
+
+## Reproducibility Statement
+
+Unlike the benchmark runner, the replay verifier does not regenerate
+decisions from the dataset.
+
+Instead, it validates that the emitted execution ledger is
+cryptographically and logically self-consistent, allowing deterministic
+third-party auditing from the replay manifest alone.
+
 
 ## 10. Results we actually got
 
@@ -282,16 +446,76 @@ From [gamma_lab_v1_report.json](gamma_lab_v1_report.json) and
 | Rows (N) | 284,807 (nominal 284,315 · adversarial/fraud 492) |
 | Derived PERMIT / SAFE_STATE | 284,315 / 492 |
 | Match vs ground‑truth `Status` | **100%** |
-| Unauthorized executions (Eq. 7) | **0** |
-| False Permit Rate | 0 / 284,807 — Wilson 95% cc upper `< 2.29 × 10⁻⁵` |
-| False Denial Rate | 0 / 284,807 — Wilson 95% cc upper `< 2.29 × 10⁻⁵` |
+| **Unauthorized Execution Rate (UER)** — over **all** rows | 0 / 284,807 — Wilson 95% cc upper `< 2.29 × 10⁻⁵` |
+| **False Permit Rate (FPR)** — over **should‑deny** rows only | 0 / **492** — Wilson 95% cc upper `< 1.31 × 10⁻²` |
+| **False Denial Rate (FDR)** — over **should‑permit** rows only | 0 / **284,315** — Wilson 95% cc upper `< 2.30 × 10⁻⁵` |
 | Replay Determinism Rate | 100% — hash‑chain links OK 284,807/284,807 |
 | TOCTOU violations | 0 |
-| Class‑Veto Effectiveness | 100% — all 492 fraud rows held in SAFE_STATE |
+| Class‑Veto Effectiveness | 100% — all 492 fraud rows held in SAFE_STATE (0/492 failures) |
 | **All six invariants hold** | **Yes** (0 violations each) |
-| Negative control | an isolated single deficit (0.071) `< τ`=0.15 → weighted‑sum would false‑permit **492** deficit rows that LLC denies |
-| Measured latency | mean **0.0207 ms**, p95 0.0265 ms, p99 0.033 ms, max 1.27 ms |
-| Throughput | **~48,390 decisions/s** (pure software, this host) |
+| Negative control — **actual** dataset baseline | weighted‑sum admits **0** false permits vs LLC (adversarial rows fail multiple predicates) |
+| Negative control — **Corollary 2 counterfactual** | an isolated single deficit (0.077) `< τ`=0.15 → weighted‑sum would false‑permit **492** rows LLC denies |
+| Measured latency | mean **0.0347 ms**, p95 0.0417 ms, p99 0.0517 ms, max 1.25 ms |
+| Throughput | **~28,821 decisions/s** (pure software, this host) |
+
+> **Denominator hygiene (why UER ≠ FPR).** A *false permit* can only occur on a row ground truth
+> says to deny, so FPR's denominator is the **should‑deny population (492)**, not all 284,807 rows.
+> Reporting `0/492` gives a Wilson upper bound near **1.3 × 10⁻²** — far wider (and more honest)
+> than the `2.3 × 10⁻⁵` you get by (incorrectly) spreading the same 0 events over all rows. That
+> over‑total figure is really the **UER**, which the runner now reports separately.
+
+## Real-Dataset Golden-Trace Validation
+
+In addition to the generated LAB v1.0 benchmark suite, this repository includes
+[gamma_test_runner.py](gamma_test_runner.py), a dataset‑level validator for mapped Gamma G‑0
+golden traces.
+
+This runner reads a Gamma G‑0 mapped CSV, independently re‑derives the authorization
+decision using the L‑DREA externalization‑monitor rule set, computes the six LAB v1.0
+metrics, verifies runtime invariants, emits a per‑decision ERTuple replay manifest,
+and optionally verifies TLC attestation hashes.
+
+Example:
+
+```bash
+python3 gamma_test_runner.py \
+  --input GAMMA_G0_CREDITCARD_FULL_mapped.csv \
+  --output gamma_validation_results.csv \
+  --summary gamma_summary.json \
+  --lab-report gamma_lab_v1_report.json \
+  --replay-manifest gamma_replay_manifest.jsonl
+```
+
+The credit‑card mapped run reported:
+
+- **N = 284,807** rows
+- **284,315** derived PERMIT decisions
+- **492** derived SAFE_STATE decisions
+- **0** unauthorized executions
+- **0** false permits
+- **0** false denials
+- **6/6** runtime invariants satisfied
+- **284,807/284,807** replay‑manifest hash‑chain links valid
+  (independently re‑verified by [gamma_replay_verify.py](gamma_replay_verify.py):
+  0 adjacency failures, 0 ledger‑bind failures, 0 consistency failures)
+
+This is a **mapped‑dataset authorization validation**. It does **not** replace the synthetic
+LAB‑A1–A5 benchmark, hardware‑in‑the‑loop evaluation, or formal TLC source‑level reproduction.
+
+### Metric Denominator Discipline
+
+The following denominators are reported separately (a rate is taken over the population at risk
+of that event, never blindly over all rows):
+
+| Metric | Denominator |
+|---|---|
+| Unauthorized Execution Rate | all rows |
+| False Permit Rate | should‑deny / adversarial rows |
+| False Denial Rate | should‑permit / nominal rows |
+| Replay Determinism | all replayed rows |
+| Revocation Compliance | rows containing revocation/expiry tests |
+| TOCTOU Violation Rate | rows containing stale/revalidation tests |
+| Class‑Veto Effectiveness | class‑veto rows |
 
 ## 11. The webpage / dashboard
 
@@ -344,7 +568,97 @@ Reader's questions — answered straight — Why the run scores 100% (tautologic
 
 Verbatim terminal output — The unedited console output from the runner for this exact run.
 
-## 12. Honesty notes & scope
+## 12. Independent verification: TLC, replay manifest, reproducibility bundle
+
+Beyond the benchmark itself, the runner emits three artifacts that let a **third party**
+re‑check the results without trusting us — each is genuinely computed, not decorative.
+
+### 12.1 TLC model‑check verification (tiered, not just displayed)
+
+Earlier the runner merely *printed* the trace's TLC state counts. It now **verifies** the
+TLC attestation with [`verify_tlc()`](gamma_test_runner.py#L445) — nine checks surfaced in
+`gamma_lab_v1_report.json → tlc_verification`, escalating through **verification tiers** as you
+supply artifacts:
+
+| Check | What it proves | Tier |
+|---|---|---|
+| V1 `spec_hash_consistent` | one `TLCSpecHash` across every row (no per‑row tampering) | 0 |
+| V2 `cfg_hash_consistent` | one `TLCCfgHash` across every row | 0 |
+| V3 `states_constant` | one `TLCTotalStates` across every row | 0 |
+| V4 `nontrivial_state_space` | `TLCTotalStates > 0` (model checking actually ran) | 0 |
+| V5 `zero_safety_violations` | `Σ TLCViolationCount == 0` (safety held during checking) | 0 |
+| V6 `spec_source_binding` *(needs `--tla-spec`)* | `sha256(spec.tla) == TLCSpecHash` | 1 |
+| V7 `cfg_source_binding` *(needs `--tla-cfg`)* | `sha256(spec.cfg) == TLCCfgHash` | 1 |
+| V8 `log_states_match` *(needs `--tlc-log`)* | log's *distinct states found* == `TLCTotalStates` | 2 |
+| V9 `log_no_violation` *(needs `--tlc-log`)* | log reports clean completion, no error | 2 |
+
+| Tier | Meaning | Requires |
+|---|---|---|
+| `tier0_attestation_consistency_only` | attestation internally sound + zero violations | (default) |
+| `tier1_source_bound` | + `.tla`/`.cfg` bytes hash‑match the attested hashes | `--tla-spec`, `--tla-cfg` |
+| `tier2_log_cross_checked` | + TLC console log's state count & clean‑completion agree | `--tlc-log` |
+| `tier3_fully_reproduced` | re‑run TLC from source | out of this harness's scope (`tla2tools.jar`) |
+
+The checks collapse into one `attestation_digest`; the report also records the verbatim
+`--tlc-run-command` and the parsed log (`distinct_states`, violation status). Every optional
+check is **genuine** — a wrong `.tla` fails V6, a wrong state count in the log fails V8 (both
+demonstrated). The report lists `artifacts_missing_for_full_closure` so you always know what
+would raise the tier. Full re‑execution (tier 3) needs the sources + `tla2tools.jar`.
+
+```bash
+# Raise TLC to tier 2 by supplying the console log + run command:
+python gamma_test_runner.py --input GAMMA_G0_CREDITCARD_FULL_mapped.csv \
+  --tla-spec spec.tla --tla-cfg spec.cfg \
+  --tlc-log tlc_console.log \
+  --tlc-run-command "java -jar tla2tools.jar -config spec.cfg spec.tla"
+```
+
+### 12.2 Per‑item ERTuple replay manifest
+
+[`write_replay_manifest()`](gamma_test_runner.py#L539) writes `gamma_replay_manifest.jsonl`:
+a header line plus **one self‑describing evidence record per decision** — `proposal_id`,
+`ertuple_id`, `policy_hash`, `hash_prev`/`hash_current`, `decision`, `gamma_g/gamma_class/pi`,
+and the **Evidence Quad** `{decision, method_version, policy_hash, ledger_hash}`.
+
+[gamma_replay_verify.py](gamma_replay_verify.py) re‑audits that file **with zero
+dependencies** (stdlib only — no pandas, no dataset, no runner). Per record it re‑checks:
+hash‑chain **adjacency** (`rec[i].hash_prev == rec[i-1].hash_current`, GENESIS‑anchored),
+**evidence‑quad↔ledger** binding (`ledger_hash == hash_current`), and record
+**self‑consistency** (`decision`, `pi`, `gamma` agree). It also recomputes the manifest's own
+SHA‑256 so any post‑hoc edit is caught. Exit code is `0` iff everything passes:
+
+```bash
+python gamma_replay_verify.py gamma_replay_manifest.jsonl \
+  --expect-sha256 <manifest_sha256_from_the_run>
+```
+
+Tested: **PASS** on a clean 1,000‑row manifest; a single flipped byte flips it to **FAIL**.
+
+### 12.3 Full lab reproducibility bundle
+
+`--bundle <dir>` invokes [`write_repro_bundle()`](gamma_test_runner.py#L618), producing a
+tamper‑evident package:
+
+- **`MANIFEST.json`** — SHA‑256 + size of every *input*, *source* and *output* file, the exact
+  command line, the TLC verification block, the replay‑manifest summary, and a single
+  `bundle_digest_sha256` sealing the whole thing;
+- **`env.json`** — Python / pandas / platform / method version;
+- **`command.txt`** — the literal command that produced the run;
+- **`REPRODUCE.md`** — step‑by‑step: check input digests → re‑run → independently verify the
+  replay manifest → bind TLC to source → diff outputs (deterministic fields reproduce exactly;
+  MEASURED latency is host‑dependent and will differ).
+
+### 12.4 Caveat — what "replay" verifies here
+
+The bundled golden trace's hash chain is **linked but not re‑derivable** from
+[gamma_map_raw.py](gamma_map_raw.py)'s canonical formula (its row‑1 SHA‑256 does not
+reproduce), which means that trace was emitted by a *different* generator. Replay therefore
+verifies **adjacency + genesis anchoring + evidence‑quad binding**, not full per‑row hash
+re‑computation. Files produced by `gamma_map_raw.py` itself *are* fully re‑derivable; wiring
+the trace generator's exact canonical‑record format into the verifier would upgrade this to
+end‑to‑end hash re‑computation.
+
+## 13. Honesty notes & scope
 
 - **Ground truth is real.** Decisions are scored against the genuine ULB `Class` label, not a
   synthetic oracle. The hash chain is genuinely SHA‑256 computed and verified.
@@ -361,84 +675,11 @@ Verbatim terminal output — The unedited console output from the runner for thi
 - **The mapper is a faithful reconstruction** of the synthetic golden‑trace construction that
   produced the bundled 1,000‑row sample (its first rows reproduce the sample), driven by the
   real fraud label.
-
-
----
-
-# 13. Independent Replay Manifest Verification
-
-LAB v1.0 supports **independent third-party auditing** through a replay manifest.
-
-Unlike the benchmark runner, the replay verifier does **not** require:
-
-- the original dataset
-- `gamma_test_runner.py`
-- pandas
-- any benchmark implementation
-
-Instead, it validates the generated `gamma_replay_manifest.jsonl` directly.
-
-## Repository additions
-
-```text
-gamma_replay_manifest.jsonl      # Generated replay manifest
-gamma_replay_verify.py           # Independent replay verifier
-```
-
-## Verification performed
-
-The verifier independently checks:
-
-1. **Hash-chain adjacency**
-   - Every `hash_prev` equals the previous record's `hash_current`
-   - First record is GENESIS anchored
-
-2. **Evidence Quad binding**
-   - `evidence_quad.ledger_hash == hash_current`
-
-3. **Decision consistency**
-   - `decision`
-   - `Π`
-   - `Γ_G`
-   - `Γ_class`
-
-   must all agree.
-
-4. **Manifest authenticity**
-
-The verifier recomputes the SHA-256 digest of the entire JSONL file so any modification after generation is immediately detectable.
-
-## Replay Integrity
-
-Each authorization decision is permanently linked into a SHA-256 hash chain.
-
-Changing any historical decision changes every downstream hash, making tampering immediately visible.
-
-## Generator vs Independent Verifier
-
-| Component | Responsibility |
-|------------|----------------|
-| gamma_test_runner.py | Executes benchmark, generates reports and replay manifest |
-| gamma_replay_verify.py | Independently validates replay manifest without dataset or runner |
-
-## Running the verifier
-
-```bash
-python gamma_replay_verify.py gamma_replay_manifest.jsonl
-```
-
-or verify against an expected digest
-
-```bash
-python gamma_replay_verify.py gamma_replay_manifest.jsonl --expect-sha256 <expected_sha256>
-```
-
-A PASS result confirms:
-
-- GENESIS anchoring
-- Replay determinism
-- Evidence Quad ledger integrity
-- Decision consistency
-- Manifest authenticity
-
-This enables any independent auditor to validate execution integrity from the replay manifest alone without requiring the benchmark implementation.
+- **TLC is verified in tiers, not re‑run.** [§12.1](#121-tlc-modelcheck-verification-tiered-not-just-displayed)
+  checks the attestation's consistency + zero‑violation status (tier 0), its cryptographic
+  binding to `.tla`/`.cfg` source (tier 1), and its agreement with a supplied TLC console log
+  (tier 2). It does **not** re‑execute the model checker (tier 3 needs the sources +
+  `tla2tools.jar`). The report always lists what artifacts would raise the tier.
+- **Replay verifies adjacency, not full re‑derivation** for the bundled golden trace — see
+  [§12.4](#124-caveat--what-replay-verifies-here). Traces produced by `gamma_map_raw.py` are
+  fully re‑derivable.
