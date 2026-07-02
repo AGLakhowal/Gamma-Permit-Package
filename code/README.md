@@ -73,6 +73,7 @@ Incoming Request
 ├── lab_benchmark.py           ← Benchmark engine
 ├── dashboard.html             ← Benchmark dashboard
 ├── ertuple_audit_manifest.json
+├── run_all.py                 ← One command to run the whole pipeline
 ├── concurbench.py             ← ConcurBench v1.0 conformance packet generator
 ├── test_baseline_metrics.py
 ├── test_corpus_enforcement.py
@@ -317,6 +318,23 @@ Everything runs using Python's built-in standard library.
 ---
 
 # ▶️ How to Run
+
+## Fastest path — run everything
+
+[run_all.py](run_all.py) runs the whole pipeline in one command: materialize the corpus →
+LAB engine → main verification (Sections 1–6 incl. the ConcurBench packet) → unit tests →
+consolidated verdict summary.
+
+```bash
+python3 run_all.py               # full pipeline (~3 min, ConcurBench included)
+python3 run_all.py --quick       # skip the ConcurBench packet (fast)
+python3 run_all.py --open        # also open both dashboards
+python3 run_all.py --skip-tests  # skip the unit tests
+```
+
+Prefer the step-by-step route below if you want to run pieces individually.
+
+---
 
 ## Step 1 — Clone the Repository
 
@@ -625,20 +643,51 @@ The framework is intentionally **non-compensatory**: passing one security check 
 
 ## Meaning of Γ (Gamma)
 
-Γ represents the aggregate runtime safety decision.
+Γ represents the aggregate runtime safety decision. Per **FULL_SPEC §1.2** it is a **max**,
+not a count: `Γ = maxᵢ(1 − gᵢ)` with `gᵢ ∈ {0,1}` (Theorem T0 deficit form `Γ = max_k d_k`).
 
 - Γ = 0 → every required runtime predicate passed.
 - Γ > 0 → at least one required predicate failed, therefore the request enters SAFE_STATE.
 
+> The **number** of failing predicates is a separate severity diagnostic
+> (`predicate_failure_count`), and the dominating one is the first-failure attribution **μ**
+> (§2.2) — neither of which is Γ itself.
+
+## FULL_SPEC §7.1 — Governance acceptance bands
+
+`maincode.py` computes the §7.1 acceptance bands and shows them on the dashboard. They are
+**conjunctive and non-compensatory** — a permit requires *all* bands to hold; no weighted
+average may trade safety for accuracy. Every value is **derived from measured run quantities**,
+not hand-set.
+
+| Band | Meaning | Requirement | Derived from |
+|------|---------|-------------|--------------|
+| ICS | integrity confidence | ≥ 0.90 | decision accuracy vs `y* = Λ(G)` |
+| PR_LCB | robustness lower bound | ≥ 0.80 | `1 − Wilson-UB(FPR)` |
+| CI_WIDTH | 95% CI width | ≤ 0.03 | zero-event CI `[0, UB]` |
+| ΔV | stability residual | ≤ 0 | `1 − replay_rate` |
+| C | coherence | ≥ 0.85 (`C_STAR`) | decision coherence across recomputation |
+| PTP skew | clock skew | ≤ 1 ms | single-process (0) |
+| cycle P95 | cycle latency | ≤ 100 ms | measured latency |
+| ER_LOCAL | evidence commit rate | = 1.0 | ERTuple committed per cycle |
+
+> **AIS (§6.12 Audit Integrity Signal) is `NOT_IMPLEMENTED`** — declared, not faked. The
+> simulator does not yet model audit-integrity as a live control predicate.
+
+> **On invariants:** the run reports **6/6 runtime invariants hold**. These are the six
+> L-DREA runtime invariants that *instantiate* the theorem family (Paper A App. G §2) — this
+> does **not** assert that T0–T9 are proved here.
+
 ## Dashboard Sections
 
-The generated dashboard contains five major sections:
+The generated dashboard contains:
 
-1. Runtime Enforcement
-2. Stress-Test Scenarios
-3. Quantitative Performance Metrics
+1. Runtime Enforcement (incl. the **Evidence Quad**)
+2. Stress-Test Scenarios (Γ per §1.2 + severity count)
+3. Quantitative Performance Metrics + **§7.1 governance acceptance bands**
 4. Benchmark Reproduction
-5. Evidence Bundle
+5. Evidence Bundle (TLA+ / TLC · ERTuple replay manifest · reproducibility bundle)
+6. **ConcurBench v1.0 conformance** (all four levels + verdict)
 
 ## Evidence Bundle
 
