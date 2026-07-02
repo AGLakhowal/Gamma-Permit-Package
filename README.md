@@ -1158,7 +1158,84 @@ ENGAGEMENT TRACKS
 
 -----
 
+# Standards Alignment and Regulatory Positioning.
 
+LAB v1.0 is designed as a runtime authorization benchmark for execution-boundary correctness. It is not itself a regulatory standard or certification scheme. Instead, it produces structured evidence that can support existing AI governance frameworks and future conformity assessments.
+
+The benchmark aligns with several emerging AI governance initiatives by providing deterministic authorization decisions, replayable audit evidence, adversarial evaluation, and execution-boundary metrics.
+How LAB v1.0 maps
+AI RMF Function
+LAB v1.0 Evidence
+Govern
+Runtime authorization policies, governance rules, audit evidence
+Map
+Threat model, externally effective actions, predicate definitions
+Measure
+UER, FPR, FDR, replay determinism, latency, Gamma compliance
+Manage
+SAFE_STATE transitions, fail-closed execution, replay verification
+
+### Alignment with NIST AI RMF 1.0
+
+LAB v1.0 provides runtime governance evidence that maps naturally to the NIST AI Risk Management Framework (AI RMF 1.0). The benchmark generates measurable authorization, replay, and audit metrics that can support the Govern, Map, Measure, and Manage functions defined by the framework.
+
+### Alignment with NIST ARIA
+
+ConcurBench follows a similar evaluation philosophy to the NIST AI Risk & Impact Assessment (ARIA) initiative by emphasizing measurable runtime behaviour, adversarial evaluation, replayability, and operational evidence rather than capability-only benchmarking.
+
+This alignment is conceptual and should not be interpreted as NIST endorsement or certification.
+### Relationship to NIST Generative AI Evaluations
+
+NIST Generative AI evaluations primarily measure generation quality, robustness, safety, and reliability of model outputs.
+
+LAB v1.0 complements these evaluations by measuring execution-boundary correctness after model generation, ensuring that only authorized externally effective actions are permitted.
+### EU AI Act Alignment
+
+LAB v1.0 can generate technical evidence supporting AI governance obligations described in the EU AI Act, particularly for high-risk systems requiring:
+
+- deterministic authorization
+- audit logging
+- replayable evidence
+- human oversight
+- risk controls
+- execution traceability
+
+These benchmark outputs may be incorporated into broader conformity-assessment evidence but are not themselves a conformity assessment.
+### Future Harmonised Standards
+
+LAB v1.0 has been designed so that benchmark evidence can be mapped to the emerging European harmonised AI standards supporting the EU AI Act.
+
+Examples include evidence for:
+
+- risk management
+- technical documentation
+- logging
+- transparency
+- human oversight
+- robustness
+- accuracy
+- cybersecurity
+### External Validation
+
+Future versions of LAB v1.0 may be evaluated within AI Testing and Experimentation Facilities (TEFs) or equivalent third-party benchmark environments to obtain independent validation under real deployment conditions.
+
+## Standards Positioning
+ 
+| Framework                               |          Relationship                                                 |
+|-----------------------------------------|---------------------------------------------------------------------- |
+| NIST AI RMF 1.0                         | Runtime governance evidence mapped to Govern, Map, Measure and Manage |
+| NIST ARIA                               | Conceptually aligned with adversarial runtime evaluation philosophy   |
+| NIST GenAI Evaluations                  | Complementary evaluation layer after model generation                 |
+| EU AI Act Article 43                    | Technical evidence supporting conformity assessment activities        |
+| EU Harmonised Standards                 | Maps benchmark outputs to emerging AI governance requirements         |
+| AI Testing & Experimentation Facilities | Future external benchmark validation opportunity                      |
+
+
+## Positioning Statement
+
+LAB v1.0 does not replace existing AI governance frameworks. Instead, it complements them by providing measurable execution-boundary evidence. While many AI evaluations focus on model capability or output quality, LAB v1.0 measures whether externally effective actions are authorized, replayable, auditable, and fail closed under uncertainty. This evidence can support governance activities under frameworks such as NIST AI RMF 1.0 and the EU AI Act but does not constitute regulatory approval, certification, or standards compliance on its own.
+
+_____
 ## References
 
 
