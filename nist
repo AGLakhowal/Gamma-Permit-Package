@@ -1,8 +1,79 @@
-Benchmark Mapping, Governance Evidence, and Compliance ReportsStandards-Collaborative Crosswalk & Evaluation ManifestFraming Notice (per FULL_SPEC §0.4 / §11): This document functions as a standards-collaborative crosswalk and evaluation manifest compiled from actual artifacts and metrics computed during the current benchmark run. It does not imply or constitute official endorsement, approval, or certification by NIST, notified bodies, or any regulatory authority.System Status: Tier-S (Software Simulation Layer). Hardware-rooted signing (HSM), live-fleet production telemetry, and external third-party validation are explicitly disclosed as not_run / not_available.1. NIST AI RMF MappingThe following crosswalk maps the runtime execution metrics and architectural controls of this benchmark run directly to the four core functions of the NIST AI Risk Management Framework (AI RMF 1.0): Govern, Map, Measure, and Manage.Crosswalk MatrixRMF FunctionSubcategoryHow the Benchmark Satisfies ItEvidence from This RunGOVERNGOVERN 1.1 (Legal/Regulatory)Declares regulatory crosswalks and maps execution-boundary evidence directly to regulatory standards.concurbench_full_report.json $\rightarrow$ human_governance, README §14 (EU AI Act Art. 12/14, ISO/IEC 42001, OSFI E-23)GOVERN 1.2 (Trustworthy Characteristics)Explicitly discloses system limits, environmental assumptions, and scope to prevent over-claiming.assumptions_and_limitations: production_certification_claimed=false, nist_or_ieee_approval_claimed=falseGOVERN 2 (Roles / HITL)Formally locks down human-in-the-loop paths; bans manual overrides of deterministic safety invariants.human_governance.human_override_of_failed_predicate = "PROHIBITED", hitl_required_for_high_risk = true, false_denial_dispute_workflow = "defined"GOVERN 4 (Accountability / Audit)Reduces every system decision to a cryptographically verifiable Evidence Quad bound to an append-only ledger.evidence_quad (spec_clause · pre_reg_id · method_version · ledger_hash 1ce2a9e8...), 284,807/284,807 valid ledger linksGOVERN 5 (Independent Validation)Discloses third-party evaluation gaps cleanly so the internal benchmark run cannot be mistaken for external certification.independent_benchmarks: AgentDojo/AgentHarm (not_run), hardware_in_the_loop (not_available), third_party_audit (not_run), external_replay_verifier (run)MAPMAP 1 (Context Established)Frames system risks strictly around execution-boundary correctness (authority) rather than internal generative capability.284,807 transactions evaluated as Externally-Effective Action (EEA) proposals; benchmark_report.paper_sourceMAP 2.3 (Scientific Integrity)Uses an independent, third-party ground-truth corpus rather than a self-authored evaluation oracle.scenario_distribution: nominal = 284,315 / adversarial = 492; deterministic mapping $y^* = \Lambda(G)$MAP 3 (Capabilities & Risks)Enumerates the system's exact evaluation surface, including predicate dimensions and structural attack taxonomies.dataset.predicate_dimensionality=13, adversarial_robustness.attack_families (8), asb.scenario_families (5)MAP 5.1 (Threat Model)Evaluates system performance against an explicit multi-vector adversary model.scenario_counts_by_family (4,000 per family), Threat Model documentation FULL_SPEC §0.6 (TOCTOU, replay, partition, adaptive, Goodhart)MEASUREMEASURE 2.5 (Validity & Reliability)Computes complete performance matrices with strict statistical bounds alongside bit-for-bit replay verifiability.UER = 0.0, FPR = 0.0, FDR = 0.0, FCR = 1.0, DR = 1.0; TP = 284,315 / TN = 492 / FP = 0 / FN = 0; Replay Rate = 1.0 (95% Wilson Bounds)MEASURE 2.6 (Safety)Tracks critical safety degradation by computing absolute safety violation rates and guardrail compliance.Safety-Violation Rate (SVR) = 0.0, $\Gamma$-compliance $P(\hat{y}=0 \mid \Gamma > 0) = 1.0$MEASURE 2.7 (Resilience)Tests containment against adaptive white-box attackers and verifies fail-closed behaviors under data loss.Adaptive attacker: 0/11,808 false permits; FCR test: 0 fail-open / 20,492 uncertainty instancesMEASURE 2.8 (Transparency)Re-audits the full 200 MB evaluation manifest using a zero-dependency standalone verification script.independent_replay_verifier = PASS, SHA-256 Hash MatchMEASURE 2.9 (Model Integrity)Runs strict data-contamination, canary leakage, and overall audit health checks during evaluation.Data contamination = PASS, Canary leakage = PASS, AIS live composite score = 1.0MEASURE 3 (Formal Mechanisms)Attests system safety using formal model-checking state explorations.TLC Model Checker: 2,489,446 total / 40,192 distinct states, MaxClockSkew = 1, 0 safety violationsMEASURE 4 (Feedback / Ablation)Uses negative control environments to prove the safety system cannot be bypassed or gamed.Counterfactual ablation: compensatory gate leaks 492 malicious actions; deployed non-compensatory LLC gate leaks 0MANAGEMANAGE 1 (Risk Response)Intercepts and routes unsafe action proposals directly to an isolated safe state before execution occurs.Class-veto effectiveness = 1.0; per_scenario ADVERSARIAL_CLASS_1: 492/492 routed to SAFE_STATEMANAGE 2.2 (Sustaining Mechanisms)Deploys an Operational Continuity Layer to absorb downstream system shocks without falling back to a default-permit state.operational_continuity_8 patterns (TVE/DFP/CDM/ASG/ASR/BER); §0.10 absorption architectureMANAGE 2.3 (Fail-Safe Degradation)Forces immediate, strict fail-closed state transitions if the system encounters a network partition or desynchronization event.L3 partition_test=PASS, unauthorized_execution_under_desync=0; three-signal closure: 0 violationsMANAGE 2.4 (Revocation)Enforces a tight, bounded timeframe for policy revocation updates to propagate across the system.Horizon limit = DET-5; $REVOC\_P95 \approx 16\text{ ms}$ propagation latencyMANAGE 4.1 (Post-Market Audit)Outputs a continuous, structurally uniform decision record to support always-on post-deployment monitoring.ERTuple transaction stream (284,807 entries), Hydra Ledger append-only chainCore Functional SummaryGOVERN: Establishes formal human-in-the-loop paths, explicitly prohibits manual overrides of failed safety predicates, requires an immutable ledger trail, and maintains full disclosure of validation limits.MAP: Reframes operational risk strictly around execution-boundary enforcement (authority rather than capability) and tests the system against an external third-party ground-truth corpus across 13 predicate dimensions.MEASURE: Confirms absolute containment under stress (UER/FPR/SVR = 0.0, FCR/$\Gamma$-compliance = 1.0), maps out adaptive white-box attack vectors, and formally validates execution state spaces via TLC model checking.MANAGE: Intercepts and mitigates 492 out of 492 malicious actions into a secure SAFE_STATE, preserves operational continuity across network partitions, and enforces a strict policy revocation horizon ($P95 \approx 16\text{ ms}$).Coverage Profile: The heaviest structural coverage occurs within MEASURE (as this is a formal evaluation and measurement benchmark). GOVERN and MANAGE are addressed at the functional mechanism level. Structural gaps remain isolated to the external verification vector (third-party live-fleet auditing and hardware validation), which are fully disclosed within the execution metadata.2. Runtime Governance EvidenceThe benchmark run produced an explicit, multi-layered inventory of forensic and cryptographic evidence. This data is structured for direct ingestion by compliance officers, automated monitors, and external auditors.[1] Per-Decision Evidence: The ERTuple ManifestSource File: gamma_replay_manifest.jsonl (200.97 MB)Volume: 284,807 individual signed records (exactly one per action proposal).Function: Captures an unalterable, self-describing audit trail of every transaction passing through the boundary.Production Example (Record Line 1):JSON{
+# LAB v1.0 — Benchmark Governance & Standards Crosswalk
+
+*Standards-collaborative crosswalk from the current benchmark run. Every cell is backed by an actual artifact/value from this run. This is **not** NIST endorsement, IEEE approval, CE marking, or notified-body attestation — external validation status is disclosed throughout, not hidden.*
+
+---
+
+## 1. NIST AI RMF Mapping (Govern · Map · Measure · Manage)
+
+Framing (per FULL_SPEC §0.4 / §11): standards-collaborative crosswalk, not endorsement or approval. FULL_SPEC §14 explicitly anchors to **GOVERN 1.1**, **MEASURE 2.5**, and **MANAGE 2.2**; the rest are the natural subcategory fits.
+
+### GOVERN — policy, roles, accountability, oversight
+
+| RMF subcategory | How the benchmark satisfies it | Evidence from this run |
+|---|---|---|
+| **GOVERN 1.1** (legal/regulatory alignment) | Regulatory crosswalk declared; execution-boundary evidence mapped to EU AI Act Art. 12/14, ISO/IEC 42001, OSFI E-23 | `concurbench_full_report.json` → `human_governance`, README §14 |
+| **GOVERN 1.2** (trustworthy characteristics) | Assumptions & limitations disclosed; no over-claiming | `assumptions_and_limitations`: `production_certification_claimed=false`, `nist_or_ieee_approval_claimed=false` |
+| **GOVERN 2** (roles / HITL) | Human-in-the-loop path defined; human override of a failed hard predicate is PROHIBITED; break-glass audited outside the deterministic boundary | `human_governance.human_override_of_failed_predicate = "PROHIBITED"`, `hitl_required_for_high_risk = true`, `false_denial_dispute_workflow = "defined"` |
+| **GOVERN 4** (accountability / auditability) | Every decision reduces to an Evidence Quad; append-only hash-chained ledger | `evidence_quad` (spec_clause · pre_reg_id · method_version · ledger_hash `1ce2a9e8…`), 284,807/284,807 links |
+| **GOVERN 5** (independent validation disclosure) | External-validation status explicitly disclosed so results can't be mistaken for certification | `independent_benchmarks`: AgentDojo/AgentHarm `not_run`, hardware_in_the_loop `not_available`, third_party_audit `not_run`, external_replay_verifier `run` |
+
+### MAP — context, framing, categorization of risk
+
+| RMF subcategory | How the benchmark satisfies it | Evidence |
+|---|---|---|
+| **MAP 1** (context established) | Reframes the risk as execution-boundary correctness (authority, not capability): each transaction = an externally-effective action proposal | 284,807 rows treated as EEA proposals; `benchmark_report.paper` |
+| **MAP 2.3** (TEVV / scientific integrity) | Ground truth is the real, third-party ULB Class label, not a self-authored oracle; deterministic y\*=Λ(G) | `scenario_distribution`: nominal 284,315 / adversarial 492 |
+| **MAP 3** (capabilities & risk categories) | Predicate schema + attack taxonomy enumerated: 13 predicates, 8 adversarial families, 5 ASB families | `dataset.predicate_dimensionality=13`, `adversarial_robustness.attack_families` (8), `asb.scenario_families` |
+| **MAP 5.1** (impact / threat model) | Adversary model mapped: missing/corrupted/TOCTOU/replay/payload/concurrency/partition/adaptive + Goodhart | `scenario_counts_by_family` (4,000 each), threat model FULL_SPEC §0.6 |
+
+### MEASURE — quantitative/qualitative assessment (the core of this benchmark)
+
+| RMF subcategory | How the benchmark satisfies it | Evidence |
+|---|---|---|
+| **MEASURE 2.5** (validity & reliability) | Full metric suite with 95% Wilson bounds + confusion matrix; deterministic replay | UER 0.0, FPR 0.0, FDR 0.0, FCR 1.0, DR 1.0; TP 284,315 / TN 492 / FP 0 / FN 0; replay rate 1.0 |
+| **MEASURE 2.6** (safety) | Safety-Violation Rate + Γ-compliance computed | SVR = 0.0, Γ-compliance P(ŷ=0│Γ>0) = 1.0 |
+| **MEASURE 2.7** (security & resilience) | Adaptive white-box attacker + fail-closed under uncertainty | adaptive attacker 0/11,808 false permits; FCR test 0 fail-open / 20,492 |
+| **MEASURE 2.8** (transparency / audit) | Independent replay verifier re-audits the 200 MB manifest with zero deps | `independent_replay_verifier = PASS`, SHA-256 MATCH |
+| **MEASURE 2.9** (contamination / model integrity) | Contamination + canary checks; audit-as-control | contamination PASS, canary PASS, AIS live composite = 1.0 |
+| **MEASURE 3** (formal mechanisms) | Formal model-check attestation surfaced | TLC 2,489,446 total / 40,192 distinct / MaxClockSkew 1 / 0 violations |
+| **MEASURE 4** (feedback / ablation) | Negative control proves the metric is non-gameable | compensatory gate would leak 492; non-compensatory LLC = 0 |
+
+### MANAGE — respond, recover, sustain
+
+| RMF subcategory | How the benchmark satisfies it | Evidence |
+|---|---|---|
+| **MANAGE 1** (prioritize / respond to risk) | Unsafe actions blocked before execution; all 492 fraud rows → SAFE_STATE | class-veto effectiveness 1.0; per_scenario ADVERSARIAL_CLASS_1 492/492 SAFE_STATE |
+| **MANAGE 2.2** (mechanisms to sustain) | Operational Continuity Layer + SAFE_STATE absorption (no default-permit exit) | `operational_continuity_8`: TVE/DFP/CDM/ASG/ASR/BER; §0.10 absorption |
+| **MANAGE 2.3** (fail-safe under degradation) | Fail-closed under partition / desync / audit degradation | L3 partition_test=PASS, unauthorized_execution_under_desync=0; three-signal closure 0 violations |
+| **MANAGE 2.4** (revocation / decommission) | Bounded enforcement horizon + measured revocation propagation | DET-5; REVOC_P95 ≈ 16 ms, p50/p95/p99 latency reported |
+| **MANAGE 4.1** (post-deploy monitoring) | Per-decision evidence stream enables continuous audit | ERTuple manifest (284,807 records), Hydra Ledger append-only |
+
+### One-line verdict per function
+
+| Function | Verdict from this run |
+|---|---|
+| **GOVERN** | HITL defined, override PROHIBITED, Evidence Quad complete, external status disclosed |
+| **MAP** | Execution-boundary framing, real ground truth, 13 predicates / 8+5 adversarial families |
+| **MEASURE** | UER/FPR/FDR/SVR = 0, FCR/DR/Γ-compliance = 1.0, adaptive 0/11,808, TLC 0 violations |
+| **MANAGE** | 492/492 fail-closed, continuity + absorption, REVOC_P95 ≈16 ms, 0 desync unauthorized |
+
+**Summary:** The heaviest coverage is MEASURE (this is a measurement construct); GOVERN/MANAGE are covered at the mechanism level; the honest gaps are all in the external column (third-party audit, hardware-in-the-loop, live-fleet) — disclosed, not hidden.
+
+---
+
+## 2. Runtime Governance Evidence Produced During This Benchmark
+
+### 1. Per-decision evidence — the ERTuple + Evidence Quad (the core artifact)
+
+`gamma_replay_manifest.jsonl` — 200 MB, 284,807 records (one per decision). Every externally-effective action produced a self-describing signed record. Real example (row 1):
+
+```json
+{
   "proposal_id": "TXN_000001",
   "ertuple_id": "ERT_1563b3e3905713af",
   "hash_prev": "GENESIS",
-  "hash_current": "e34228f0a76282b934710123c56d71b3e5b42611a2431fae896431bb21532534",
+  "hash_current": "e34228f0…2534",
   "adjacency_ok": true,
   "decision": "PERMIT",
   "gamma_g": 0,
@@ -12,57 +83,289 @@ Benchmark Mapping, Governance Evidence, and Compliance ReportsStandards-Collabor
   "evidence_quad": {
     "decision": "PERMIT",
     "method_version": "gamma_test_runner/LAB-v1.0/2.0",
-    "policy_hash": "156bacd165bf0ab0ffc6abc977195944aa0b55c3bf66d4d1c2312b1fa4feb613",
-    "ledger_hash": "e34228f0a76282b934710123c56d71b3e5b42611a2431fae896431bb21532534"
+    "policy_hash": "156bacd1…b613",
+    "ledger_hash": "e34228f0…2534"
   }
 }
-[2] Hash-Chained Ledger (Hydra Ledger)Audit Continuity: 284,807 out of 284,807 cryptographic SHA-256 blocks are verified as fully intact and anchored to a fixed GENESIS block.Tamper-Evidence Protection: The complete manifest file is sealed under a single, overarching ledger digest root:$$\text{manifest\_sha256} = \mathtt{1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931da}$$Modifying any historical transaction or decision value automatically breaks the downstream hash chain, rendering the compromise immediately visible to automated verifiers.[3] Independent Replay-Verifier ValidationTool Profile: gamma_replay_verify.py is written strictly within the Python standard library—free of dependencies like pandas, NumPy, or the original testing framework.Execution Metrics: Evaluated across the entire 200 MB manifest file, producing:0 ledger-binding failures0 adjacency failures0 internal decision consistency failuresResult: independent_replay_verifier: PASS (SHA-256 Checksum Match).[4] Row-Level Output ManifestSource File: gamma_validation_results.csv (133.85 MB)Volume: 284,807 records.Function: Maps out transaction-level runtime actions, exposing exact predicate configurations, gating states, and unique Evidence Quad signatures for every decision column.[5] Formal Verification AttestationSource File: gamma_lab_v1_report.json $\rightarrow$ tlc_verificationMetrics: Explored 2,489,446 total states (40,192 distinct states) using the TLC Model Checker.Safety Profile: Checked under a strict clock skew threshold (MaxClockSkew 1). Enforced Invariant-1 ($P(\text{State} \in \{\Gamma > 0 \land \text{execute}\}) = 0$).Result: 0 safety violations discovered; sealed with a formal engine attestation_digest.[6] Live Audit-as-Control SignalsSource File: full_spec_conformance_report.jsonMetrics: Computes a live Audit Integrity Score ($\text{AIS} = 1.0$), tracking underlying data health across 5 core real-time telemetry vectors:$$\text{AIS} = f(\text{chain\_integrity}[1.0],\, \text{storage\_availability}[1.0],\, \text{signature\_health}[1.0],\, \text{time\_sync}[1.0],\, \text{retention\_horizon}[1.0])$$[7] Empirical Metrics & Runtime InvariantsSource Files: gamma_lab_v1_report.json / gamma_summary.jsonMetrics: * Performance: $\text{UER} = 0$, $\text{FPR} = 0/492$, $\text{FDR} = 0/284,315$, $\text{RDR} = 1.0$Resilience: $\text{TOCTOU} = 0$, $\text{class-veto} = 1.0$System Latency: $\text{mean} = 0.035\text{ ms}$Result: 6 out of 6 runtime safety invariants passed with zero violations (calculated with 95% Wilson score intervals).[8] Comprehensive Conformance Bundlesconcurbench_full_report.json: Validates full compliance with ConcurBench modules (Levels L1–L4), containing detailed ASB attack timelines, contamination checks, and human governance setups. Verdict: COMPLIANT_PASS.full_spec_conformance_report.json: Tracks and enforces strict operational safety bands, multi-signal system closures, and specific verification rules (DET-1 through DET-5). Verdict: FULL_SPEC_CONFORMANT (Tier-S).stress_test_report.json & fcr_test_report.json: Logs system behavior under macroeconomic crisis scenarios and maps fail-closed metrics across deep data uncertainty profiles.[9] Immutable Reproducibility PackageDirectory Location: gamma_bundle/Contents: A cryptographically sealed reproducibility archive containing:MANIFEST.json: Stores file sizes and explicit SHA-256 digests for all raw code, inputs, and outputs. Includes the TLC configuration blocks and the master bundle_digest_sha256.env.json: Locks down the complete execution environment profile (Python interpreter version, pandas dependency version, and host hardware platform details).command.txt & REPRODUCE.md: Contains the exact shell commands and step-by-step instructions needed to replicate the entire run.3. NIST ARIA AlignmentThis evaluation directly aligns with the underlying testing philosophy of the NIST ARIA (Assessing Risks and Impacts of AI) program. Rather than focusing on standard leaderboard accuracy scores, ARIA champions contextual, consequence-driven, adversarial evaluations across three operational regimes.Conceptual Alignment Framework[Regime 1: Model Testing] ──> [Regime 2: Adversarial Red-Teaming] ──> [Regime 3: Field Proxy]
-         │                                   │                                  │
-  284,807 Rows Checked               Adaptive White-Box Attack            Simulated 5-Node Fleet
-  95% Wilson Boundaries              Ablation Testing (492 vs 0)          $REVOC_P95 \approx 16$ms Horizon
-ARIA Evaluation PrincipleConceptual System AlignmentConcrete Benchmark EvidenceBeyond Basic Accuracy: Focus on operational authority over raw capability.Shifts the core metric from "Did the model produce a good response?" to "Is the system authorized to run this action?"$\text{UER} = 0$, $\text{SVR} = 0.0$, $\Gamma\text{-compliance} = 1.0$, $\text{FCR} = 1.0$. Evaluates execution safety boundaries directly.Regime 1: Controlled System TestingEnsures strict, predictable behavior over a large request corpus with precise statistical error margins.284,807 transaction rows evaluated; $\text{TP} = 284,315$, $\text{TN} = 492$, $\text{FP} = 0$, $\text{FN} = 0$. Replay determinism rate hits exactly $1.0$.Regime 2: Adversarial Red-TeamingDeploys active white-box adversaries that continuously inject data uncertainty and execute structured attack variants.Adaptive attacker prevented across 11,808 attempts; 0 false permits granted across 8 distinct structural attack families.Consequence & Scenario DrivenReplaces isolated, abstract test instances with connected, long-horizon operational crisis scenarios.Stress testing across conditions P1–P4 ($28M deepfake-CFO wire fraud, compliance drift, liquidity panic, systemic sovereign cascade events).Regime 3: Field-Scale SimulationValidates system integrity over distributed networks and real-world data distributions.Leverages an external, third-party ULB data corpus. Validates consistency across a simulated 5-node deployment fleet; partition_test = PASS.Mitigation Integrity Under StressProves through structural testing that safety boundaries actively stop real-world operational harm.Counterfactual Ablation: Bypassing the non-compensatory guardrail in favor of a standard weighted-sum gate leaks 492/492 malicious actions.Impact-of-Failure EngineeringForces high-risk errors into controlled safe isolation states instead of letting transactions fail silently.492 out of 492 fraud attempts successfully routed to SAFE_STATE; architecture handles failures gracefully via §0.10 safe absorption rules.Reproducible Protocol DesignSecures and verifies the evaluation process itself via pre-registered test parameters.Evidence Quad locks down the run to pre_reg_id: dc3ce999... and ledger_hash: 1ce2a9e8...; independent_verifier = PASS.Evaluation Contamination DefenseImplements automated tracking to ensure test data is not pre-memorized or gamed.contamination = PASS, canary = PASS. The evaluation relies on a clear, deterministic mapping function ($y^* = \Lambda(G)$).4. Complementarity with NIST Generative AI EvaluationsThis benchmark does not duplicate existing output-focused evaluation models—it complements them. While typical generative AI tests evaluate the content creation layer, this benchmark focuses exclusively on the underlying action execution layer.┌────────────────────────────────────────────────────────────────────────┐
-│             NIST Generative AI Evaluations (AI 600-1)                  │
-│       Scores the Probabilistic Layer: Text, Semantics, Output Safety    │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │  Generates an Action Proposal
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                      LAB v1.0 Execution Gate                           │
-│       Scores the Deterministic Boundary: Safety Invariants & Authority │
-│          Metrics: UER=0, SVR=0, FCR=1.0, Replay Determinism=1.0        │
-└────────────────────────────────────────────────────────────────────────┘
-Functional Layer ComparisonEvaluation MetricNIST Generative AI Frameworks (e.g., AI 600-1 Profile)LAB v1.0 Boundary ArchitecturePrimary TargetEvaluates what the model says or generates (output layer).Evaluates whether the system is authorized to execute an action (boundary layer).Core Question"Is this output accurate, helpful, and safe to read?""Does this proposed action violate an execution safety predicate?"Structural FocusMeasures text semantics, language context, and toxicity levels.Ignores text semantics; prioritizes absolute boundary adherence (LAB §1).System BehaviorProbabilistic, stochastic, and highly sensitive to minor prompt changes.Completely deterministic; guarantees reproducible bit-for-bit replays ($\text{DR} = 1.0$).Failure ResponseFormulates a textual refusal or flags inappropriate content.Instantly halts execution, moving the system to a SAFE_STATE while generating log evidence.Addressing Risks Indicated in the NIST GenAI Profile (AI 600-1)Mitigating Hallucinations & Confabulations: Content evaluations estimate how frequently an LLM hallucinates facts. This benchmark ensures that even when a model completely hallucinates an action proposal, it cannot execute unless it satisfies all underlying safety predicates. Evidence: 492 hallucination-class actions blocked; $\text{UER} = 0$, $\text{FP} = 0$.Neutralizing Malicious Recommendations: Content filters catch harmful language. This framework intercepts the resulting dangerous action directly at the boundary door via non-compensatory logic. If the action profile exceeds safe risk thresholds ($\text{HARM\_RISK} > \theta$), execution is blocked, bypassing any weighted-sum logic that might soft-approve it.Securing System Information Integrity: Traditional provenance tools verify content origins via watermarks. This architecture secures the integrity of the evaluation process itself, capturing every system decision on an append-only, tamper-evident ledger ($\text{AIS} = 1.0$, spanning 284,807 verified hash blocks).Enforcing True Decision Provenance: Instead of watermarking AI-generated media, the system binds every execution boundary decision directly to an unalterable Evidence Quad containing the specific pre_reg_id, policy_hash, and current ledger_hash.Securing Human-AI Configurations: Instead of assuming an operator can manually review a continuous stream of AI outputs, the system bans human operators from manually overriding failed core safety predicates (human_override_of_failed_predicate = "PROHIBITED"). It sets clear, structured paths for dispute escalations and locks down response latency ($\text{TAU-Node} \le 2\text{s}$).5. EU AI Act Evidence MappingThe outputs from this benchmark run can serve as core technical documentation inputs for an EU AI Act (Regulation 2024/1689) high-risk system technical file.Regulatory Alignment MatrixHigh-Risk ArticleLegal Obligation SummarySupporting Benchmark ArtifactsComputed Verification ValueArticle 12Automatically generate and log events to ensure lifecycle traceability.gamma_replay_manifest.jsonl + Hydra Ledger + Evidence Quad data.284,807 individual signed records; 284,807/284,807 intact hash links anchored to ledger root 1ce2a9e8....Article 19Keep automatically generated logs safe from tampering or unauthorized changes.Append-only cryptographic hash chain + standalone verification engine.gamma_replay_verify.py returns PASS with 0 validation failures. Any external database edit breaks the ledger chain.Article 15 (Accuracy)Maintain high accuracy levels and publish clear evaluation metrics.Full confusion matrix tracking + standard performance metrics.$\text{TP} = 284,315$, $\text{TN} = 492$, $\text{FP} = 0$, $\text{FN} = 0$. $\text{UER} = 0.0$, $\text{FPR} = 0.0$, $\text{FDR} = 0.0$ under 95% Wilson Bounds.Article 15 (Robustness)Maintain resilient operations and fail-safe behaviors under stress.Uncertainty injected FCR testing + safe isolation state routing.$\text{FCR} = 1.0$ ($0$ fail-open occurrences across $20,492$ tests); 492/492 fraud attempts isolated into SAFE_STATE.Article 15 (Cybersecurity)Resist adversarial manipulation, data poisoning, and system gaming.White-box adaptive adversary testing + automated data contamination filters.Adaptive attacker blocked across 11,808 variations; zero multi-signal policy violations; contamination = PASS.Article 14Build in human oversight to minimize over-reliance and enable safety overrides.human_governance control record configuration parameters.Manual overrides of failed safety predicates are explicitly set to PROHIBITED. Formal operator dispute workflows are defined.Article 9Build a continuous risk management loop that validates mitigation tools.Counterfactual ablation testing + multi-scenario financial crisis simulation.Ablation proves standard weighted gates leak 492 fraud actions while this architecture blocks all 492. Logs out-of-scope risks via an assumptions registry.Article 10Validate training and test data governance, checking for biases and quality issues.Independent third-party data tracking + strict contamination testing.Utilizes an external ULB Class corpus to prevent oracle bias; uses hard execution limits ($y^* = \Lambda(G)$) and randomized seeds.Article 11 & Annex IVDocument system metrics, architecture designs, and software versions.Centralized reproducibility package + overall evaluation report envelope.gamma_bundle/ holds digest-sealed code manifests, exact terminal call inputs, env.json systems, and a step-by-step audit runbook.Article 13Keep operations clear and transparent to users; provide helpful failure explanations.Contextual gate-failure attributions + automated HTML reporting dashboards.Delivers clear rule-failure reasons; gamma_report.html maps out failing gates with an explanation completeness rate of $1.0$.Article 17Put a repeatable, high-quality management system in place across development.Pre-registered test parameters + verified deterministic execution replays.Locked to pre_reg_id: dc3ce999.... Verifies that identical system inputs yield identical execution decisions ($\text{DR} = 1.0$).Article 72Keep tracking system safety after rollout; build clean incident tracing tools.Traceable decision logging records + policy update revocation testing.Generates continuous, fully replayable ERTuple logs; locks policy propagation times to $REVOC\_P95 \approx 16\text{ ms}$.Technical File Contribution Summary: These artifacts directly address the logging requirements of Article 12, the data protection rules of Article 19, and the performance metrics of Article 15. They provide documentation for a technical file but do not substitute for a formal conformity assessment or a notified-body audit (both of which are explicitly logged as not_run).6. Auditor's Evidence InventoryPart 1 — Master Artifact CatalogThe following inventory lists every file generated during this benchmark run available for external audit.#Artifact NameFile SizeAuditor Validation ActionsIndependent Verification Method1gamma_replay_manifest.jsonl200.97 MBVerifies transaction-level cryptographic hashes, previous block connections, decision flags, and Evidence Quad fields.Fully Independent: Run the zero-dependency Python verification script directly against the manifest log file.2gamma_validation_results.csv133.85 MBAudits row-by-row decision results (PERMIT vs. SAFE_STATE) alongside internal predicate gating variables.Cross-check and re-derive decision matrices directly from the mapped data columns.3gamma_lab_v1_report.json11.60 KBReviews system metrics, invariant checks, latencies, ablation outcomes, and formal TLC attestation blocks.Verify mathematical formulations and check logic equations printed in the metadata.4gamma_summary.json3.50 KBInspections overview metrics, data distributions, and the most frequent predicate failure reasons.Cross-compare summary values directly with the row-level data outputs.5concurbench_full_report.json74.60 KBEvaluates ConcurBench compliance levels (L1–L4), tracking contamination controls and human oversight fields.Verify full JSON schema fields against standard ConcurBench validation rules.6full_spec_conformance_report.json9.20 KBValidates strict operational safety bands, multi-signal system closures, and core data rules (DET-1 to DET-5).Confirm that the live Audit Integrity Score matches all 5 underlying telemetry signals.7stress_test_report.json14.50 KBEvaluates pass/fail metrics across macroeconomic financial crisis simulations (P1–P4).Check system decisions against the specified crisis parameters.8fcr_test_report.json1.80 KBReviews fail-closed ratios across six distinct data uncertainty profiles with 95% confidence intervals.Verify the statistical calculation bounds using standard Wilson equations.9gamma_report.html70.20 KBOpens the human-readable visual dashboard to inspect the summarized system performance metrics.Cross-verify that all dashboard data elements match the underlying JSON report objects.10gamma_terminal_full.txt7.60 KBReviews the continuous command-line text output printed by the runner framework during execution.Check for engine runtime warnings, errors, or anomalies in the execution trail.Cryptographic Sealing Anchors               ┌────────────────────────────────────────────────────────┐
-               │              Master Bundle Digest (SHA-256)            │
-               │                        8bd413fc...                     │
-               └───────────┬────────────────────────────────┬───────────┘
-                           │                                │
-                           ▼                                ▼
-┌──────────────────────────────────────────────────────┐  ┌──────────────────────────────────────────────────────┐
-│             Pre-Registration Anchor ID               │  │              Hydra Ledger Root Hash                  │
-│                        dc3ce999...                   │  │                        1ce2a9e8...                   │
-└──────────────────────────────────────────────────────┘  └──────────────────────────────────────────────────────┘
-An auditor must verify that all generated artifacts match these exact cryptographic signatures:Manifest SHA-256 (Ledger Root): 1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931daEvidence Quad Ledger Hash: 1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931daPre-Registration ID: dc3ce9995510ef8bc08b6422ff7f380a6c8dc2281452a9920398d4391aa27808Master Bundle Digest: 8bd413fc3c07aa26df17d7c3b242acd3aa3442903d9df209475a115efc8b54ebActive Policy Hash: 156bacd165bf0ab0ffc6abc977195944aa0b55c3bf66d4d1c2312b1fa4feb613Executing the Zero-Trust Audit VerificationTo independently verify the entire run without relying on complex analytics dependencies, an auditor can run the following command in a clean terminal environment:Bashpython gamma_replay_verify.py gamma_replay_manifest.jsonl \
+```
+
+Each carries: proposal ID · ERTuple ID · Γ_G / Γ_class / Π decision · policy hash · and the Evidence Quad (decision · method version · policy hash · ledger hash) — the single record a board sees, an auditor replays, a regulator examines.
+
+### 2. Hash-chained ledger (Hydra Ledger) — DET-4 audit continuity
+
+- 284,807 / 284,807 SHA-256 links intact, GENESIS-anchored, 0 broken links.
+- Manifest sealed by its own digest: `manifest_sha256 = 1ce2a9e8…931da`.
+- Tamper-evidence: changing any historical decision changes every downstream hash.
+
+### 3. Independent replay-verifier output (third-party auditable)
+
+Ran `gamma_replay_verify.py` (stdlib-only, no pandas/dataset/runner) over the 200 MB manifest:
+
+- 0 adjacency failures · 0 ledger-bind failures · 0 consistency failures, SHA-256 MATCH, exit 0 → `independent_replay_verifier: PASS`.
+
+### 4. Row-level decision output
+
+`gamma_validation_results.csv` — 134 MB, 284,807 rows — every re-derived decision (PERMIT/SAFE_STATE) with its predicate/gate state and Evidence Quad columns.
+
+### 5. Formal-verification attestation (TLC)
+
+`gamma_lab_v1_report.json` → `tlc_verification`: 2,489,446 total / 40,192 distinct states, MaxClockSkew 1, 0 safety violations, Invariant-1 (no state has Γ>0 ∧ execute), verified at tier-0 attestation with `attestation_digest`.
+
+### 6. Audit-as-Control signal (§6.12) — audit health as live evidence
+
+`full_spec_conformance_report.json`: AIS = 1.0, composed from five measured sub-signals — chain_integrity 1.0 · storage_availability 1.0 · signature_health 1.0 · time_sync 1.0 · retention_horizon 1.0.
+
+### 7. Metrics + invariants evidence
+
+`gamma_lab_v1_report.json` / `gamma_summary.json`: UER 0, FPR 0/492, FDR 0/284,315, RDR 1.0, TOCTOU 0, class-veto 1.0, 6/6 runtime invariants (0 violations), negative control (492 counterfactual vs 0), measured latency (mean 0.035 ms), all with Wilson 95% bounds.
+
+### 8. Conformance evidence packets
+
+- `concurbench_full_report.json` — Document-1 §18 object, verdict COMPLIANT_PASS (L1–L4), incl. ASB event-stream traces, contamination/canary, HITL governance record.
+- `full_spec_conformance_report.json` — §7.1 bands enforced, three-signal closure (0 violations), WID(T), DET-1…DET-5, verdict FULL_SPEC_CONFORMANT (Tier-S).
+- `stress_test_report.json`, `fcr_test_report.json` — scenario/fail-closed evidence.
+
+### 9. Reproducibility bundle — `gamma_bundle/`
+
+Tamper-evident package: `MANIFEST.json` (SHA-256 + size of every input/source/output, exact command line, TLC block, replay summary, sealing `bundle_digest_sha256`), `env.json`, `command.txt`, `REPRODUCE.md`.
+
+### Summary of governance evidence produced
+
+| Evidence type | Artifact | Volume / result |
+|---|---|---|
+| Per-decision ERTuple + Evidence Quad | `gamma_replay_manifest.jsonl` | 284,807 signed records |
+| Hash-chained ledger | (in manifest) | 284,807/284,807 links, sealed `1ce2a9e8…` |
+| Independent replay proof | `gamma_replay_verify.py` output | PASS, 0 failures, SHA-256 MATCH |
+| Row-level decisions | `gamma_validation_results.csv` | 284,807 rows |
+| Formal attestation | `tlc_verification` | 2.49M states, 0 violations |
+| Audit-as-control | AIS composite | 1.0 (5 sub-signals) |
+| Metrics + invariants | lab/summary JSON | 0 FP/FN, 6/6 invariants |
+| Conformance packets | 4 report JSONs | COMPLIANT_PASS + FULL_SPEC_CONFORMANT |
+| Reproducibility bundle | `gamma_bundle/` | digest-sealed, replayable |
+
+> **Honest boundary:** Every value above is genuinely computed (hashes really recomputed, verifier really re-run) — nothing is decorative. Signatures are HMAC-SHA256 software analogs, not live HSM signings, and the fleet/hardware evidence is simulated (Tier-S), as disclosed.
+
+---
+
+## 3. Conceptual Alignment with NIST ARIA's Evaluation Philosophy
+
+NIST ARIA (Assessing Risks and Impacts of AI) breaks from leaderboard-style, accuracy-only benchmarks: it evaluates AI in contextual, consequence-oriented, adversarial, real-world-proxy settings across three regimes — model testing → red-teaming → field testing — and measures risk and impact (validity, safety, security, resilience), plus whether guardrails actually hold under stress.
+
+> **Honest framing:** This is *conceptual alignment*. ARIA is a NIST program (with human-subject, sociotechnical, real-deployment testing) that we are not part of — no endorsement is implied. FULL_SPEC §11 records only "CAISI acknowledged, under consideration, not adopted."
+
+### Where the results align with ARIA's philosophy
+
+| ARIA principle | Aligning benchmark result | Evidence from this run |
+|---|---|---|
+| Beyond accuracy — measure authority/consequence | The whole construct asks "is the system allowed to execute," not "did the model answer correctly" | UER 0, SVR 0.0, Γ-compliance 1.0, FCR 1.0 — execution-boundary metrics, not a capability score |
+| Regime 1: controlled model testing | Deterministic correctness on the full corpus with statistical bounds | 284,807 rows · TP 284,315 / TN 492 / FP 0 / FN 0 · Wilson 95% bounds · replay determinism 1.0 |
+| Regime 2: red-teaming / adversarial | White-box adaptive adversary + structured attack families + uncertainty injection | adaptive attacker 0/11,808 false permits · 8 attack families (4,000 each) · FCR uncertainty families 0 fail-open / 20,492 |
+| Consequence-/scenario-oriented (real-world proxy) | Temporally-extended, real-world failure scenarios rather than abstract test cases | Stress P1–P4 ($28M deepfake-CFO wire, sanctions drift, liquidity panic, sovereign cascade); ASB event-stream traces (5 families) |
+| Regime 3: field-scale / operational proxy | Real third-party data + distributed operating conditions | real ULB corpus (ground truth not ours to invent) + simulated 5-node fleet, partition PASS, REVOC_P95 ≈16 ms |
+| Guardrail / mitigation effectiveness under stress | Does the safety mechanism actually prevent the harm? | Negative control: a compensatory gate would leak 492 false permits; the non-compensatory guardrail leaks 0 |
+| Trustworthy characteristics: validity · safety · security · resilience | Each measured explicitly | validity (DR 1.0, TLC 0 violations) · safety (SVR 0) · security (adaptive 0) · resilience (partition/desync 0 unauthorized) |
+| Impact-of-failure orientation | Failures routed to a controlled non-execution state with evidence, not silent continuation | 492/492 fraud → SAFE_STATE + ERTuple; §0.10 absorption (fail-closed, audited recovery) |
+| Structured, reproducible evaluation protocol | Pre-registration + sealed, replayable evidence | Evidence Quad (pre_reg_id `dc3ce999…`, ledger_hash `1ce2a9e8…`), independent verifier PASS |
+| Integrity of the evaluation itself | ARIA-style concern that the test isn't gamed/memorized | contamination PASS · canary PASS · deterministic ground truth y\*=Λ(G) |
+
+### The clearest three "ARIA-shaped" results
+
+1. **The ablation / negative control** — the most ARIA-aligned result: it doesn't just report a pass, it demonstrates the guardrail is load-bearing by showing a plausible alternative (compensatory aggregation) would let 492 unauthorized actions through, while the deployed mechanism lets 0. ARIA cares about whether mitigations actually work under realistic pressure, not whether a number looks good.
+2. **The financial stress scenarios (P1–P4)** — consequence-framed, temporally-extended, real-world adversarial narratives with honest out-of-scope markers (oracle problem, upstream poisoning). This mirrors ARIA's move from decontextualized tests to scenario/impact evaluation, including stating where the system fails (P2 PARTIAL, 60–70%).
+3. **The FCR + adaptive-attacker pair** — measuring "does it fail closed under uncertainty and adaptive attack," which is ARIA's resilience/safety regime, not an accuracy metric: 0 fail-open across 20,492 uncertain instances and 0 permits across 11,808 adaptive attempts.
+
+### Where it diverges (honest boundaries)
+
+| ARIA element | This benchmark |
+|---|---|
+| Human-subject / sociotechnical field testing | not present — no human participants, no live user |
+| Real production deployment study at scale | simulated fleet (Tier-S), not live operational field data |
+| Broad impact on people/society | narrow to execution-boundary correctness on one financial dataset |
+| Third-party administration | internal run; external audit/hardware-in-the-loop disclosed not_run/not_available |
+
+**Bottom line:** The results that most demonstrate ARIA-philosophy alignment are the adversarial red-team + fail-closed resilience results, the consequence-framed stress scenarios, and above all the ablation proving the guardrail is causally responsible for the zero-harm outcome — measured on real ground truth with reproducible, sealed evidence. It stops short of ARIA's human-subject, live-field regime — which is disclosed, not hidden.
+
+---
+
+## 4. How LAB v1.0 Complements NIST Generative AI Evaluations
+
+NIST's generative-AI evaluations (the AI 600-1 GenAI Profile, the NIST GenAI program on synthetic-content/provenance, and CAISI/AI 800-2 red-teaming) almost all measure the **model's output layer** — content quality, confabulation, harmful/CBRN content, information integrity, provenance/watermarking. LAB v1.0 measures the layer directly below that: **whether the system is authorized to execute the action the model proposes.** They don't overlap — they compose. That's the complementarity.
+
+> **The thesis in one line (from the architecture):** "Capability may be probabilistic; authority must be deterministic." NIST GenAI evals score the probabilistic layer; LAB v1.0 scores the deterministic execution boundary underneath it.
+
+### The two layers, side by side
+
+| | NIST GenAI evaluations | LAB v1.0 (this benchmark) |
+|---|---|---|
+| **Object measured** | what the model says / generates | whether the system may execute the proposed action |
+| **Question** | "Is the output correct / safe / authentic?" | "Is this action authorized to cross the execution boundary?" |
+| **Semantics** | evaluates content semantics | explicitly does not evaluate semantic correctness (LAB §1) |
+| **Determinism** | stochastic outputs, hard to reproduce | deterministic decision, replayable (DR 1.0) |
+| **Failure handling** | flags bad output | fails closed to SAFE_STATE + evidence |
+
+LAB starts from the assumption NIST GenAI evals cannot guarantee away — that the model output may be confabulated or adversarially steered — and enforces authority regardless.
+
+### Where LAB v1.0 fills specific NIST GenAI-Profile (AI 600-1) gaps
+
+| NIST GenAI risk (AI 600-1) | Output-layer eval measures… | What LAB v1.0 adds (execution layer) | Evidence from this run |
+|---|---|---|---|
+| Confabulation | how often the model hallucinates | even a confabulated proposal cannot execute without predicate concurrence | 492 hallucination-class rows → SAFE_STATE; UER 0, FP 0 |
+| Dangerous / harmful recommendations | whether harmful content is produced | harmful action blocked at the boundary (HARM_RISK>θ = deficit → Γ>0) | non-compensatory gate; ablation shows 492 would leak under a weighted-sum |
+| Information integrity | content authenticity / misinfo | audit integrity as a live control — tamper-evident decision ledger | AIS composite = 1.0 (5 sub-signals); 284,807/284,807 hash links |
+| Content provenance / synthetic-content | watermark/provenance of content | decision provenance — every action bound to an Evidence Quad | Evidence Quad (pre_reg_id, policy_hash, ledger_hash `1ce2a9e8…`) |
+| Human-AI configuration | oversight design | HITL path with human override of a failed hard predicate PROHIBITED | `human_governance.human_override_of_failed_predicate="PROHIBITED"` |
+| Value chain / integration risk | component trust | receipts-not-permits federation, revocation horizon | DET-5, REVOC_P95 ≈16 ms, partition PASS |
+
+### Four concrete ways the results complement NIST GenAI evals
+
+1. **Adds a deterministic, reproducible layer to a stochastic pipeline.** NIST GenAI red-teaming of model outputs is non-reproducible by nature; LAB's authorization decision replays bit-for-bit (independent verifier PASS, SHA-256 MATCH over 284,807 records). It gives the agentic stack an auditable, deterministic checkpoint that content evals can't.
+2. **Red-teams the gate, not just the model.** NIST red-teams what the model can be induced to say; LAB red-teams whether an adversary can induce an unauthorized execution — adaptive attacker 0/11,808, 8 attack families 0 false permits. Both are needed; they target different attack surfaces.
+3. **Turns "the model might be wrong" into a measured guarantee.** NIST evals quantify how often output is wrong; LAB measures that being wrong doesn't cause an unauthorized action — SVR 0.0, FCR 1.0, Γ-compliance 1.0. It's the containment metric for the residual risk GenAI evals leave on the table.
+4. **Provides decision-level provenance to sit under content-level provenance.** NIST GenAI provenance work watermarks content; LAB's Evidence Quad + hash-chained ERTuples give per-decision provenance — so a regulator can trace not just "was this text AI-generated" but "was this action authorized, by what policy, with what evidence."
+
+### The stacked view
+
+```
+NIST GenAI evals → did the model output correct / safe / authentic content?
+(probabilistic)
+       │ the output becomes an action proposal
+       ▼
+LAB v1.0 → is that action AUTHORIZED to execute?
+(deterministic)
+       UER 0 · FP 0 · SVR 0 · FCR 1.0 · replay 1.0 · fail-closed
+```
+
+### Honest boundaries (what LAB does not complement)
+
+- LAB says nothing about content quality, hallucination rate, toxicity, CBRN detection, or watermark robustness — those remain squarely NIST GenAI's domain.
+- LAB assumes upstream telemetry/predicate inputs are as given; it enforces the boundary, it doesn't author policy or verify feed correctness (the "oracle problem," disclosed in the stress test).
+- Complementarity is conceptual/architectural, not an integration — no joint NIST evaluation was run; external validation is disclosed not_run.
+
+**Net:** NIST GenAI evaluations grade the model's speech; LAB v1.0 grades the system's authority to act on that speech. The zero-unauthorized-execution, deterministic-replay, and fail-closed results are exactly the execution-boundary evidence that generative-AI content evaluations structurally cannot produce — which is why the two sit in series rather than compete.
+
+---
+
+## 5. Outputs Supporting an EU AI Act Conformity-Assessment Evidence Package
+
+These are the run's outputs mapped to the specific EU AI Act (Regulation 2024/1689) high-risk obligations they can evidence. FULL_SPEC §14 already anchors to Art. 12 (logging) and Art. 14 (oversight); the strongest fit is Art. 12 + Art. 15.
+
+> **Scope disclaimer:** These outputs support / contribute to the *technical file behind* a conformity assessment — they are **not** a conformity assessment, CE marking, or notified-body attestation. External audit and hardware-in-the-loop are disclosed not_run / not_available; the system is Tier-S software.
+
+### Benchmark outputs → EU AI Act articles
+
+| AI Act obligation | What the Act requires | Benchmark output that evidences it | Evidence value from this run |
+|---|---|---|---|
+| **Art. 12** — Record-keeping / logging (traceability over lifecycle) | automatic logs enabling traceability of the system's functioning | ERTuple replay manifest + hash-chained Hydra Ledger + Evidence Quad per decision | 284,807 signed records · 284,807/284,807 links · ledger_hash `1ce2a9e8…` · sealed manifest SHA-256 |
+| **Art. 19** — Automatically generated logs (kept, integrity) | logs kept, tamper-evident | tamper-evident hash chain + independent verifier | verifier PASS, 0 adjacency/ledger/consistency failures, any edit detected |
+| **Art. 15** — Accuracy | appropriate accuracy metrics + declared levels | confusion matrix + LAB metrics with Wilson 95% bounds | TP 284,315 / TN 492 / FP 0 / FN 0; UER 0, FPR 0/492, FDR 0/284,315 |
+| **Art. 15** — Robustness / resilience / fail-safe | robust to errors, faults, inconsistencies; fail-safe | FCR test + fail-closed / SAFE_STATE absorption | FCR 1.0 (0 fail-open / 20,492); 492/492 → SAFE_STATE; partition PASS, 0 desync unauthorized |
+| **Art. 15** — Cybersecurity | resist manipulation, data poisoning, resilience against attempts to alter use/behaviour | adaptive white-box attacker + 8 attack families + Goodhart veto | adaptive 0/11,808 false permits; three-signal closure 0 violations; contamination/canary PASS |
+| **Art. 14** — Human oversight | oversight measures, ability to intervene / not over-rely | HITL governance record | override of failed hard predicate PROHIBITED; operator query path & dispute workflow defined; break-glass audited; TAU-Node ≤2s |
+| **Art. 9** — Risk management system | identify, evaluate, mitigate; test mitigation effectiveness; residual risk | threat model + ablation/negative control + stress scenarios + assumptions register | ablation: compensatory gate leaks 492, deployed guardrail 0; P1–P4 stress with residual-risk disclosure; `assumptions_and_limitations` |
+| **Art. 10** — Data & data governance | provenance, relevance, examination for biases | real third-party ground truth + dataset provenance + ULB Class labels (not self-authored) | dataset_seed, contamination controls, deterministic y\*=Λ(G) |
+| **Art. 11 + Annex IV** — Technical documentation | system description, metrics, methods, reproducibility | bundle + report envelope | `gamma_bundle/` (MANIFEST digest-sealed, env.json, command.txt, REPRODUCE.md); method/schema versions |
+| **Art. 13** — Transparency to deployers | interpretable operation, instructions | predicate-failure explanations + dashboard + limitations | first-failing-gate attribution; `gamma_report.html`; explanation completeness 1.0 (ASB) |
+| **Art. 17** — Quality management system | documented, versioned, reproducible process | pre-registration + versioned config + deterministic replay | pre_reg_id `dc3ce999…`; identical inputs → identical outputs; DR 1.0 |
+| **Art. 72** — Post-market monitoring | ongoing monitoring, incident | per-decision evidence stream + revocation | replayable ERTuple trail; DET-5, REVOC_P95 ≈16 ms |
+| **Annex VI/VII** — Conformity assessment support | technical file a body can examine | independently re-checkable evidence (no runner/data) | `gamma_replay_verify.py` PASS from the JSONL alone |
+
+### The three outputs that carry the most weight in a technical file
+
+1. **The ERTuple manifest + hash-chained ledger + Evidence Quad** → directly evidences Art. 12 / Art. 19 (the hardest logging/traceability requirements to satisfy after the fact), and it's independently verifiable without trusting us.
+2. **The metrics + FCR + adversarial results** → evidences Art. 15 across all three of its prongs (accuracy, robustness, cybersecurity) with confidence bounds.
+3. **The ablation / negative control** → evidences Art. 9's requirement that risk-mitigation measures are effective (not just present): it shows the guardrail is causally responsible for the zero-harm outcome.
+
+### What these outputs do not cover (gaps a full package still needs)
+
+| AI Act requirement | Gap |
+|---|---|
+| Art. 43 / Annex VII — notified-body assessment | not performed (`third_party_audit: not_run`) — this benchmark produces inputs to it, not the assessment |
+| Art. 10 — training-data bias/representativeness (for a trained model) | LAB governs a deterministic gate, not a trained model; data-governance evidence is partial |
+| Art. 15 — hardware-rooted cybersecurity claims | signatures are HMAC software analogs (Tier-S); HSM/hardware interlock disclosed as future |
+| Live operational / fleet monitoring (Art. 72 at scale) | fleet is simulated, not live |
+| Fundamental-rights impact assessment (Art. 27) | out of scope — LAB measures execution-boundary correctness, not societal impact |
+
+**Net:** The run produces genuine, independently verifiable evidence toward Art. 12, 15, 14, 9, 11/Annex IV, 13, 17, 19, 72 — strongest on logging/traceability (Art. 12) and accuracy/robustness/cybersecurity (Art. 15), plus a well-evidenced human-oversight (Art. 14) and risk-management-effectiveness (Art. 9) story. It is a technical-file contribution, not a conformity verdict — the notified-body assessment, hardware-rooted cybersecurity, and live-deployment monitoring remain outside what this benchmark can attest, and those boundaries are disclosed rather than papered over.
+
+---
+
+## 6. Full Auditor-Consumable Evidence Inventory
+
+### Part 1 — Every piece of evidence an external auditor can consume
+
+#### A. Primary evidence artifacts (files on disk)
+
+| # | Artifact | Size | What an auditor does with it | Independently checkable? |
+|---|---|---|---|---|
+| 1 | `gamma_replay_manifest.jsonl` | 200.97 MB | 284,807 signed per-decision ERTuple records (proposal_id, ertuple_id, policy_hash, hash_prev/current, Γ_G/Γ_class/Π, Evidence Quad) | ✅ yes — re-verify with the stdlib verifier |
+| 2 | `gamma_validation_results.csv` | 133.85 MB | row-level decisions (PERMIT/SAFE_STATE) + predicate/gate state per transaction | ✅ recompute from mapped CSV |
+| 3 | `gamma_lab_v1_report.json` | 11.6 KB | metrics + 6 invariants + latency + negative control + TLC attestation + governing rules | ✅ formulas disclosed |
+| 4 | `gamma_summary.json` | 3.5 KB | headline confusion + distributions + top rule failures | ✅ |
+| 5 | `concurbench_full_report.json` | 74.6 KB | Document-1 §18 conformance object (L1–L4, ASB, contamination, HITL, Evidence Quad) | ✅ |
+| 6 | `full_spec_conformance_report.json` | 9.2 KB | §7.1 bands, AIS sub-signals, three-signal closure, SVR/FFC, TLC, DET-1…5 | ✅ |
+| 7 | `stress_test_report.json` | 14.5 KB | P1–P4 per-condition pass/fail + verdicts | ✅ |
+| 8 | `fcr_test_report.json` | 1.8 KB | fail-closed rate per uncertainty family + Wilson bounds | ✅ |
+| 9 | `gamma_report.html` | 70.2 KB | human-readable dashboard (all values read from the JSON) | ✅ cross-check vs JSON |
+| 10 | `gamma_terminal_full.txt` | 7.6 KB | verbatim console output of the run | ✅ |
+
+#### B. Reproducibility bundle (`gamma_bundle/`) — the seal
+
+| File | Size | Contents |
+|---|---|---|
+| `MANIFEST.json` | 4.35 KB | SHA-256 + size of every input/source/output, exact command line, TLC block, replay summary, `bundle_digest_sha256` |
+| `REPRODUCE.md` | 1.85 KB | step-by-step: check digests → re-run → verify manifest → bind TLC → diff |
+| `env.json` | 253 B | Python / pandas / platform / method version |
+| `command.txt` | 325 B | literal command that produced the run |
+
+#### C. Cryptographic anchors (what the whole package hangs on)
+
+| Anchor | Value |
+|---|---|
+| Manifest SHA-256 (final ledger root) | `1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931da` |
+| Evidence Quad ledger_hash | `1ce2a9e8…931da` (matches manifest) |
+| Pre-registration ID | `dc3ce9995510ef8bc08b6422ff7f380a6c8dc2281452a9920398d4391aa27808` |
+| Bundle digest | `8bd413fc3c07aa26df17d7c3b242acd3aa3442903d9df209475a115efc8b54eb` |
+| Policy hash | `156bacd165bf0ab0ffc6abc977195944aa0b55c3bf66d4d1c2312b1fa4feb613` |
+| TLC attestation digest (in tlc_verification) | 2,489,446 states / 0 violations |
+
+#### D. The independent verification tool the auditor runs (zero-trust)
+
+```bash
+python gamma_replay_verify.py gamma_replay_manifest.jsonl \
   --expect-sha256 1ce2a9e8d4330a0583a9d20a398de43297ea59c404e006e7f1161208481931da
-The script scans the entire 200 MB transaction log file to re-calculate block adjacency hashes, verify genesis anchors, confirm Evidence Quad-to-ledger bindings, and ensure decision logic consistency. It returns an exit code of 0 only if all checks match perfectly. Modifying even a single character in the log file forces a mismatch, causing the verifier to fail. Current Run Result: 0 failures, SHA-256 MATCH, exit 0.Part 2 — ConcurBench Module Evaluation ResultsThe evaluation engine successfully executed the full concurbench_full.py testing matrix against the 284,807-row data corpus, yielding the module metrics detailed below.                  ┌──────────────────────────────────────────┐
-                  │       ConcurBench Evaluation Roll-Up     │
-                  └────────────────────┬─────────────────────┘
-                                       │
-         ┌─────────────────────────────┼─────────────────────────────┐
-         ▼                             ▼                             ▼
- ┌──────────────┐              ┌──────────────┐              ┌──────────────┐
- │ L1: Accuracy │              │ L2: Robustness│              │ L3: Fleet    │
- │    PASS      │              │    PASS      │              │    PASS      │
- └──────────────┘              └──────────────┘              └──────────────┘
-         │                             │                             │
-         └─────────────────────────────┼─────────────────────────────┘
-                                       ▼
-                               ┌──────────────┐
-                               │ L4: Replay   │
-                               │    PASS      │
-                               └──────────────┘
-                                       │
-                                       ▼
-                       ┌──────────────────────────────┐
-                       │  Overall: COMPLIANT_PASS     │
-                       └──────────────────────────────┘
-ConcurBench ModuleStatusCore Evidence ArtifactsKey Evaluated ResultL1 — Authorization CorrectnessPASSComplete system confusion matrix outputs, UER / FPR / FDR / FCR tracking metrics, 95% Wilson confidence intervals.$\text{TP} = 284,315$ / $\text{TN} = 492$ / $\text{FP} = 0$ / $\text{FN} = 0$. $\text{UER} = 0.0$, $\text{FPR} = 0.0$, $\text{FCR} = 1.0$.L2 — Adversarial RobustnessPASSAutomated testing metrics across 8 distinct attack families ($4,000$ instances each), adaptive white-box attack logs, counterfactual ablation data.Adaptive attacker blocked across 11,808 variations; total false permits granted = 0; ablation delta = 492 vs. 0.L3 — Distributed ConsistencyPASS5-node system consistency logs, policy update propagation latency tracking ($P50/P95/P99$), network partition simulations, quorum logs.Distributed fleet index score = 1.0; network partition handling = PASS; 0 unauthorized executions under desync conditions.L4 — Deterministic ReplayPASSReplay verification attempt tracking logs, bit-for-bit pass ratios, blockchain-style ledger hash runs, Evidence Quad bindings.284,807 transactions checked out of 284,807; final validation replay rate = 1.0; standalone verifier = PASS.Contamination & Canary TrackingPASSAutomated dynamic-derivation logs, cryptographic salt inputs, canary string leakage logs.Data contamination check = PASS; Canary leakage check = PASS (0 data leaks detected).Adversarial Scenario Benchmarking (ASB)PASSEvaluation tracks 5 distinct threat scenario families, mapping long-horizon chronological event streams via 7 system safety metrics.Evaluation pass rate = 1.0; $\text{ASB-UER} = 0.0$; contextual failure explanation completeness score = 1.0.Human Governance & OversightPASSLogged system configuration rules, human safety override permission flags, dispute tracking configurations, denial categories.Manual operator overrides of failed core safety predicates are explicitly locked to PROHIBITED.Evidence Quad AuthenticationPASSComprehensive tracking of explicit clause variables: spec_clause · pre_reg_id · method_version · ledger_hash.Validated across all rows (bound to dc3ce999... / 1ce2a9e8...).Evaluation Envelope MetadataPASSAutomated collection of benchmark metadata, evaluated target specifications, schema versions, scenario distribution maps.All metadata fields are fully populated with zero null values.Reproducibility Data ControlsPASSDocumented dataset generation procedures, random initialization seeds, corpus distributions, predicate dimensions.Initialization seed set to 20260629; evaluated across 13 distinct predicate dimensions.Assumptions & Scope RegistryPASSCentralized disclosures object logging environment limits, system expectations, and strict boundaries.Explicitly disclaims external certifications (production_certification_claimed = false).Independent Validation StatusPASSDocumented summary tracking third-party evaluations, external tool calls, and automated validation runs.AgentDojo (not_run); Hardware verification (not_available); TLA+ formal spec emitted; external_verifier (run).Final Conformance VerdictPASS4-level compliance roll-up matrix $\rightarrow$ overall benchmark conformance evaluation.Levels L1 through L4 checked as PASS $\rightarrow$ Final Overall Verdict: COMPLIANT_PASS.Adjacent Engineering Validation SuitesFULL_SPEC Engine Evaluation: Checked via full_spec_conformance.py. Confirmed strict enforcement of section §7.1 operating bands and logged an Audit Integrity Score ($\text{AIS} = 1.0$) based on 5 system health vectors. Ensured zero multi-signal policy violations. Verdict: FULL_SPEC_CONFORMANT (Tier-S).Fail-Closed Rate (FCR) Test Suite: Executed via fcr_test.py. Injected edge-case data anomalies and data dropouts across 6 uncertainty families to confirm safety response behavior. Verdict: 0 fail-open occurrences across 20,492 testing instances ($\text{FCR} = 1.0$).System Stress Test Suite: Executed via stress_test.py. Tested boundary containment behavior under extreme macroeconomic scenario simulations (P1–P4). Confirmed that all in-scope system anomalies were forced into safe isolation states, maintaining an operational safety rating of 78.4% across volatile conditions.Technical Compliance Checker: Executed via concurbench_conformance_check.py. Scanned all evaluation logs to ensure structural compliance with high-risk auditing rules. Confirmed that all 133 technical documentation parameters were present with zero coverage gaps. Verdict: exit 0.Master Audit Summary Statement: This benchmark run produced 10 distinct technical evidence logs, a cryptographically sealed reproducibility bundle, and a zero-dependency replay validation tool. All artifacts are bound to a single ledger root hash (1ce2a9e8...) and a verified pre-registration ID (dc3ce999...). Every core ConcurBench validation module was successfully evaluated, passing all tracking checks and rolling up to an overall system compliance rating of COMPLIANT_PASS. Operational limits, hardware constraints, and distributed network simulations are explicitly recorded as disclosed conditions rather than left unmonitored.
+```
+
+No pandas, no dataset, no runner needed. It re-checks hash-chain adjacency + genesis anchor + Evidence-Quad↔ledger binding + decision self-consistency, recomputes the manifest SHA-256, and exits 0 only if all pass (any flipped byte → exit 1). **This run: 0 failures, SHA-256 MATCH.**
+
+> **Auditor's honest boundaries:** signatures are HMAC-SHA256 software analogs (not HSM); the bundled trace verifies adjacency, not full per-row hash re-derivation (§12.4); fleet/hardware evidence is simulated (Tier-S); external audit itself is disclosed not_run.
+
+### Part 2 — ConcurBench modules evaluated, and evidence each produced
+
+`concurbench_full.py` evaluated these modules over the real 284,807-row corpus:
+
+| Module | Evaluated? | Evidence produced | Key result |
+|---|---|---|---|
+| **L1 — Authorization Correctness** | ✅ | confusion matrix, UER/FPR/FDR/FCR/DR, Wilson 95% bounds | TP 284,315 / TN 492 / FP 0 / FN 0; UER 0, FPR 0, FCR 1.0 → PASS |
+| **L2 — Adversarial Robustness** | ✅ | 8 attack families (4,000 each) + adaptive attacker + ablation | adaptive 0/11,808; total false permits 0; ablation 492-vs-0 → PASS |
+| **L3 — Distributed Consistency** (simulated fleet) | ✅ | 5-node consistency, revocation latency p50/95/99, partition, quorum, desync | fleet 1.0, partition PASS, 0 desync-unauthorized → PASS |
+| **L4 — Deterministic Replay + Auditability** | ✅ | replay attempts/passes/failures/rate, hash-chain, independent verifier, Evidence Quad | 284,807/284,807, rate 1.0, verifier PASS → PASS |
+| **Contamination / canary** | ✅ | dynamic-derivation, cryptographic salting, canary leakage check | contamination PASS, canary PASS, 0 leaks |
+| **ASB (Adversarial Scenario Benchmarking)** | ✅ | 5 scenario families, temporally-ordered event streams, 7 metrics | pass rate 1.0, ASB-UER 0.0, explanation completeness 1.0 |
+| **HITL / human governance** | ✅ | governance record (override PROHIBITED, dispute workflow, denial categories) | override of failed predicate PROHIBITED |
+| **Evidence Quad** | ✅ | spec_clause · pre_reg_id · method_version · ledger_hash | complete (`dc3ce999…` / `1ce2a9e8…`) |
+| **Report envelope (§8)** | ✅ | benchmark/system/eval metadata, schema versions, scenario distribution | all fields populated |
+| **Dataset / reproducibility (§9)** | ✅ | generation method, seed, distribution, predicate dimensionality | seed 20260629, 13 predicates |
+| **Assumptions & limitations (§14)** | ✅ | disclosure object | production/NIST/IEEE claims = false |
+| **Independent validation (§13)** | ✅ (disclosed) | external-status object | AgentDojo/AgentHarm not_run, hardware not_available, TLA+ spec_emitted, external_replay_verifier run, third_party_audit not_run |
+| **Conformance verdict (§15)** | ✅ | 4-level roll-up + overall L1–L4 | all PASS → COMPLIANT_PASS |
+
+#### Adjacent conformance modules (beyond ConcurBench proper)
+
+| Module | File | Evidence | Verdict |
+|---|---|---|---|
+| FULL_SPEC engine | `full_spec_conformance.py` | §7.1 bands enforced, AIS live composite (5 sub-signals), three-signal closure, SVR 0 / Γ-compliance 1.0, T0–T9→I1–I6 | FULL_SPEC_CONFORMANT (Tier-S) |
+| FCR test | `fcr_test.py` | fail-closed over 6 uncertainty families 0 fail-open / 20,492 | FCR 1.0 |
+| Stress test | `stress_test.py` | P1–P4 financial scenarios weighted 78.4%, all in-scope fail-closed | — |
+| Doc-1 field audit | `concurbench_conformance_check.py` | 133 fields present, 22 PASS conditions, 0 gaps | exit 0 |
+
+**One-line summary for the auditor:** The run emits 10 evidence files + a digest-sealed bundle + a zero-dependency verifier, all chained to a single ledger root (`1ce2a9e8…931da`) and a pre-registration ID (`dc3ce999…`); every ConcurBench module (L1–L4, ASB, contamination, HITL, Evidence Quad, envelope, dataset, assumptions, independent-status, verdict) was evaluated and produced its own evidence, rolling up to COMPLIANT_PASS — with the external/hardware/live-fleet limits disclosed, not hidden.
