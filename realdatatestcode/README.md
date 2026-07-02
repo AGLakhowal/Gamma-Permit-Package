@@ -132,7 +132,10 @@ carddataset/
 ├── stress_test.py                           # 4 financial-services stress scenarios (P1–P4) vs Γ engine
 ├── stress_test_report.json                  #          per-condition pass/fail + verdicts [generated]
 ├── fcr_test.py                              # dedicated Fail-Closed Rate test over real corpus + uncertainty
-└── fcr_test_report.json                     #          FCR + per-family Wilson bounds [generated]
+├── fcr_test_report.json                     #          FCR + per-family Wilson bounds [generated]
+├── full_spec_conformance.py                 # FULL_SPEC.md corrected flow — enforces §7.1 bands, AIS, 3-signal, SVR/FFC
+├── full_spec_conformance_report.json        #          FULL_SPEC conformance object [generated]
+└── concurbench_conformance_check.py         # audits report vs Document-1 required fields (exit 0 = all matched)
 ```
 
 **The main file is [gamma_test_runner.py](gamma_test_runner.py)** — it is the reference
@@ -283,8 +286,10 @@ python3 run_all.py
 ```
 
 This is the entry point for anyone landing on the repo: by default it runs the **entire**
-pipeline end-to-end (base benchmark included, with its full console output) and produces
-`gamma_report.html` with every section. Flags:
+pipeline end-to-end (base benchmark included, with its full console output), produces
+`gamma_report.html` with every section, and **prints a complete results summary of every
+layer to the terminal** (base LAB metrics, ConcurBench L1–L4, the 4 stress scenarios, the
+FCR families, and the FULL_SPEC §7.1 bands + AIS sub-signals + verdict). Flags:
 `--reuse` (fast path — skip the heavy base benchmark and reuse existing artifacts),
 `--no-open` (don't open a browser), `--input FILE` (base benchmark input CSV).
 Full details of the added layers are in [§14](#14-concurbench-conformance-stress-test--fcr-one-command).
@@ -311,6 +316,8 @@ python gamma_test_runner.py \
 python concurbench_full.py     # ConcurBench "Document 1" full conformance packet
 python stress_test.py          # 4 financial-services stress scenarios (P1–P4)
 python fcr_test.py             # dedicated Fail-Closed Rate test
+python full_spec_conformance.py # FULL_SPEC.md corrected flow (enforces §7.1 bands, AIS, 3-signal, SVR/FFC)
+python concurbench_conformance_check.py  # audit report vs Document-1 fields (exit 0 = all matched)
 ```
 
 The runner builds [gamma_report.html](gamma_report.html) from the exact results it just
@@ -736,7 +743,7 @@ surfaced on the same dashboard. They run over the **real ULB corpus** (284,807 r
 # includes the heavy base benchmark: reads the 451 MB mapped CSV, rebuilds the manifest
 python3 run_all.py
 
-# fast path: skip the base benchmark and reuse existing artifacts, run layers 2-5
+# fast path: skip the base benchmark and reuse existing artifacts, run layers 2-6
 python3 run_all.py --reuse
 
 # don't auto-open the browser
@@ -749,8 +756,10 @@ Use `--reuse` only if you want the fast path on already-generated artifacts.
 
 `run_all.py` chains: **(1)** base LAB v1.0 benchmark → **(2)** [concurbench_full.py](concurbench_full.py)
 → **(3)** [stress_test.py](stress_test.py) → **(4)** [fcr_test.py](fcr_test.py) →
-**(5)** unified `gamma_report.html` (base sections **+** ConcurBench **+** stress **+** FCR).
-Each layer also runs standalone (`python3 concurbench_full.py`, etc.).
+**(5)** [full_spec_conformance.py](full_spec_conformance.py) → **(6)** unified `gamma_report.html`
+(base sections **+** ConcurBench **+** stress **+** FCR **+** FULL_SPEC), then prints a
+**full terminal results summary** of all five result groups. Each layer also runs standalone
+(`python3 concurbench_full.py`, etc.).
 
 ### 14.1 ConcurBench full conformance packet — `concurbench_full.py`
 
@@ -798,8 +807,31 @@ signature). Adverse event = a **fail-open** (permit under uncertainty). Emits `f
 | invalid_token / stale_telemetry / stale_context_toctou / missing_predicate / ambiguous_signature | 4,000 each | 0 | 1.0 |
 | **Overall** | **20,492** | **0** | **1.0** (Wilson 95% fail-open bound reported) |
 
-### 14.4 Dashboard
+### 14.4 FULL_SPEC conformance — `full_spec_conformance.py`
 
-All three layers render as additional sections at the bottom of `gamma_report.html`
+The corrected, complete authorization flow that **enforces** (not just references) every
+FULL_SPEC.md construct the base runner left implicit, over the real telemetry columns in the
+corpus (ICS, ΔV, C_om, AIS, Latency_ms, risk scores). Emits `full_spec_conformance_report.json`.
+
+| FULL_SPEC clause | Now enforced in code | Result |
+|---|---|---|
+| §7.1 acceptance bands (ICS≥0.90, PR_LCB≥0.80, CI_WIDTH≤0.03, ΔV≤0, C≥0.85, PTP≤1ms, latency≤100ms, ER_LOCAL=1.0) | evaluated per-row as predicates feeding Γ (non-compensatory) | all hold; 0 false denials |
+| §6.12 Audit-as-Control (AIS) | **live composite** = min(chain integrity, storage availability, signature health, time sync, retention horizon); AIS<0.99 → Γ>0 → run-wide fail-closed | AIS = 1.0 (all sub-signals healthy) |
+| §6.7 three-signal closure `P_phys = SIG_COMMIT ∧ SIG_GAMMA ∧ SIG_WATCHDOG` | per-row, watchdog = deadline monitor | 0 closure violations |
+| §6.10 WID(T) = (boot nonce, monotonic counter) | emitted | present |
+| §11.1 SVR + FFC (Γ-compliance `P(ŷ=0│Γ>0)`) | computed | SVR 0.0 · Γ-compliance 1.0 |
+| §1.11 theorem family T0–T9 | **proved in Paper A, not here**; the six runtime invariants I1–I6 that instantiate them are verified | 6/6 invariants hold (0 violations) |
+| §10 TLC | total 2,489,446 / distinct 40,192 / MaxClockSkew 1 / 0 violations | reported |
+| §9 DET-5 + REVOC_P95 | bounded enforcement horizon + simulated revocation drill | ~16 ms P95 |
+| §8 continuity (TVE/DFP/CDM/ASG/ASR/BER) + §0.10 SAFE_STATE absorption | structured | present |
+
+The PR_LCB robustness band independently catches all 492 fraud rows without causing a single
+false denial. **Verdict: `FULL_SPEC_CONFORMANT (Tier-S)`** — the software root-of-trust
+realization; the Tier-H hardware interlock (HSM three-signal, WID silicon) remains §6/§15 future.
+
+### 14.5 Dashboard
+
+All four added layers render as sections at the bottom of `gamma_report.html`
 (server-rendered by `build_extra_sections()` in [gamma_report_page.py](gamma_report_page.py)),
-so the base benchmark, ConcurBench conformance, stress scenarios, and FCR all live on one page.
+so the base benchmark, ConcurBench conformance, stress scenarios, FCR, and FULL_SPEC
+conformance all live on one page.
