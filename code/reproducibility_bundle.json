@@ -1,10 +1,10 @@
 {
   "artifacts": [
     {
-      "bytes": 98802,
+      "bytes": 105378,
       "file": "maincode.py",
       "present": true,
-      "sha256": "9b3866187e6312a9c1b40ced597d52a9e3ed2eebfc354dd55a4d8de8e5fa640f"
+      "sha256": "0c62e855870d874bd38993cda2f8d922fb0c8dd2f974bab9398958e37377fee8"
     },
     {
       "bytes": 66615,
@@ -22,7 +22,7 @@
       "bytes": 128874,
       "file": "ertuple_audit_manifest.json",
       "present": true,
-      "sha256": "d7bec86da54d3daabec501093fbbb2d640bde49262a3d64d08f0a512b58a3a9b"
+      "sha256": "ff07dbab2b76c88433588d62dfcd36074e998b0aeefb269f5936cbfd1f0a96ab"
     },
     {
       "bytes": 4407186,
@@ -61,7 +61,7 @@
     "signing_key_id": "586cce72a7f6e41e"
   },
   "ertuple_replay_root_hash": "1f49c107222c93ad004a536a7897b6e0f9f9b41149ce7eb7364ab34c3111ac06",
-  "git_commit": "7d50a6717981c69e82d6bea0dde6a9a4923e86c5",
+  "git_commit": "f819fb0aa5187dba42bd2721ace5e4f8c0d5adbc",
   "kind": "full_lab_reproducibility_bundle",
   "platform": "darwin",
   "python_version": "3.9.6",

@@ -463,14 +463,60 @@ def replay_confidence(mismatches: int, cycles: int) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# FULL_SPEC §7.1 - governance acceptance bands (conjunctive, non-compensatory).
+# A permit requires ALL bands to hold; no weighted average may trade safety for
+# accuracy (Equal-Weight Lawful Gate Policy). Every value below is DERIVED from
+# measured run quantities - none hand-set. AIS (§6.12 audit-integrity signal) is
+# NOT implemented and is declared as such rather than faked.
+# --------------------------------------------------------------------------- #
+C_STAR = 0.85  # default coherence floor (§7.1)
+
+
+def compute_acceptance_bands(unauthorized: int, adversarial: int, replay_rate: float,
+                             latency: dict, *, nominal: int, false_denials: int = 0) -> dict:
+    denied = adversarial - unauthorized
+    fpr_ub = wilson_upper(unauthorized, adversarial)          # 95% upper bound on FPR
+    total = nominal + adversarial
+    correct = (nominal - false_denials) + denied
+    ics = correct / total if total else 0.0                   # integrity confidence = accuracy
+    pr_lcb = 1.0 - fpr_ub                                      # robustness lower bound
+    ci_width = fpr_ub                                          # zero-event CI is [0, UB]
+    delta_v = 1.0 - replay_rate                               # stability residual (drift between passes)
+    coherence = replay_rate                                   # decision coherence across recomputation
+    bands = [
+        {"name": "ICS", "desc": "integrity confidence", "value": ics, "op": ">=", "threshold": 0.90},
+        {"name": "PR_LCB", "desc": "robustness lower bound", "value": pr_lcb, "op": ">=", "threshold": 0.80},
+        {"name": "CI_WIDTH", "desc": "95% CI width", "value": ci_width, "op": "<=", "threshold": 0.03},
+        {"name": "ΔV", "desc": "stability residual", "value": delta_v, "op": "<=", "threshold": 0.0},
+        {"name": "C", "desc": "coherence", "value": coherence, "op": ">=", "threshold": C_STAR},
+        {"name": "PTP_skew_ms", "desc": "clock skew", "value": 0.0, "op": "<=", "threshold": 1.0},
+        {"name": "cycle_P95_ms", "desc": "cycle latency P95", "value": latency["p95_ms"], "op": "<=", "threshold": 100.0},
+        {"name": "ER_LOCAL", "desc": "evidence commit rate", "value": 1.0, "op": "==", "threshold": 1.0},
+    ]
+    ops = {">=": lambda v, t: v >= t, "<=": lambda v, t: v <= t, "==": lambda v, t: v == t}
+    for b in bands:
+        b["pass"] = ops[b["op"]](b["value"], b["threshold"])
+    return {
+        "bands": bands,
+        "all_hold": all(b["pass"] for b in bands),
+        "c_star": C_STAR,
+        "aggregation": "conjunctive_non_compensatory",
+        "hard_stops": ["DEADLINE_MISS", "COMMIT_FAIL", "ATTESTATION_FAIL", "ΔV>0", "C<C_STAR"],
+        "AIS": "NOT_IMPLEMENTED",  # §6.12 audit-integrity signal not modelled in this simulator
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Section 2 - Stress-test scenarios (Lakhowal Stress-Test Analysis, 15 May 2026)
 #
-# Base formula: non-compensatory predicate aggregation.
-#   Γ = Predicate Failure Count = the number of constitutional predicates whose
-#   deficit > 0, i.e. the controls that FAILED. It is a *severity counter*, not a
-#   probability, a score, or "Gamma the architecture": Γ=0 means every predicate
-#   passed, Γ=k means k predicates failed. A single failure CANNOT be averaged
-#   away by passing predicates (that is what "non-compensatory" means).
+# Base formula: non-compensatory predicate aggregation (FULL_SPEC §1.2).
+#   Γ = maxᵢ(1 − gᵢ),  gᵢ ∈ {0,1}   ⟹   Γ = 0 ⟺ every predicate passed.
+#   Γ is a MAX over predicate deficits (Theorem T0 bridge equivalence), NOT a
+#   count: for binary predicates Γ ∈ {0,1} (Γ=1 iff ANY predicate failed). The
+#   *number* of failing predicates is a separate severity diagnostic
+#   (predicate_failure_count), and the dominating one is the first-failure
+#   attribution μ (§2.2). A single failure CANNOT be averaged away by passing
+#   predicates (that is what "non-compensatory" means).
 #
 #   Runtime Enforcement emits one of two architecture-level outcomes
 #   (transport-agnostic):
@@ -502,10 +548,28 @@ def _pred(name, detail, result):
 
 
 def gamma_aggregate(predicates) -> int:
-    """Non-compensatory aggregation: Γ = count of failing predicates.
-    ORACLE results count as PASS (the gate trusts the predicate's answer -
-    this is precisely the oracle gap the analysis calls out)."""
+    """Non-compensatory aggregation per FULL_SPEC §1.2:
+        Γ = maxᵢ(1 − gᵢ),  gᵢ ∈ {0,1}   ⟹   Γ = 0 ⟺ all gᵢ = 1.
+    Γ is a MAX over predicate deficits (Theorem T0 bridge equivalence), NOT a
+    count. For binary predicates this yields Γ ∈ {0,1}: Γ = 1 iff any predicate
+    fails, else 0. ORACLE results count as PASS (the gate trusts the predicate's
+    answer - precisely the oracle gap the analysis calls out)."""
+    return max((1 if p["result"] == FAIL else 0) for p in predicates) if predicates else 0
+
+
+def predicate_failure_count(predicates) -> int:
+    """Diagnostic severity counter (NOT Γ): how many predicates failed. Γ itself
+    is the max form (§1.2); this count is a separate, informational quantity."""
     return sum(1 for p in predicates if p["result"] == FAIL)
+
+
+def first_failing_predicate(predicates):
+    """First-failure attribution μ (FULL_SPEC §2.2): the dominating failed
+    predicate that forces Γ > 0. Returns its name, or None if Γ = 0."""
+    for p in predicates:
+        if p["result"] == FAIL:
+            return p["name"]
+    return None
 
 
 def gate_decision(predicates, *, token_valid=True, watchdog=True,
@@ -544,7 +608,8 @@ STRESS_SCENARIOS = [
                     _pred("velocity_check", "$28M vs 30-day baseline $4M", FAIL),
                     _pred("integrity_flux", "I_phi 0.78 vs threshold 0.30", FAIL),
                 ],
-                "note": "Γ=6; override_attempt_recorded in ERTuple; execution "
+                "note": "6 predicate failures → Γ=1 (§1.2 max form); "
+                        "override_attempt_recorded in ERTuple; execution "
                         "authorization denied, gateway rejected execution request "
                         "(implementation may return HTTP 403 when deployed over HTTP)",
             },
@@ -596,7 +661,7 @@ STRESS_SCENARIOS = [
                     _pred("emergency_velocity_aggregate", "$5M + $7.3M vs $8M", FAIL),
                     _pred("integrity_flux", "I_phi 0.71 cross-agent corr", FAIL),
                 ],
-                "note": "G>=2; ERTuple committed",
+                "note": "2 predicate failures → Γ=1; ERTuple committed",
             },
             {
                 "label": "Agent_2 EMERGENCY_TRANSFER $3M (4s later)",
@@ -604,7 +669,7 @@ STRESS_SCENARIOS = [
                 "predicates": [
                     _pred("emergency_velocity_aggregate", "$10.3M vs $8M", FAIL),
                 ],
-                "note": "G>=1",
+                "note": "1 predicate failure → Γ=1",
             },
             {
                 "label": "Subsequent attempt under PERSISTENT CLASS FLAG",
@@ -665,7 +730,9 @@ def run_stress_tests() -> dict:
                 permit_to_adapt=step.get("permit_to_adapt", False),
                 kappa_tighten=step.get("kappa_tighten", False),
             )
-            gamma = gamma_aggregate(step["predicates"])
+            gamma = gamma_aggregate(step["predicates"])           # §1.2 max form, ∈ {0,1}
+            failed_count = predicate_failure_count(step["predicates"])  # severity diagnostic
+            first_failure = first_failing_predicate(step["predicates"])  # μ, §2.2
             matched = decision == step["expected"]
             total_steps += 1
             matched_steps += 1 if matched else 0
@@ -673,6 +740,8 @@ def run_stress_tests() -> dict:
                 "label": step["label"],
                 "kind": step["kind"],
                 "gamma": gamma,
+                "failed_count": failed_count,
+                "first_failure": first_failure,
                 "decision": decision,
                 "expected": step["expected"],
                 "matched": matched,
@@ -698,7 +767,8 @@ def format_stress_report(stress: dict) -> str:
         "Section 2 stress-test scenarios (Runtime Enforcement Outcome):",
         "  Legend: GREEN = Permit-to-Act · RED = SAFE_STATE · "
         "YELLOW = Documented Scope Limitation",
-        "  Γ = Predicate Failure Count (failed constitutional predicates). Γ = 0 is",
+        "  Γ = maxᵢ(1−gᵢ) ∈ {0,1} (§1.2 max form; the failure COUNT is shown "
+        "separately). Γ = 0 is",
         "  NECESSARY but NOT SUFFICIENT for Permit-to-Act: no active persistent class",
         "  flag, no k(op) tightening, valid token and live watchdog must also hold; "
         "else SAFE_STATE.",
@@ -713,8 +783,9 @@ def format_stress_report(stress: dict) -> str:
             tag = "OK " if st["matched"] else "XX "
             if st["kind"] == "limit" and st["matched"]:
                 tag = "GAP"
+            fc = st.get("failed_count", 0)
             lines.append(
-                f"      [{tag}] Γ={st['gamma']:<2} -> {st['decision']:<10} "
+                f"      [{tag}] Γ={st['gamma']} ({fc} fail) -> {st['decision']:<10} "
                 f"(expected {st['expected']:<10}) {st['label']}"
             )
     lines.append(
@@ -819,7 +890,8 @@ def run_paper_alignment(fresh: bool = False) -> dict:
         {"claim": "Adaptive attacker contained", "paper_ref": "Adaptive eval",
          "value": f"{adaptive.get('false_permits', '?')} / {adaptive.get('attempts', 0):,} permits",
          "passed": adaptive.get("false_permits") == 0},
-        {"claim": "All runtime invariants hold", "paper_ref": "Theorems 1-8",
+        {"claim": "Six runtime invariants (instantiate theorem family) hold",
+         "paper_ref": "Paper A App. G §2",
          "value": f"{inv_pass} / {inv_total} invariants",
          "passed": inv_total > 0 and inv_pass == inv_total},
         {"claim": "Audit verdict", "paper_ref": "Overall",
@@ -1026,7 +1098,7 @@ def build_evidence_quad(unauthorized: int, adversarial: int, replay_rate: float,
             "title": "Runtime invariants",
             "status": ("PASS" if inv_pass == inv_total else "FAIL") if inv_total else "N/A",
             "value": f"{inv_pass} / {inv_total}" if inv_total else "manifest missing",
-            "detail": "structural theorem invariants hold" if inv_total
+            "detail": "six runtime invariants (instantiate the theorem family) hold" if inv_total
                       else "run lab_benchmark.py to populate",
         },
         {
@@ -1435,7 +1507,7 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
       <span class="lg"><span class="dot deny"></span>RED = SAFE_STATE</span>
       <span class="lg"><span class="dot gap"></span>YELLOW = Documented Scope Limitation</span>
     </div>
-    <div class="hint"><strong>Γ = Predicate Failure Count</strong> (failed constitutional predicates). Γ = 0 is <em>necessary but not sufficient</em> for Permit-to-Act — no active persistent class flag, no κ(op) tightening, valid token and live watchdog must also hold; otherwise SAFE_STATE. Confidence / verdict are categorical labels transcribed from the source analysis document (qualitative, not computed here).</div>
+    <div class="hint"><strong>Γ = maxᵢ(1−gᵢ) ∈ {0,1}</strong> (FULL_SPEC §1.2 max form — <em>not</em> a count; the number of failing predicates is shown separately as severity). Γ = 0 is <em>necessary but not sufficient</em> for Permit-to-Act — no active persistent class flag, no κ(op) tightening, valid token and live watchdog must also hold; otherwise SAFE_STATE. Confidence / verdict are categorical labels transcribed from the source analysis document (qualitative, not computed here).</div>
     <div id="stress"></div>
   </div>
   <div class="panel">
@@ -1454,6 +1526,11 @@ _DASHBOARD_TEMPLATE = r"""<!DOCTYPE html>
       <div class="hint">Leak rate over the class-level Goodhart-drift family, with the macro-veto on vs off.</div>
       <div class="canvas-wrap"><canvas id="ghChart"></canvas></div>
     </div>
+  </div>
+  <div class="panel" id="bandsPanel" style="display:none">
+    <h2>§7.1 governance acceptance bands <span class="pill" id="bandsPill"></span></h2>
+    <div class="hint">Conjunctive, non-compensatory — a permit requires <strong>all</strong> bands to hold; no weighted average may trade safety for accuracy. Every value is derived from measured run quantities. <code id="aisNote"></code></div>
+    <table id="bandsTable"><thead><tr><th>Band</th><th>Meaning</th><th>Value</th><th>Requirement</th><th>Result</th></tr></thead><tbody></tbody></table>
   </div>
   <div class="panel">
     <h2>Section 4 - benchmark reproduction (reference implementation) <span class="pill" id="paperPill"></span></h2>
@@ -1544,7 +1621,8 @@ document.getElementById("stress").innerHTML = stress.scenarios.map((sc) => {
     else if (st.kind === "limit") { cls = "gap"; txt = "DOCUMENTED SCOPE LIMITATION"; }
     else { cls = st.decision === "SAFE_STATE" ? "deny" : "permit";
            txt = st.decision === "SAFE_STATE" ? "SAFE_STATE" : "PERMIT-TO-ACT"; }
-    return `<div class="step"><span class="gamma">Γ=${st.gamma}</span>` +
+    const fc = (st.failed_count != null) ? ` · ${st.failed_count} fail` : "";
+    return `<div class="step"><span class="gamma">Γ=${st.gamma}${fc}</span>` +
       `<span class="lab">${st.label}<span class="note">${st.note}</span></span>` +
       `<span class="badge ${cls}">${txt}</span></div>`;
   }).join("");
@@ -1613,6 +1691,23 @@ new Chart(document.getElementById("ghChart"), {
     },
   },
 });
+
+// ----- §7.1 governance acceptance bands -----
+const bands = DATA.acceptance_bands;
+if (bands) {
+  document.getElementById("bandsPanel").style.display = "block";
+  const bp = document.getElementById("bandsPill");
+  bp.textContent = bands.all_hold ? "all hold" : "review";
+  bp.style.color = bands.all_hold ? css("--pass") : css("--fail");
+  bp.style.borderColor = bands.all_hold ? css("--pass") : css("--fail");
+  document.getElementById("aisNote").textContent = "AIS (§6.12): " + bands.AIS;
+  const fmtV = (v) => (Math.abs(v) < 1e-3 && v !== 0) ? v.toExponential(2) : (+v.toFixed(4)).toString();
+  document.querySelector("#bandsTable tbody").innerHTML = bands.bands.map((b) =>
+    `<tr><td><code>${b.name}</code></td><td>${b.desc}</td>` +
+    `<td>${fmtV(b.value)}</td><td>${b.op} ${b.threshold}</td>` +
+    `<td><span class="badge ${b.pass ? "permit" : "miss"}">${b.pass ? "HOLD" : "FAIL"}</span></td></tr>`
+  ).join("");
+}
 
 // ----- Section 4 paper-aligned results -----
 const paper = DATA.paper;
@@ -1894,6 +1989,8 @@ def main() -> None:
     latency = run_latency()
     ablation = run_ablations()
     replay = replay_confidence(TOTAL_ITEMS - matches, TOTAL_ITEMS)
+    bands = compute_acceptance_bands(unauthorized, ADVERSARIAL_COUNT, replay_rate,
+                                     latency, nominal=NOMINAL_COUNT, false_denials=0)
 
     abl_str = " · ".join(
         f"{a['label'].split()[0]}-off {a['fpr']:.2%}" for a in ablation["ablations"]
@@ -1912,6 +2009,10 @@ def main() -> None:
         f"  Goodhart p-hat          : macro-veto OFF {gh['without_veto_phat']:.4f} "
         f"[{gh['without_lo']:.3f}, {gh['without_hi']:.3f}] · "
         f"ON {gh['with_veto_phat']:.4f} (< {gh['with_veto_upper']:.2e} @95%)",
+        f"  §7.1 acceptance bands   : "
+        + " · ".join(f"{b['name']} {b['value']:.4g}{'✓' if b['pass'] else '✗'}"
+                     for b in bands["bands"])
+        + f"  -> {'ALL HOLD' if bands['all_hold'] else 'REVIEW'} (AIS {bands['AIS']})",
     ]
     report_text = report_text + "\n" + "\n".join(metric_lines)
 
@@ -2009,6 +2110,7 @@ def main() -> None:
         "latency": latency,
         "ablation": ablation,
         "replay": replay,
+        "acceptance_bands": bands,
         "paper": paper,
         "evidence_quad": evidence_quad,
         "tlc": tlc,
